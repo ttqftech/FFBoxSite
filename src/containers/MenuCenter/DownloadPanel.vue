@@ -21,6 +21,7 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 		appStore.selectedPanelIndex = 3;
 		return;
 	}
+	fetch('https://github.com/ttqftech/download-count-test/releases/download/1/test').then(async (s) => s.text());	// 仅供测试
 	let url;
 	switch (os) {
 		case 'Windows':
