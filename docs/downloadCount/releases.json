@@ -1406,7 +1406,7 @@
         "state": "uploaded",
         "size": 108042275,
         "digest": null,
-        "download_count": 52,
+        "download_count": 51,
         "created_at": "2024-06-22T22:28:48Z",
         "updated_at": "2024-06-22T22:29:03Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.1/macOS_ARM64_FFBox_4.1.dmg"
