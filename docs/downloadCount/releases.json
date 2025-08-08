@@ -283,7 +283,7 @@
         "state": "uploaded",
         "size": 86881961,
         "digest": "sha256:5c93dc174417523b3bf0842f457201ba4695da15924fc169ee82ce077ce3b984",
-        "download_count": 2236,
+        "download_count": 2237,
         "created_at": "2025-06-06T23:31:18Z",
         "updated_at": "2025-06-06T23:31:31Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.5/Windows_x86-64_FFBox_4.5.exe"
@@ -294,11 +294,11 @@
     "body": "FFBox v4.5 新功能\r\n\r\n- 新增全选任务按钮、应用参数到全部任务按钮\r\n- 新增“FFBox 推荐画质设定”文档及本地知识库窗口，并修正了几款编码器画质滑块的标定值\r\n- 新增 3 种模式的保留元数据参数、4 种模式的保留文件时间功能\r\n- 新增限制一倍速参数\r\n- 新增“复制任务”功能、“查看图表”任务菜单项\r\n- 新增功能限制的进度条展示和表格说明\r\n- 更新软件字体\r\n- 支持在气泡提示/吐司组件中使用换行，并依此优化了部分参数描述的文案与显示效果\r\n- 吐司组件支持手动关闭，吐司组件和标签页组件支持鼠标中键关闭\r\n- 菜单支持根据文字自动缩放宽度\r\n- 增加任务列表和同时运行任务数量限制\r\n- 修复无色按钮按下时的效果（含 Windows 安装程序）",
     "reactions": {
       "url": "https://api.github.com/repos/ttqftech/FFBox/releases/223752290/reactions",
-      "total_count": 4,
+      "total_count": 5,
       "+1": 0,
       "-1": 0,
       "laugh": 0,
-      "hooray": 4,
+      "hooray": 5,
       "confused": 0,
       "heart": 0,
       "rocket": 0,
@@ -589,7 +589,7 @@
         "state": "uploaded",
         "size": 86155892,
         "digest": null,
-        "download_count": 3448,
+        "download_count": 3455,
         "created_at": "2025-05-01T15:51:48Z",
         "updated_at": "2025-05-01T15:52:03Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.4/Windows_x86-64_FFBox_4.4.exe"
