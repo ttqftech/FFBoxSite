@@ -103,7 +103,7 @@
         "state": "uploaded",
         "size": 117177350,
         "digest": "sha256:f4e1ebaadfb6c0045222d298f8f4f17d66b9fc00de507502cc049ad8cad75e32",
-        "download_count": 19,
+        "download_count": 20,
         "created_at": "2025-06-06T23:31:00Z",
         "updated_at": "2025-06-06T23:31:18Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.5/Linux_x86-64_FFBox_4.5.AppImage"
@@ -247,7 +247,7 @@
         "state": "uploaded",
         "size": 16287038,
         "digest": "sha256:4143705414def25ee7e9fb09200e9a14a2e5c8eee3af279d8f4a593022fdfe04",
-        "download_count": 232,
+        "download_count": 233,
         "created_at": "2025-06-06T23:30:45Z",
         "updated_at": "2025-06-06T23:30:47Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.5/Windows_x86-64_FFBoxService%2BwebUI_4.5.zip"
@@ -283,7 +283,7 @@
         "state": "uploaded",
         "size": 86881961,
         "digest": "sha256:5c93dc174417523b3bf0842f457201ba4695da15924fc169ee82ce077ce3b984",
-        "download_count": 2223,
+        "download_count": 2227,
         "created_at": "2025-06-06T23:31:18Z",
         "updated_at": "2025-06-06T23:31:31Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.5/Windows_x86-64_FFBox_4.5.exe"
@@ -517,7 +517,7 @@
         "state": "uploaded",
         "size": 105805422,
         "digest": null,
-        "download_count": 118,
+        "download_count": 120,
         "created_at": "2025-05-01T15:52:33Z",
         "updated_at": "2025-05-01T15:52:50Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.4/macOS_ARM64_FFBox_4.4.dmg"
@@ -589,7 +589,7 @@
         "state": "uploaded",
         "size": 86155892,
         "digest": null,
-        "download_count": 3446,
+        "download_count": 3447,
         "created_at": "2025-05-01T15:51:48Z",
         "updated_at": "2025-05-01T15:52:03Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.4/Windows_x86-64_FFBox_4.4.exe"
