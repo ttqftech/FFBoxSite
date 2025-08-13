@@ -212,7 +212,7 @@
         "state": "uploaded",
         "size": 106826013,
         "digest": "sha256:8e3b83aa773020183802cb9c07f7d67063d1cda6fd7129d112df765989965ff5",
-        "download_count": 43,
+        "download_count": 44,
         "created_at": "2025-06-06T23:30:25Z",
         "updated_at": "2025-06-06T23:30:41Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.5/macOS_ARM64_FFBox_4.5.dmg"
@@ -284,7 +284,7 @@
         "state": "uploaded",
         "size": 86881961,
         "digest": "sha256:5c93dc174417523b3bf0842f457201ba4695da15924fc169ee82ce077ce3b984",
-        "download_count": 2411,
+        "download_count": 2414,
         "created_at": "2025-06-06T23:31:18Z",
         "updated_at": "2025-06-06T23:31:31Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.5/Windows_x86-64_FFBox_4.5.exe"
@@ -519,7 +519,7 @@
         "state": "uploaded",
         "size": 105805422,
         "digest": null,
-        "download_count": 120,
+        "download_count": 121,
         "created_at": "2025-05-01T15:52:33Z",
         "updated_at": "2025-05-01T15:52:50Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.4/macOS_ARM64_FFBox_4.4.dmg"
@@ -826,7 +826,7 @@
         "state": "uploaded",
         "size": 106108428,
         "digest": null,
-        "download_count": 177,
+        "download_count": 178,
         "created_at": "2025-01-01T05:10:18Z",
         "updated_at": "2025-01-01T05:13:22Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.3/macOS_ARM64_FFBox_4.3.dmg"
@@ -1121,7 +1121,7 @@
         "state": "uploaded",
         "size": 108292526,
         "digest": null,
-        "download_count": 48,
+        "download_count": 49,
         "created_at": "2024-09-01T00:32:31Z",
         "updated_at": "2024-09-01T00:32:52Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.2/macOS_ARM64_FFBox_4.2.dmg"
@@ -1416,7 +1416,7 @@
         "state": "uploaded",
         "size": 108042275,
         "digest": null,
-        "download_count": 52,
+        "download_count": 53,
         "created_at": "2024-06-22T22:28:48Z",
         "updated_at": "2024-06-22T22:29:03Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.1/macOS_ARM64_FFBox_4.1.dmg"
@@ -1747,7 +1747,7 @@
         "state": "uploaded",
         "size": 107731663,
         "digest": null,
-        "download_count": 30,
+        "download_count": 31,
         "created_at": "2024-03-31T23:40:50Z",
         "updated_at": "2024-03-31T23:41:05Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.0/macOS_ARM64_FFBox_4.0.dmg"
