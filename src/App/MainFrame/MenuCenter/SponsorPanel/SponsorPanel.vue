@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useCssModule } from 'vue';
 import CryptoJS from 'crypto-js';
-import Button, { ButtonType } from '../../components/Button/Button';
-import Tooltip from '../../components/Tooltip/Tooltip';
-import IconGithub from '../../assets/menuCenter/sponsorCenter/github.svg?component';
-import IconGitee from '../../assets/menuCenter/sponsorCenter/gitee.svg?component';
-import IconKoFi from '../../assets/menuCenter/sponsorCenter/ko-fi.svg?component';
-import IconAfdian from '../../assets/menuCenter/sponsorCenter/afdian.png';
-import ImageAlipay from '../../assets/menuCenter/sponsorCenter/alipay.png';
-import ImageWechatpay from '../../assets/menuCenter/sponsorCenter/wechatpay.svg?url';
-import ImageQQpay from '../../assets/menuCenter/sponsorCenter/qqpay.png';
+import Button, { ButtonType } from '../../../../components/Button/Button';
+import Tooltip from '../../../../components/Tooltip/Tooltip';
+import IconGithub from './github.svg?component';
+import IconGitee from './gitee.svg?component';
+import IconKoFi from './ko-fi.svg?component';
+import IconAfdian from './afdian.png';
+import ImageAlipay from './alipay.png';
+import ImageWechatpay from './wechatpay.svg?url';
+import ImageQQpay from './qqpay.png';
 
 const style = useCssModule();
 

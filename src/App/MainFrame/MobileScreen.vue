@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { useAppStore } from '../stores/appStore';
-import Changelog from './MenuCenter/Changelog.vue';
-import DownloadPanel from './MenuCenter/DownloadPanel.vue';
-import SponsorPanel from './MenuCenter/SponsorPanel.vue';
-import Terms from './MenuCenter/Terms.vue';
-import Faq from './MenuCenter/Faq.vue';
-import IconSidebarUpdate from '../assets/menuCenter/update2.svg?component';
-import IconSidebarDownload from '../assets/menuCenter/download.svg?component';
-import IconSidebarSponsor from '../assets/menuCenter/sponsor.svg?component';
-import IconSidebarTerm from '../assets/menuCenter/term.svg?component';
-import IconSidebarFaq from '../assets/menuCenter/faq.svg?component';
+import { useAppStore } from '../../stores/appStore';
+import Changelog from './MenuCenter/Changelog/Changelog.vue';
+import DownloadPanel from './MenuCenter/DownloadPanel/DownloadPanel.vue';
+import SponsorPanel from './MenuCenter/SponsorPanel/SponsorPanel.vue';
+import Terms from './MenuCenter/Terms/Terms.vue';
+import Faq from './MenuCenter/Faq/Faq.vue';
+import IconSidebarUpdate from './menuCenter/update2.svg?component';
+import IconSidebarDownload from './menuCenter/download.svg?component';
+import IconSidebarSponsor from './menuCenter/sponsor.svg?component';
+import IconSidebarTerm from './menuCenter/term.svg?component';
+import IconSidebarFaq from './menuCenter/faq.svg?component';
 
 interface Props {
 	onScreenshotClicked: () => any
@@ -69,7 +69,7 @@ onMounted(() => appStore.selectedPanelIndex = -1);
 		<div class="content">
 			<Transition :name="animationName">
 				<div v-if="appStore.selectedPanelIndex === -1" class="intro">
-					<img class="title-1" src="../assets/软件图标v1.0.png" alt="FFBox 图标" width="368" height="184" />
+					<img class="title-1" src="../../assets/软件图标v1.0.png" alt="FFBox 图标" width="368" height="184" />
 					<div class="actions">
 						<button @click="handleTopBarButtonClicked(0)">更新说明</button>
 						<div class="seperator"></div>
@@ -81,8 +81,8 @@ onMounted(() => appStore.selectedPanelIndex = -1);
 						<div>版本：4.5&nbsp;&nbsp;(2025-06-07)</div>
 					</div>
 					<div class="screenshot" @click="props.onScreenshotClicked">
-						<img v-if="appStore.colorTheme === 'themeLight'" src="../assets/软件截图_中_浅色_完整.webp" />
-						<img v-if="appStore.colorTheme === 'themeDark'" src="../assets/软件截图_中_深色_完整.webp" />
+						<img v-if="appStore.colorTheme === 'themeLight'" src="../../assets/软件截图_中_浅色_完整.webp" />
+						<img v-if="appStore.colorTheme === 'themeDark'" src="../../assets/软件截图_中_深色_完整.webp" />
 					</div>
 				</div>
 			</Transition>

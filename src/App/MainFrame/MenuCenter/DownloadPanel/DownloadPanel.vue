@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { h } from 'vue';
-import { useAppStore } from '../../stores/appStore';
-import Button, { ButtonType } from '../../components/Button/Button';
-import Popup from '../../components/Popup/Popup';
-import Msgbox from '../../components/Msgbox/Msgbox';
-import IconNodejs from '../../assets/menuCenter/downloadPanel/nodejs.svg?component';
-import IconMsi from '../../assets/menuCenter/downloadPanel/msi.svg?component';
-import IconApp from '../../assets/menuCenter/downloadPanel/app.svg?component';
-import IconWeb from '../../assets/menuCenter/downloadPanel/web.svg?component';
-import IconZip from '../../assets/menuCenter/downloadPanel/zip.svg?component';
-import IconPointOut from '../../assets/warnings/pointOut.svg?component';
+import { useAppStore } from '../../../../stores/appStore';
+import Button, { ButtonType } from '../../../../components/Button/Button';
+import Popup from '../../../../components/Popup/Popup';
+import Msgbox from '../../../../components/Msgbox/Msgbox';
+import IconMsi from './msi.svg?component';
+import IconApp from './app.svg?component';
+import IconWeb from './web.svg?component';
+import IconZip from './zip.svg?component';
+import IconPointOut from '../../../../assets/warnings/pointOut.svg?component';
 
 const appStore = useAppStore();
 
@@ -147,7 +146,7 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 		<div class="oss">
 			<div class="os">
 				<span>Windows (x86-64)</span>
-				<Button size="large" @click="handleDownloadClick('Windows', 2)"><img src="../../assets/menuCenter/downloadPanel/gyan.dev.png">gyan.dev<br/>release essentials</Button>
+				<Button size="large" @click="handleDownloadClick('Windows', 2)"><img src="./gyan.dev.png">gyan.dev<br/>release essentials</Button>
 			</div>
 		</div>
 		<div style="height: 32px;"></div>

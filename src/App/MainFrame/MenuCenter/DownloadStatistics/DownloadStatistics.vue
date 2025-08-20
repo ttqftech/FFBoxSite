@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { useAppStore } from '../../stores/appStore';
-import Button, { ButtonType } from '../../components/Button/Button';
-import Checkbox from '../../components/Checkbox/Checkbox.vue';
-import Popup from '../../components/Popup/Popup';
-import Msgbox from '../../components/Msgbox/Msgbox';
+import { useAppStore } from '../../../../stores/appStore';
+import Button from '../../../../components/Button/Button';
+import Checkbox from '../../../../components/Checkbox/Checkbox.vue';
 
 type Releases = {
 	tag_name: string;	// v1.0 v1.1 v2.0 v2.1 v2.2 v2.3 v2.4 v2.5 v2.6 v3.0 v4.0 v4.1 v4.2 v4.3 v4.4 v4.5
