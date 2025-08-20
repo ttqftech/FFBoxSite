@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useCssModule } from 'vue';
+import CryptoJS from 'crypto-js';
 import Button, { ButtonType } from '../../components/Button/Button';
 import Tooltip from '../../components/Tooltip/Tooltip';
 import IconGithub from '../../assets/menuCenter/sponsorCenter/github.svg?component';
@@ -84,6 +85,18 @@ onMounted(() => {
 	paintQRcode2canvas(qr_alipay.value, alipayQR());
 	paintQRcode2canvas(qr_wechatpay.value, wechatpayQR());
 	paintQRcode2canvas(qr_qqpay.value, qqpayQR());
+	(window as any).encrypt = (content: string) => {
+		const fixedCode = 'c934a34fc7823c4e';
+		const result = CryptoJS.AES.encrypt(content, fixedCode).toString();
+		console.log(result);
+		const deResult = CryptoJS.AES.decrypt(result, fixedCode).toString(CryptoJS.enc.Utf8);
+		console.log(deResult);
+	};
+	(window as any).decrypt = (content: string) => {
+		const fixedCode = 'c934a34fc7823c4e';
+		const result = CryptoJS.AES.decrypt(content, fixedCode).toString();
+		console.log(result);
+	};
 });
 
 </script>
