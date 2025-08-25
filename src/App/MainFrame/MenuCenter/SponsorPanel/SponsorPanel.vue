@@ -91,11 +91,13 @@ onMounted(() => {
 		console.log(result);
 		const deResult = CryptoJS.AES.decrypt(result, fixedCode).toString(CryptoJS.enc.Utf8);
 		console.log(deResult);
+		return result;
 	};
 	(window as any).decrypt = (content: string) => {
 		const fixedCode = 'c934a34fc7823c4e';
-		const result = CryptoJS.AES.decrypt(content, fixedCode).toString();
+		const result = CryptoJS.AES.decrypt(content, fixedCode).toString(CryptoJS.enc.Utf8);
 		console.log(result);
+		return result;
 	};
 });
 

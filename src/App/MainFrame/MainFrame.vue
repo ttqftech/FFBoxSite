@@ -5,6 +5,7 @@ import Button, { ButtonType } from '../../components/Button/Button';
 import Popup from '../../components/Popup/Popup';
 import Msgbox from '../../components/Msgbox/Msgbox';
 import MenuCenter from './MenuCenter/MenuCenter.vue';
+import AISearch from './AISearch/AISearchWithConfig.vue';
 import MobileScreen from './MobileScreen.vue';
 import IconPointOut from '../../assets/warnings/pointOut.svg?component';
 
@@ -160,6 +161,11 @@ onMounted(async () => {
 					<div class="FFBox">
 						<button @click="handleTopBarButtonClicked(3)" class="startbutton startbutton2 startbutton-cyan">🌐网页版</button>
 						<button @click="handleTopBarButtonClicked(4)" class="startbutton startbutton1 startbutton-green">⬇️下载</button>
+						<div class="AISearch">
+							<div>
+								<AISearch />
+							</div>
+						</div>
 						<MenuCenter />
 					</div>
 				</div>
@@ -387,6 +393,19 @@ onMounted(async () => {
 					.startbutton2 {
 						right: 160px;
 						width: 140px;
+					}
+					.AISearch {
+						position: absolute;
+						top: 46px;
+						left: 100px;
+						right: 316px;
+						height: 36px;
+						display: flex;
+						justify-content: center;
+						align-items: center;
+						&>div {
+							width: clamp(104px, calc(40px + 50%), 100%);
+						}
 					}
 				}
 			}
