@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, h, onMounted, ref } from 'vue';
-import { useAppStore } from '../stores/appStore';
-import Button, { ButtonType } from '../components/Button/Button';
-import Popup from '../components/Popup/Popup';
-import Msgbox from '../components/Msgbox/Msgbox';
-import MenuCenter from './MenuCenter.vue';
+import { useAppStore } from '../../stores/appStore';
+import Button, { ButtonType } from '../../components/Button/Button';
+import Popup from '../../components/Popup/Popup';
+import Msgbox from '../../components/Msgbox/Msgbox';
+import MenuCenter from './MenuCenter/MenuCenter.vue';
+import AISearch from './AISearch/AISearchWithConfig.vue';
 import MobileScreen from './MobileScreen.vue';
-import IconPointOut from '../assets/warnings/pointOut.svg?component';
+import IconPointOut from '../../assets/warnings/pointOut.svg?component';
 
 const appStore = useAppStore();
 
@@ -135,7 +136,7 @@ onMounted(async () => {
 		</div>
 		<div v-if="windowWidth >= 640" class="firstScreen">
 			<div class="lrCenter">
-				<img class="title-1" src="../assets/软件图标v1.0.png" alt="FFBox 图标" width="368" height="184" />
+				<img class="title-1" src="../../assets/软件图标v1.0.png" alt="FFBox 图标" width="368" height="184" />
 				<div class="actions">
 					<button @click="handleTopBarButtonClicked(0)">更新说明</button>
 					<div class="seperator"></div>
@@ -150,16 +151,21 @@ onMounted(async () => {
 			<div class="FFBox-topWrapper" :style="FFBoxTopWrapperStyle">
 				<div class="FFBox-wrapper">
 					<div class="img" @click="() => handleScreenshotClicked()">
-						<img v-if="appStore.colorTheme === 'themeLight' && windowWidth < 1000" src="../assets/软件截图_小_浅色.webp" />
-						<img v-if="appStore.colorTheme === 'themeDark' && windowWidth < 1000" src="../assets/软件截图_小_深色.webp" />
-						<img v-if="appStore.colorTheme === 'themeLight' && windowWidth >= 1000 && windowWidth < 1320" src="../assets/软件截图_中_浅色.webp" />
-						<img v-if="appStore.colorTheme === 'themeDark' && windowWidth >= 1000 && windowWidth < 1320" src="../assets/软件截图_中_深色.webp" />
-						<img v-if="appStore.colorTheme === 'themeLight' && windowWidth >= 1320" src="../assets/软件截图_大_浅色.webp" />
-						<img v-if="appStore.colorTheme === 'themeDark' && windowWidth >= 1320" src="../assets/软件截图_大_深色.webp" />
+						<img v-if="appStore.colorTheme === 'themeLight' && windowWidth < 1000" src="../../assets/软件截图_小_浅色.webp" />
+						<img v-if="appStore.colorTheme === 'themeDark' && windowWidth < 1000" src="../../assets/软件截图_小_深色.webp" />
+						<img v-if="appStore.colorTheme === 'themeLight' && windowWidth >= 1000 && windowWidth < 1320" src="../../assets/软件截图_中_浅色.webp" />
+						<img v-if="appStore.colorTheme === 'themeDark' && windowWidth >= 1000 && windowWidth < 1320" src="../../assets/软件截图_中_深色.webp" />
+						<img v-if="appStore.colorTheme === 'themeLight' && windowWidth >= 1320" src="../../assets/软件截图_大_浅色.webp" />
+						<img v-if="appStore.colorTheme === 'themeDark' && windowWidth >= 1320" src="../../assets/软件截图_大_深色.webp" />
 					</div>
 					<div class="FFBox">
 						<button @click="handleTopBarButtonClicked(3)" class="startbutton startbutton2 startbutton-cyan">🌐网页版</button>
 						<button @click="handleTopBarButtonClicked(4)" class="startbutton startbutton1 startbutton-green">⬇️下载</button>
+						<div class="AISearch">
+							<div>
+								<AISearch />
+							</div>
+						</div>
 						<MenuCenter />
 					</div>
 				</div>
@@ -257,7 +263,7 @@ onMounted(async () => {
 			}
 		}
 		.ttqftechlogo {
-			background-image: url(../assets/ttqftechlogo.png);
+			background-image: url(../../assets/ttqftechlogo.png);
 			background-repeat: no-repeat;
 			background-size: cover;
 		}
@@ -387,6 +393,19 @@ onMounted(async () => {
 					.startbutton2 {
 						right: 160px;
 						width: 140px;
+					}
+					.AISearch {
+						position: absolute;
+						top: 46px;
+						left: 100px;
+						right: 316px;
+						height: 36px;
+						display: flex;
+						justify-content: center;
+						align-items: center;
+						&>div {
+							width: clamp(104px, calc(40px + 50%), 100%);
+						}
 					}
 				}
 			}

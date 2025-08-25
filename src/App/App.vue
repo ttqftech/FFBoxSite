@@ -2,8 +2,8 @@
 // 以下这句对全局有效
 /// <reference types="vite-svg-loader" />
 import { onMounted, watch } from 'vue';
-import { useAppStore } from './stores/appStore';
-import MainFrame from './containers/MainFrame.vue'
+import { useAppStore } from '../stores/appStore';
+import MainFrame from './MainFrame/MainFrame.vue'
 
 const appStore = useAppStore();
 

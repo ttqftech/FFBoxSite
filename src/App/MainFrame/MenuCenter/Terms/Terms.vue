@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, Component, h } from 'vue';
 import SimpleMarkdown from '@khanacademy/simple-markdown';
-import { useAppStore } from '../../stores/appStore';
-import Msgbox from '../../components/Msgbox/Msgbox';
-import Button, { ButtonType } from '../../components/Button/Button';
-import Checkbox from '../../components/Checkbox/Checkbox.vue';
-import IconReadBook from '../../assets/warnings/readbook.svg?component';
-import IconBrick from '../../assets/warnings/brick.svg?component';
+import { useAppStore } from '../../../../stores/appStore';
+import Msgbox from '../../../../components/Msgbox/Msgbox';
+import Button, { ButtonType } from '../../../../components/Button/Button';
+import Checkbox from '../../../../components/Checkbox/Checkbox.vue';
+import IconReadBook from '../../../../assets/warnings/readbook.svg?component';
+import IconBrick from '../../../../assets/warnings/brick.svg?component';
 
 const appStore = useAppStore();
 

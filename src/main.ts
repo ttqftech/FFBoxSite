@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
 import './theme.css';
-import App from './App.vue';
+import App from './App/App.vue';
 
 import { createPinia, setActivePinia } from 'pinia';
 

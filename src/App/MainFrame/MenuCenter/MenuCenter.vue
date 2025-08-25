@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { useAppStore } from '../stores/appStore';
-import Changelog from './MenuCenter/Changelog.vue';
-import DownloadPanel from './MenuCenter/DownloadPanel.vue';
-import SponsorPanel from './MenuCenter/SponsorPanel.vue';
-import Terms from './MenuCenter/Terms.vue';
-import Faq from './MenuCenter/Faq.vue';
-import DownloadStatistics from './MenuCenter/DownloadStatistics.vue';
-import IconSidebarUpdate from '../assets/menuCenter/update2.svg?component';
-import IconSidebarDownload from '../assets/menuCenter/download.svg?component';
-import IconSidebarSponsor from '../assets/menuCenter/sponsor.svg?component';
-import IconSidebarTerm from '../assets/menuCenter/term.svg?component';
-import IconSidebarFaq from '../assets/menuCenter/faq.svg?component';
-import IconSidebarStatistics from '../assets/menuCenter/statistics.svg?component';
+import { useAppStore } from '../../../stores/appStore';
+import Changelog from './Changelog/Changelog.vue';
+import DownloadPanel from './DownloadPanel/DownloadPanel.vue';
+import SponsorPanel from './SponsorPanel/SponsorPanel.vue';
+import Terms from './Terms/Terms.vue';
+import Faq from './Faq/Faq.vue';
+import DownloadStatistics from './DownloadStatistics/DownloadStatistics.vue';
+import IconSidebarUpdate from './update2.svg?component';
+import IconSidebarDownload from './download.svg?component';
+import IconSidebarSponsor from './sponsor.svg?component';
+import IconSidebarTerm from './term.svg?component';
+import IconSidebarFaq from './faq.svg?component';
+import IconSidebarStatistics from './statistics.svg?component';
 
 const appStore = useAppStore();
 

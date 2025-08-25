@@ -1,34 +1,37 @@
 import { FunctionalComponent, h } from "vue";
 import { useAppStore } from '../../stores/appStore';
-import style from './Button.module.less';
+import css from './Button.module.less';
 
 export interface ButtonProps {
 	disabled?: boolean;
-	onClick?: () => any;
+	onClick?: (event: MouseEvent) => any;
 	type?: ButtonType;
 	size?: 'small' | 'normal' | 'large';
 }[];
 export enum ButtonType {
-	Normal = 0,
-	Primary = 1,
-	Danger = 2,
+	Normal = 'normal',
+	Primary = 'primary',
+	Danger = 'danger',
+	NoBg = 'noBg',
 };
 
 const getButtonClass = (type?: ButtonType, disabled?: boolean, size?: ButtonProps['size']) => {
-	let classText = style['button'];
+	let classText = css['button'];
 	classText += ' ';
 	if (type === ButtonType.Primary) {
-		classText += style['primary'];
+		classText += css['primary'];
 	} else if (type === ButtonType.Danger) {
-		classText += style['danger'];
+		classText += css['danger'];
+	} else if (type === ButtonType.NoBg) {
+		classText += css['noBg'];
 	}
 	classText += ' ';
 	if (size) {
-		classText += style[size];
+		classText += css[size];
 	}
 	classText += ' ';
 	if (disabled) {
-		classText += style['disabled'];
+		classText += css['disabled'];
 	}
 	return classText;
 };
@@ -40,7 +43,7 @@ const ButtonComponent: FunctionalComponent<ButtonProps> = (props, ctx) => {
 			data-color_theme={appStore.colorTheme}
 			class={getButtonClass(props.type, props.disabled, props.size)}
 			disabled={props.disabled}
-			onClick={() => props.onClick}
+			onClick={(event) => { (props.onClick || (() => {}))(event); event.stopImmediatePropagation() } }
 		>
 			{ h(ctx.slots.default) }
 		</button>
