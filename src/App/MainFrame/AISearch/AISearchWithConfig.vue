@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue';
 import CryptoJS from 'crypto-js';
 import AISearchConfig from './types';
 // import { version } from '@common/constants';
+import { randomString } from '../../../common/utils';
 import ImprovedLocalStorage from '../../../common/ImprovedLocalStorage';
 import Msgbox from '../../../components/Msgbox/Msgbox';
 import { ButtonType } from '../../../components/Button/Button';
@@ -233,7 +234,7 @@ onMounted(async () => {
 		userIdv1 = await ImprovedLocalStorage.get('aiAssistant.userIdv1');
 		if (!userIdv1) {
 			const t = new Date();
-			userIdv1 = `${t.getFullYear()}-${(t.getMonth() + 1 + '').padStart(2, '0')}-${(t.getDate() + '').padStart(2, '0')} / Site / ${navigator.platform} / ${navigator.userAgent}`;
+			userIdv1 = `${randomString()}｜${t.getFullYear()}-${(t.getMonth() + 1 + '').padStart(2, '0')}-${(t.getDate() + '').padStart(2, '0')}｜Site｜${navigator.platform}｜${navigator.userAgent}`;
 			ImprovedLocalStorage.set('aiAssistant.userIdv1', userIdv1);
 		}
 
