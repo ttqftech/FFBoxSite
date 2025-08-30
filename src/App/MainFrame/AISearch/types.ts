@@ -27,22 +27,18 @@ interface ProviderConfig {
 	modelPrice?: ModelPrice; // 已使用模型的用量计算算法
 }
   
-interface RequestKeywordMessage {
-	keywords: string[];
-	message: string;
-	forbid: boolean;
-}
-
 interface ResponseKeywordMessage {
 	keywords: string[];
 	message: string;
+	once?: boolean;	// 是否只显示一次，默认 false
 }
+type RequestKeywordMessage = ResponseKeywordMessage & { forbid: boolean };
 
 interface ResponseResponseKeywordLink {
 	keywords: string[];
 	urls?: string[];
 	blank?: boolean;	// 是否新标签打开，网页版默认 true，PC 版无论如何为 true
-	execute?: string;	// 执行程序
+	execute?: string[];	// 执行程序
 }
 type RequestResponseKeywordLink = ResponseResponseKeywordLink & { needContinue?: boolean };	// continue 表示匹配到后是否继续向 API 发送消息，默认 true
 
