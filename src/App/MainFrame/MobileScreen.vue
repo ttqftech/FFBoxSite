@@ -43,7 +43,7 @@ const handleTopBarButtonClicked = (index: number) => {
 		appStore.selectedPanelIndex = 0;
 	} else if (index === 1) {
 		// 开发日志
-		window.open('https://github.com/ttqftech/FFBox/blob/4.0%2B/日志.md', '_blank');
+		window.open('https://github.com/ttqftech/FFBox/blob/5.0%2B/日志.md', '_blank');
 	} else if (index === 2) {
 		// 使用条款
 		appStore.showMenuCenter = 2;
@@ -78,7 +78,7 @@ onMounted(() => appStore.selectedPanelIndex = -1);
 						<button @click="handleTopBarButtonClicked(2)">使用条款</button>
 					</div>
 					<div class="versionInfo">
-						<div>版本：4.5&nbsp;&nbsp;(2025-06-07)</div>
+						<div>版本：5.0&nbsp;&nbsp;(2025-09-01)</div>
 					</div>
 					<div class="screenshot" @click="props.onScreenshotClicked">
 						<img v-if="appStore.colorTheme === 'themeLight'" src="../../assets/软件截图_中_浅色_完整.webp" />
