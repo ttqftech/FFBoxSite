@@ -6,6 +6,7 @@ import Popup from '../../../../components/Popup/Popup';
 import Msgbox from '../../../../components/Msgbox/Msgbox';
 import IconMsi from './msi.svg?component';
 import IconApp from './app.svg?component';
+import IconNodejs from './nodejs.svg?component';
 import IconWeb from './web.svg?component';
 import IconZip from './zip.svg?component';
 import IconPointOut from '../../../../assets/warnings/pointOut.svg?component';
@@ -25,8 +26,8 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 	switch (os) {
 		case 'Windows':
 			url = [
-				'https://github.com/ttqftech/FFBox/releases/download/v4.4/Windows_x86-64_FFBox_4.4.exe',
-				'https://github.com/ttqftech/FFBox/releases/download/v4.4/Windows_x86-64_FFBoxService+webUI_4.4.zip',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.0/Windows_x86-64_FFBox_5.0.exe',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.0/Windows_x86-64_FFBoxService_5.0.exe',
 				'./directDownload/ffmpegOnekey_Windows.ps1'
 			][selection];
 			if (selection === 2) {
@@ -51,8 +52,8 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 			break;
 		case 'MacOS':
 			url = [
-				'https://github.com/ttqftech/FFBox/releases/download/v4.4/macOS_ARM64_FFBox_4.4.dmg',
-				'https://github.com/ttqftech/FFBox/releases/download/v4.4/macOS_ARM64_FFBoxService+webUI_4.4.zip',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.0/macOS_ARM64_FFBox_5.0.dmg',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.0/macOS_ARM64_FFBoxService_5.0',
 			][selection];
 			Msgbox({
 				image: h(IconPointOut),
@@ -72,22 +73,23 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 			break;
 		case 'Linux':
 			url = [
-				'https://github.com/ttqftech/FFBox/releases/download/v4.4/Linux_x86-64_FFBox_4.4.deb',
-				'https://github.com/ttqftech/FFBox/releases/download/v4.4/Linux_x86-64_FFBox_4.4.AppImage',
-				'https://github.com/ttqftech/FFBox/releases/download/v4.4/Linux_x86-64_FFBoxService+webUI_4.4.zip',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.0/Linux_x86-64_FFBox_5.0.deb',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.0/Linux_x86-64_FFBox_5.0.AppImage',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.0/Linux_x86-64_FFBoxService_5.0',
 			][selection];
 			window.open(url, '__blank');
 			break;
 		case 'web':
 			url = [
-				'./online',
-				'./FFBox_v4.4_web.zip',
+				'./online-v4.5',
+				'./FFBox_v4.5_web.zip',
+				'./FFBox_v5.0_web.zip',
 			][selection];
 			if (selection === 0) {
 				Msgbox({
 					image: h(IconPointOut),
 					title: '您将要使用一个尚未完善的网页版～',
-					content: h('div', { style: `text-align: center` }, ['4.4 版本尚未对网页运行进行针对性优化，因此网页版只能用于体验功能，可能无法正常使用', h('br'), '同时，建议自行部署以获得更佳体验～']),
+					content: h('div', { style: `text-align: center` }, ['4.5 版本尚未对网页运行进行针对性优化，因此网页版只能用于体验功能，可能无法正常使用', h('br'), '同时，建议自行部署以获得更佳体验～']),
 					buttons: [
 						{ text: `我已知悉，继续`, type: ButtonType.Primary, callback: () => window.open(url, '__blank') && true },
 					]
@@ -121,25 +123,31 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 				<Button size="large" @click="handleDownloadClick('Linux', 1)"><IconApp />AppImage</Button>
 			</div>
 		</div>
-		<h2>转码服务<span>(含网页版)</span></h2>
+		<h2>转码服务</h2>
 		<div class="oss">
 			<div class="os">
 				<span>Windows (x86-64)</span>
-				<Button size="large" @click="handleDownloadClick('Windows', 1)"><IconZip />service + webUI</Button>
+				<Button size="large" @click="handleDownloadClick('Windows', 1)"><IconNodejs />转码服务</Button>
 			</div>
 			<div class="os">
 				<span>macOS (ARM64)</span>
-				<Button size="large" @click="handleDownloadClick('MacOS', 1)"><IconZip />service + webUI</Button>
+				<Button size="large" @click="handleDownloadClick('MacOS', 1)"><IconNodejs />转码服务</Button>
 			</div>
 			<div class="os">
 				<span>Linux (x86-64)</span>
-				<Button size="large" @click="handleDownloadClick('Linux', 2)"><IconZip />service + webUI</Button>
+				<Button size="large" @click="handleDownloadClick('Linux', 2)"><IconNodejs />转码服务</Button>
 			</div>
 		</div>
 		<h2>网页版</h2>
 		<div class="oss">
 			<div class="os">
-				<Button size="large" @click="handleDownloadClick('web', 0)"><IconWeb />在线试用</Button>
+				<span>在线试用</span>
+				<Button size="large" @click="handleDownloadClick('web', 0)"><IconWeb />v4.5 版本</Button>
+			</div>
+			<div class="os">
+				<span>压缩包</span>
+				<Button size="large" @click="handleDownloadClick('web', 1)"><IconZip />v4.5 版本</Button>
+				<Button size="large" @click="handleDownloadClick('web', 2)"><IconZip />v5.0 版本</Button>
 			</div>
 		</div>
 		<h2>ffmpeg 一键安装脚本<span>(但从下载到运行脚本的操作不是一键的)</span></h2>

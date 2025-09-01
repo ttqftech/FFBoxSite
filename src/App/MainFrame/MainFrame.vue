@@ -36,7 +36,7 @@ const handleTopBarButtonClicked = (index: number) => {
 		appStore.selectedPanelIndex = 0;
 	} else if (index === 1) {
 		// 开发日志
-		window.open('https://github.com/ttqftech/FFBox/blob/4.0%2B/日志.md', '_blank');
+		window.open('https://github.com/ttqftech/FFBox/blob/5.0%2B/日志.md', '_blank');
 	} else if (index === 2) {
 		// 使用条款
 		appStore.showMenuCenter = 2;
@@ -53,9 +53,9 @@ const handleTopBarButtonClicked = (index: number) => {
 			Msgbox({
 				image: h(IconPointOut),
 				title: '您将要使用一个尚未完善的网页版～',
-				content: h('div', ['4.5 版本尚未对网页运行进行针对性优化，因此网页版只能用于体验功能，可能无法正常使用', h('br'), '同时，建议自行部署以获得更佳体验～']),
+				content: h('div', ['出于安全性考虑，5.0 版本暂时关闭了远程转码功能，这使得您在网页版上无法体验 FFBox 的大部分功能', h('br'), '因此，此处依然提供 4.5 版本的网页版', h('br'), '4.5 版本暂未对网页运行进行针对性优化，因此网页版只能用于体验功能，可能无法正常使用', h('br'), '同时，建议自行部署以获得更佳体验～']),
 				buttons: [
-					{ text: `我已知悉，继续`, type: ButtonType.Primary, callback: () => window.open('./online', '__blank') && true },
+					{ text: `我已知悉，继续`, type: ButtonType.Primary, callback: () => window.open('./online-v4.5', '__blank') && true },
 				]
 			});
 		}
@@ -145,7 +145,7 @@ onMounted(async () => {
 					<button @click="handleTopBarButtonClicked(2)">使用条款</button>
 				</div>
 				<div class="versionInfo">
-					<div>版本：4.5&nbsp;&nbsp;(2025-06-07)</div>
+					<div>版本：5.0&nbsp;&nbsp;(2025-09-01)</div>
 				</div>
 			</div>
 			<div class="FFBox-topWrapper" :style="FFBoxTopWrapperStyle">
