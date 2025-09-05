@@ -161,7 +161,7 @@ onMounted(async () => {
 					<div class="FFBox">
 						<button @click="handleTopBarButtonClicked(3)" class="startbutton startbutton2 startbutton-cyan">🌐网页版</button>
 						<button @click="handleTopBarButtonClicked(4)" class="startbutton startbutton1 startbutton-green">⬇️下载</button>
-						<div class="AISearch">
+						<div class="AISearch" v-if="windowWidth >= 1000">
 							<div>
 								<AISearch />
 							</div>
@@ -173,6 +173,11 @@ onMounted(async () => {
 		</div>
 		<div v-else class="mobileScreen">
 			<MobileScreen :onScreenshotClicked="handleScreenshotClicked" />
+		</div>
+		<div class="AISearchFixed" v-if="windowWidth < 1000">
+			<div>
+				<AISearch />
+			</div>
 		</div>
 		<div class="bigDownloadButton" v-if="showBigDownloadButton">
 			<div class="mask"></div>
@@ -397,7 +402,7 @@ onMounted(async () => {
 					.AISearch {
 						position: absolute;
 						top: 46px;
-						left: 100px;
+						left: 250px;
 						right: 316px;
 						height: 36px;
 						display: flex;
@@ -409,6 +414,19 @@ onMounted(async () => {
 					}
 				}
 			}
+		}
+	}
+	.AISearchFixed {
+		position: fixed;
+		bottom: 72px;
+		left: 0;
+		right: 0;
+		height: 36px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		&>div {
+			width: clamp(104px, calc(40px + 50%), 100%);
 		}
 	}
 	.bigDownloadButton {
