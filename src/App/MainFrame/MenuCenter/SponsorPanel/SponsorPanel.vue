@@ -2,6 +2,8 @@
 import { computed, onMounted, ref, useCssModule } from 'vue';
 import CryptoJS from 'crypto-js';
 import Button, { ButtonType } from '../../../../components/Button/Button';
+import { getLimitaion } from '../../../../stores/limitaions';
+import BoxedSlider from '../../../../components/Slider/BoxedSlider.vue';
 import Tooltip from '../../../../components/Tooltip/Tooltip';
 import IconGithub from './github.svg?component';
 import IconGitee from './gitee.svg?component';
@@ -17,6 +19,8 @@ const qr_alipayredenvelop = ref<HTMLCanvasElement>();
 const qr_alipay = ref<HTMLCanvasElement>();
 const qr_wechatpay = ref<HTMLCanvasElement>();
 const qr_qqpay = ref<HTMLCanvasElement>();
+
+const functionLevel = ref(20);
 
 const jumpToGithub = () => window.open('https://github.com/ttqftech/FFBox', '_blank');
 const jumpToGitee = () => window.open('https://gitee.com/ttqf/FFBox', '_blank');
@@ -172,6 +176,45 @@ onMounted(() => {
 				</div>
 			</div>
 		</div>
+		<h2>功能解限</h2>
+		<div class="yourLevel">
+			<BoxedSlider title="用户等级演示" :min="0" :max="100" adsorption="int" :tags="[[20, '20']]" :value="functionLevel" @change="(value) => functionLevel = +value" />
+		</div>
+		<p>此处用户等级演示适用于 FFBox v5.1-alpha 版本</p>
+		<table>
+			<tbody>
+				<tr>
+					<td>媒体时长上限</td>
+					<td>{{ functionLevel < 50 ? '11:11' : '无限制' }}</td>
+				</tr>
+				<tr>
+					<td>转码时长上限</td>
+					<td>{{ functionLevel < 50 ? '11:11' : '无限制' }}</td>
+				</tr>
+				<tr>
+					<td>视频 ABR/CBR 码率设定限制</td>
+					<td>{{ functionLevel < 50 ? '500Kbps ~ 32Mbps' : '无限制' }}</td>
+				</tr>
+				<tr>
+					<td>远程单文件上传大小上限</td>
+					<td>{{ getLimitaion('maxUploadSizeGB', functionLevel) ? getLimitaion('maxUploadSizeGB', functionLevel) + 'GB' : '无限制' }}</td>
+				</tr>
+				<tr>
+					<td>任务列表数量上限</td>
+					<td>{{ getLimitaion('maxTaskListCount', functionLevel) || '无限制' }}</td>
+				</tr>
+				<tr>
+					<td>同时转码任务数量设定上限</td>
+					<td>{{ getLimitaion('maxThreads', functionLevel) || '无限制' }}</td>
+				</tr>
+				<tr>
+					<td>滤镜功能节点数量上限</td>
+					<td>{{ getLimitaion('maxFilterNodeCount', functionLevel) || '无限制' }}</td>
+				</tr>
+			</tbody>
+		</table>
+		<p>FFBox 是一款试用、有源、捐赠混合的软件。出厂状况下，本软件存在部分功能的使用限制</p>
+		<p>您可以通过激活码去除这些限制，详情请到官网或官方信息发布平台查询～</p>
 	</div>
 </template>
 
@@ -274,6 +317,32 @@ onMounted(() => {
 		font-size: 20px;
 		margin: 2em 0 1em;
 		color: var(--titleText);
+	}
+	.yourLevel {
+		position: relative;
+		display: flex;
+		justify-content: stretch;
+		align-items: center;
+		padding: 8px calc(-100px + 30%);
+		font-size: 14px;
+	}
+	table {
+		margin: 2em auto;
+		border-spacing: 0;
+		border-collapse: collapse;
+		font-size: 14px;
+		box-shadow: 0px 2px 4px var(--articleLightBg);
+		tbody>tr:nth-child(2n-1) {
+			background-color: var(--articleLightBg);
+		}
+		td, th {
+			border: var(--articleBorder) 1.5px solid;
+			border-collapse: collapse;
+			padding: 5px 12px;
+		}
+		th {
+			font-weight: 600;
+		}
 	}
 </style>
 
