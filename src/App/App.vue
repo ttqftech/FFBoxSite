@@ -4,6 +4,12 @@
 import { onMounted, watch } from 'vue';
 import { useAppStore } from '../stores/appStore';
 import MainFrame from './MainFrame/MainFrame.vue'
+import VConsole from 'vconsole';
+
+const vConsole = new VConsole();
+
+// call `console` methods as usual
+console.log('Hello world');
 
 const appStore = useAppStore();
 
