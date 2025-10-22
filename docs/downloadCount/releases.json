@@ -68,7 +68,7 @@
         "state": "uploaded",
         "size": 54791135,
         "digest": "sha256:a6c98d8d45df8311952871ab57ac4dd1a82ebcca9ec2045852c7ca0fcbbb1b95",
-        "download_count": 30,
+        "download_count": 31,
         "created_at": "2025-09-01T12:11:16Z",
         "updated_at": "2025-09-01T12:11:24Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.0/Linux_x86-64_FFBoxService_5.0"
@@ -248,7 +248,7 @@
         "state": "uploaded",
         "size": 44052860,
         "digest": "sha256:92f2b911d9924d214ec08be976f2c38382d2b68121e0823f0aae6e7bb9866f98",
-        "download_count": 271,
+        "download_count": 272,
         "created_at": "2025-09-01T12:11:55Z",
         "updated_at": "2025-09-01T12:12:02Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.0/Windows_x86-64_FFBoxService_5.0.exe"
@@ -471,7 +471,7 @@
         "state": "uploaded",
         "size": 18346644,
         "digest": "sha256:2dd2fbe9dd8796370abb97094b4d4c52a298375c3fe2862c6e52d1f058939824",
-        "download_count": 28,
+        "download_count": 29,
         "created_at": "2025-06-06T23:30:19Z",
         "updated_at": "2025-06-06T23:30:25Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.5/macOS_ARM64_FFBoxService%2BwebUI_4.5.zip"
