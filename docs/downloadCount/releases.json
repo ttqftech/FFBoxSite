@@ -1356,7 +1356,7 @@
         "state": "uploaded",
         "size": 81078708,
         "digest": null,
-        "download_count": 70,
+        "download_count": 71,
         "created_at": "2024-09-01T00:31:53Z",
         "updated_at": "2024-09-01T00:32:07Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.2/Linux_x86-64_FFBox_4.2.deb"
