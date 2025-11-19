@@ -145,7 +145,7 @@ onMounted(async () => {
 					<button @click="handleTopBarButtonClicked(2)">使用条款</button>
 				</div>
 				<div class="versionInfo">
-					<div>版本：5.0&nbsp;&nbsp;(2025-09-01)</div>
+					<div>版本：5.1&nbsp;&nbsp;(2025-11-19)</div>
 				</div>
 			</div>
 			<div class="FFBox-topWrapper" :style="FFBoxTopWrapperStyle">

@@ -26,15 +26,15 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 	switch (os) {
 		case 'Windows':
 			url = [
-				'https://github.com/ttqftech/FFBox/releases/download/v5.0/Windows_x86-64_FFBox_5.0.exe',
-				'https://github.com/ttqftech/FFBox/releases/download/v5.0/Windows_x86-64_FFBoxService_5.0.exe',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.1/Windows_x86-64_FFBox_5.1.exe',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.1/Windows_x86-64_FFBoxService+webUI_5.1.zip',
 				'./directDownload/ffmpegOnekey_Windows.ps1'
 			][selection];
 			if (selection === 2) {
 				Msgbox({
 					image: h(IconPointOut),
 					title: '使用说明',
-					content: h('div', { style: `text-align: center` }, ['一般情况下，Windows 会对从互联网上下载的 Powershell 脚本在运行前进行询问，同意后即可运行', h('br'), '如果您的 Windows 安全设置较高，则会提示“此系统上禁止运行脚本”。您需要使用管理员身份执行 Set-ExecutionPolicy RemoteSigned 后才可运行该脚本']),
+					content: h('div', { style: `text-align: center` }, ['本脚本只是备选方案，请优先使用 winget install ffmpeg --version 7.1 命令进行安装！', h('br'), h('br'), '一般情况下，Windows 会对从互联网上下载的 Powershell 脚本在运行前进行询问，同意后即可运行', h('br'), '如果您的 Windows 安全设置较高，则会提示“此系统上禁止运行脚本”。您需要使用管理员身份执行 Set-ExecutionPolicy RemoteSigned 后才可运行该脚本']),
 					buttons: [
 						{ text: `我已知悉，继续`, type: ButtonType.Primary, callback: () => {
 							const a = document.createElement('a');
@@ -46,14 +46,13 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 						} },
 					]
 				});
-			} else {
-				window.open(url, '__blank');
 			}
+			window.open(url, '__blank');
 			break;
 		case 'MacOS':
 			url = [
-				'https://github.com/ttqftech/FFBox/releases/download/v5.0/macOS_ARM64_FFBox_5.0.dmg',
-				'https://github.com/ttqftech/FFBox/releases/download/v5.0/macOS_ARM64_FFBoxService_5.0',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.1/macOS_ARM64_FFBox_5.1.dmg',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.1/macOS_ARM64_FFBoxService+webUI_5.1.zip',
 			][selection];
 			Msgbox({
 				image: h(IconPointOut),
@@ -73,23 +72,22 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 			break;
 		case 'Linux':
 			url = [
-				'https://github.com/ttqftech/FFBox/releases/download/v5.0/Linux_x86-64_FFBox_5.0.deb',
-				'https://github.com/ttqftech/FFBox/releases/download/v5.0/Linux_x86-64_FFBox_5.0.AppImage',
-				'https://github.com/ttqftech/FFBox/releases/download/v5.0/Linux_x86-64_FFBoxService_5.0',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.1/Linux_x86-64_FFBox_5.1.deb',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.1/Linux_x86-64_FFBox_5.1.AppImage',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.1/Linux_x86-64_FFBoxService+webUI_5.1.zip',
 			][selection];
 			window.open(url, '__blank');
 			break;
 		case 'web':
 			url = [
-				'./online-v4.5',
-				'./FFBox_v4.5_web.zip',
-				'./FFBox_v5.0_web.zip',
+				'./online-v5.1',
+				'./FFBox_v5.1_web.zip',
 			][selection];
 			if (selection === 0) {
 				Msgbox({
 					image: h(IconPointOut),
 					title: '您将要使用一个尚未完善的网页版～',
-					content: h('div', { style: `text-align: center` }, ['4.5 版本尚未对网页运行进行针对性优化，因此网页版只能用于体验功能，可能无法正常使用', h('br'), '同时，建议自行部署以获得更佳体验～']),
+					content: h('div', { style: `text-align: center` }, ['FFBox 是优先为客户端环境进行开发的，网页运行功能相对受限且可能存在更多 bug，建议您有条件时优先使用客户端', h('br'), '同时，建议自行部署以获得更佳体验～']),
 					buttons: [
 						{ text: `我已知悉，继续`, type: ButtonType.Primary, callback: () => window.open(url, '__blank') && true },
 					]
@@ -142,12 +140,11 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 		<div class="oss">
 			<div class="os">
 				<span>在线试用</span>
-				<Button size="large" @click="handleDownloadClick('web', 0)"><IconWeb />v4.5 版本</Button>
+				<Button size="large" @click="handleDownloadClick('web', 0)"><IconWeb />v5.1 版本</Button>
 			</div>
 			<div class="os">
 				<span>压缩包</span>
-				<Button size="large" @click="handleDownloadClick('web', 1)"><IconZip />v4.5 版本</Button>
-				<Button size="large" @click="handleDownloadClick('web', 2)"><IconZip />v5.0 版本</Button>
+				<Button size="large" @click="handleDownloadClick('web', 1)"><IconZip />v5.1 版本</Button>
 			</div>
 		</div>
 		<h2>ffmpeg 一键安装脚本<span>(但从下载到运行脚本的操作不是一键的)</span></h2>

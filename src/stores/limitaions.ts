@@ -1,8 +1,10 @@
 export function getLimitaion(type: 'maxMediaDuration' | 'maxWorkingDuration' | 'maxUploadSizeGB' | 'maxTaskListCount' | 'maxThreads' | 'maxFilterNodeCount', functionLevel?: number): number {
 	const n = functionLevel !== undefined ? functionLevel : 0;
 	switch (type) {
-		case 'maxMediaDuration': case 'maxWorkingDuration':
+		case 'maxMediaDuration':
 			return n < 50 ? 671 : undefined;
+		case 'maxWorkingDuration':
+			return n < 45 ? 671 : undefined;
 		case 'maxUploadSizeGB':
 			return n < 15 ? 1 : n < 45 ? 4 : n < 55 ? 10 : undefined;
 		case 'maxTaskListCount':
