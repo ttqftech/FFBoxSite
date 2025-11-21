@@ -34,7 +34,7 @@ interface Props {
 const props = defineProps<Props>();
 
 interface Message {
-	role: 'user' | 'ai' | 'aiErr';
+	role: 'user' | 'ai' | 'aiErr' | 'aiInfo';
 	text: string;
 }
 
@@ -220,7 +220,7 @@ const sendMessage = async () => {
 			if (keywordIndex >= 0) {
 				const dontShowSecondTime = item.once && showedRequestKeywordMessage.includes(item.keywords[keywordIndex]);
 				if (!dontShowSecondTime) {
-					messages.value.push({ role: "aiErr", text: item.message });
+					messages.value.push({ role: item.warning ? "aiErr" : 'aiInfo', text: item.message });
 				}
 				showedRequestKeywordMessage.push(item.keywords[keywordIndex]);
 				if (item.forbid) {
@@ -252,7 +252,7 @@ const sendMessage = async () => {
 					if (keywordIndex >= 0) {
 						const dontShowSecondTime = item.once && showedResponseKeywordMessage.includes(item.keywords[keywordIndex]);
 						if (!dontShowSecondTime) {
-							messages.value.push({ role: "aiErr", text: item.message });
+							messages.value.push({ role: item.warning ? "aiErr" : 'aiInfo', text: item.message });
 						}
 						showedResponseKeywordMessage.push(item.keywords[keywordIndex]);
 					}
@@ -778,7 +778,7 @@ watch(() => messages.value.length, () => {
 										0 0 0 9999px hwb(210 5% 5% / 0.85) inset;	// 背景色
 							}
 						}
-						&.ai, &.aiErr {
+						&.ai, &.aiErr, &.aiInfo {
 							text-align: left;
 							div {
 								color: var(--33);
@@ -791,6 +791,10 @@ watch(() => messages.value.length, () => {
 						}
 						&.aiErr>div {
 							color: #dd8800;
+							font-style: italic;
+						}
+						&.aiInfo>div {
+							color: #33aacc;
 							font-style: italic;
 						}
 					}
