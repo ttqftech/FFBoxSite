@@ -68,7 +68,7 @@
         "state": "uploaded",
         "size": 21519165,
         "digest": "sha256:23ca340db6dd7dc03547d7f8de1b278f8a440f740adec007d29367cbeac8ae9a",
-        "download_count": 28,
+        "download_count": 29,
         "created_at": "2025-11-19T14:33:17Z",
         "updated_at": "2025-11-19T14:33:29Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.1/Linux_x86-64_FFBoxService%2BwebUI_5.1.zip"
@@ -1157,7 +1157,7 @@
         "state": "uploaded",
         "size": 15838598,
         "digest": null,
-        "download_count": 376,
+        "download_count": 377,
         "created_at": "2025-05-01T15:52:56Z",
         "updated_at": "2025-05-01T16:01:38Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.4/Windows_x86-64_FFBoxService%2BwebUI_4.4.zip"
@@ -1193,7 +1193,7 @@
         "state": "uploaded",
         "size": 86155892,
         "digest": null,
-        "download_count": 3820,
+        "download_count": 3821,
         "created_at": "2025-05-01T15:51:48Z",
         "updated_at": "2025-05-01T15:52:03Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.4/Windows_x86-64_FFBox_4.4.exe"
