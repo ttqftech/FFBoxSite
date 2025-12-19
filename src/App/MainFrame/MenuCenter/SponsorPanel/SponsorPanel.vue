@@ -89,19 +89,21 @@ onMounted(() => {
 	paintQRcode2canvas(qr_alipay.value, alipayQR());
 	paintQRcode2canvas(qr_wechatpay.value, wechatpayQR());
 	paintQRcode2canvas(qr_qqpay.value, qqpayQR());
-	(window as any).encrypt = (content: string) => {
+	(window as any).eee = (obj: any) => {
 		const fixedCode = 'c934a34fc7823c4e';
-		const result = CryptoJS.AES.encrypt(content, fixedCode).toString();
+		const stringContent = JSON.stringify(obj);
+		const result = CryptoJS.AES.encrypt(stringContent, fixedCode).toString();
 		console.log(result);
 		const deResult = CryptoJS.AES.decrypt(result, fixedCode).toString(CryptoJS.enc.Utf8);
 		console.log(deResult);
 		return result;
 	};
-	(window as any).decrypt = (content: string) => {
+	(window as any).ddd = (content: string) => {
 		const fixedCode = 'c934a34fc7823c4e';
-		const result = CryptoJS.AES.decrypt(content, fixedCode).toString(CryptoJS.enc.Utf8);
-		console.log(result);
-		return result;
+		const stringResult = CryptoJS.AES.decrypt(content, fixedCode).toString(CryptoJS.enc.Utf8);
+		const objResult = JSON.parse(stringResult);
+		console.log(objResult);
+		return objResult;
 	};
 });
 
@@ -180,7 +182,7 @@ onMounted(() => {
 		<div class="yourLevel">
 			<BoxedSlider title="用户等级演示" :min="0" :max="100" adsorption="int" :tags="[[20, '20']]" :value="functionLevel" @change="(value) => functionLevel = +value" />
 		</div>
-		<p>此处用户等级演示适用于 FFBox v5.1 版本</p>
+		<p>此处用户等级演示适用于 FFBox v5.2 版本（预估 2026-01-01 发布）</p>
 		<table>
 			<tbody>
 				<tr>
@@ -190,10 +192,6 @@ onMounted(() => {
 				<tr>
 					<td>转码时长上限</td>
 					<td>{{ functionLevel < 45 ? '11:11' : '无限制' }}</td>
-				</tr>
-				<tr>
-					<td>视频 ABR/CBR 码率设定限制</td>
-					<td>{{ functionLevel < 50 ? '500Kbps ~ 32Mbps' : '无限制' }}</td>
 				</tr>
 				<tr>
 					<td>远程单文件上传大小上限</td>
