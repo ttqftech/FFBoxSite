@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { getTimeString } from '../../../../common/utils';
 import { useAppStore } from '../../../../stores/appStore';
 import Button from '../../../../components/Button/Button';
 import Checkbox from '../../../../components/Checkbox/Checkbox.vue';
@@ -192,7 +193,7 @@ onMounted(() => {
 		await fetch('./downloadCount/time').then(async (res) => {
 			const timeText = await res.text();
 			const t = new Date(timeText.trim());
-			releaseTime.value = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}T${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}:${String(t.getSeconds()).padStart(2, '0')}（中国国标）`;
+			releaseTime.value = `${getTimeString(t)}（中国国标）`;
 		});
 
 		/**

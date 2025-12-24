@@ -2,19 +2,22 @@
 import { ref, nextTick, computed, onMounted, watch } from 'vue';
 import gsap from 'gsap';
 import AISearchConfig from './types';
-import Button, { ButtonType } from '../../../components/Button/Button';
+import { getTimeString } from '../../../common/utils';
 import { useTooltip } from '../../../common/tooltipUtil';
 import { showActivateCodeGen } from './activateCodeGen';
+import Button, { ButtonType } from '../../../components/Button/Button';
 import GradientRect from './gradientRect.svg?skipsvgo';	// svgo 存在 bug 导致 svg 中的 id 跨 svg 产生重复，见 https://svgo.dev/docs/plugins/cleanupIds/
 import IconRefresh from './refresh.svg';
+import IconLoading from './loading.svg';
 import IconAI from './AI.svg';
 import IconX from '../../../assets/×.svg';
 
 interface Props {
 	enabled?: boolean;	// 是否启用并显示该组件，未定义则启用
-	chatAPI?: (message: string) => Promise<string>;	// 聊天 API，未定义则将在对话框中输出当前时间，出错将显示错误信息
+	chatAPI?: (message: string) => Promise<{ content: string, expense?: number }>;	// 聊天 API，未定义则将在对话框中输出当前时间，出错将显示错误信息
 	resetChat?: () => any;	// 点击重置对话时需要处理的副作用
 	init?: () => any;	// 首次打开窗口时需要处理的副作用
+	statusAPI?: () => Promise<string>;
 	titleName?: string;	// 标题名，未定义则使用“FFBox AI 帮助”
 	modelName?: string;	// 显示在标题旁的模型名，未定义则不显示
 	initialPlaceholders?: string[];	// 未激活窗口时的 placeholder，未定义则使用“智能帮助”
@@ -36,6 +39,10 @@ const props = defineProps<Props>();
 interface Message {
 	role: 'user' | 'ai' | 'aiErr' | 'aiInfo';
 	text: string;
+	time?: Date;
+	refers?: string[];
+	expense?: number;
+	actions?: any;
 }
 
 const isOpened = ref<'closed' | 'opening' | 'opened' | 'closing'>('closed');
@@ -46,6 +53,7 @@ const inputValue = ref('');
 const messages = ref<Message[]>([]);
 const sessionId = ref<string | null>(null);
 const loading = ref(false);
+const statusText = ref('大模型处理中');
 
 const defaultAnchorRef = ref<HTMLDivElement>(null);
 const anchorRef = ref<HTMLDivElement>(null);
@@ -192,7 +200,7 @@ const sendMessage = async () => {
 	}
 
 	const userText = inputValue.value.trim();
-	messages.value.push({ role: "user", text: userText });
+	messages.value.push({ role: "user", text: userText, time: new Date() });
 	inputValue.value = "";
 
 	// 发送匹配关键词打开链接
@@ -230,14 +238,26 @@ const sendMessage = async () => {
 		}
 	}
 
+	// 开始发送
 	loading.value = true;
 	if (props.chatAPI) {
-		props.chatAPI(userText).then((result) => {
-			messages.value.push({ role: "ai", text: result });
+		statusText.value = '呼叫大模型工作流';
+		const pollingTimer = setInterval(() => {
+			props.statusAPI().then((result) => {
+				if (result && loading.value) statusText.value = result;
+			});
+		}, 800);
+		props.chatAPI(userText).then((chatResult) => {
+			const result = JSON.parse(chatResult.content);
+			const { msg, ref, ext } = result.obj;
+			const extras = (ext || '').split('&') as string[];
+			const chatItem: Message = { role: "ai", text: msg, refers: ref, actions: {}, time: new Date(), expense: chatResult.expense };
+			messages.value.push(chatItem);
+
 			// 接收匹配关键词打开链接
 			if (props.responseKeywordLink) {
 				for (const item of props.responseKeywordLink) {
-					const isContain = item.keywords.some((keyword) => result.includes(keyword));
+					const isContain = item.keywords.some((keyword) => msg.includes(keyword));
 					if (isContain) {
 						for (const url of (item.urls || [])) {
 							window.open(url, item.blank === false ? '_blank' : undefined);
@@ -248,7 +268,7 @@ const sendMessage = async () => {
 			// 响应警告词检查
 			if (props.responseKeywordSystemMessage) {
 				for (const item of props.responseKeywordSystemMessage) {
-					const keywordIndex = item.keywords.findIndex((keyword) => result.includes(keyword));
+					const keywordIndex = item.keywords.findIndex((keyword) => msg.includes(keyword));
 					if (keywordIndex >= 0) {
 						const dontShowSecondTime = item.once && showedResponseKeywordMessage.includes(item.keywords[keywordIndex]);
 						if (!dontShowSecondTime) {
@@ -258,37 +278,58 @@ const sendMessage = async () => {
 					}
 				}
 			}
-			// 激活
-			const matchEnd = /[A-Z]kn[A-Z]ui[A-Z]ev[A-Z]hr[A-Z]tg/i.exec(result);
+			// 激活 1
+			const matchEnd1 = /[A-Z]kn[A-Z]ui[A-Z]ev[A-Z]hr[A-Z]tg/i.exec(msg);
 			const keyEnd =
-				result.match(/最终.+分/) ||
-				result.match(/((考核|测试|题目).{0,2}(通过|结束|完成))|((通过|结束|完成).{0,2}(考核|测试|题目))/) ||
-				result.includes('激活') && (result.includes('恭喜') || result.includes('完成了') || result.includes('通过了') || result.includes('成功'));
-			if (matchEnd || keyEnd) {
+				msg.match(/最终.+分/) ||
+				msg.match(/((考核|测试|题目).{0,2}(通过|结束|完成))|((通过|结束|完成).{0,2}(考核|测试|题目))/) ||
+				msg.includes('激活') && (msg.includes('恭喜') || msg.includes('完成了') || msg.includes('通过了') || msg.includes('成功'));
+			let extraScore = undefined;
+			extras.find((extra) => extra.replace(/asv1=(\d+)/, (_, content) => (extraScore = +content, '')));	// activation score v1
+
+			if (extraScore || matchEnd1 || keyEnd) {
 				let total = -1;
 				const regex = /[得总]分[是为:：-\s]{0,3}(\d+(\.\d+)?)/g;
 				let match1;
 				// 找到文本中最高的分数
-				while ((match1 = regex.exec(result)) !== null && match1[1]) {
+				while ((match1 = regex.exec(msg)) !== null && match1[1]) {
 					if (!isNaN(+match1[1])) {
 						total = +match1[1] > total ? +match1[1] : total;
 					}
 				}
 				if (total === -1) {
-					total = 25;
+					total = 15;
 				} else {
 					total += 1;
 				}
 				// 找到文本中的总分
-				const matchFull = /满分[是为:：-\s]{0,3}(\d+(\.\d+)?)/.exec(result)?.[1];
+				const matchFull = /满分[是为:：-\s]{0,3}(\d+(\.\d+)?)/.exec(msg)?.[1];
 				const full = +matchFull || 40;
-				console.log(`修行：${15 + (total / full) * 45}`);
-				showActivateCodeGen(Math.round(15 + (total / full) * 45));
+
+				total = extraScore || total;
+				const finalScore = 15 + (total / full) * 50;
+				console.log(`修行：${finalScore}`);
+				chatItem.actions.activationScore = finalScore;
+
+				showActivateCodeGen(Math.round(finalScore));
+			}
+
+			// 激活 2
+			const matchEnd2 = /[A-Z]ae[A-Z]fv[A-Z]sw[A-Z]cg[A-Z]lr/i.exec(msg);
+			let extraScoreActivated = extras.some((content) => content === 'assv1=1');	// activation score sponsored v1
+
+			if (matchEnd2 || extraScoreActivated) {
+				console.log(`修行：50`);
+				chatItem.actions.activationScore = 50;
+
+				showActivateCodeGen(50);
 			}
 		}).catch((error) => {
 			messages.value.push({ role: "aiErr", text: error });
 		}).finally(() => {
 			loading.value = false;
+			clearInterval(pollingTimer);
+			statusText.value = undefined;
 		});
 	} else {
 		setTimeout(() => {
@@ -304,7 +345,7 @@ const resetChat = () => {
 	(props.resetChat || (() => {}))();
 	if (props.initSystemMessage) {
 		setTimeout(() => {
-			messages.value.push({ role: "aiErr", text: props.initSystemMessage });
+			messages.value.push({ role: "aiInfo", text: props.initSystemMessage });
 		}, 0);
 	}
 };
@@ -329,7 +370,7 @@ watch(() => props.initialPlaceholderInterval, () => {
 watch(() => props.enabled, () => {
 	if (props.enabled) {
 		if (props.initSystemMessage) {
-			messages.value.push({ role: "aiErr", text: props.initSystemMessage });
+			messages.value.push({ role: "aiInfo", text: props.initSystemMessage });
 		}
 	}
 }, { immediate: true });
@@ -426,12 +467,23 @@ watch(() => messages.value.length, () => {
 					<div class="chatMessages" ref="messagesRef">
 						<TransitionGroup name="msgAnim">
 							<div v-for="(msg, idx) in messages" :key="idx" :class="['msg', msg.role]">
-								<div>
+								<div class="msgContent">
 									<!-- {{ msg.text }} -->
 									<template v-for="(line, index) in msg.text.split('\n')" :key="index">
 										{{ line }}<br />
 									</template>
 								</div>
+								<div class="smallText">
+									{{ [
+										msg.time ? getTimeString(msg.time) : '',
+										msg.refers?.length ? '参考来源：' + msg.refers.join('；') : '',
+										msg.expense ? '算力开销：' + Math.round(msg.expense) : '',
+									].filter((text) => text).join('｜') }}
+									<button v-if="msg.actions?.activationScore" @click="showActivateCodeGen(+msg.actions.activationScore)">生成激活码</button>
+								</div>
+							</div>
+							<div v-if="statusText && loading" :key="messages.length" class="msg aiInfo">
+								<div class="msgContent"><IconLoading class="loading" />{{ statusText }}</div>
 							</div>
 						</TransitionGroup>
 					</div>
@@ -723,7 +775,8 @@ watch(() => messages.value.length, () => {
 				}
 				.chatMessages {
 					flex: 1;
-					padding: 12px 12px 80px;
+					padding: 12px 12px;
+					margin-bottom: 68px;
 					overflow-y: auto;
 					.msgAnim-enter-from {
 						opacity: 0;
@@ -754,8 +807,9 @@ watch(() => messages.value.length, () => {
 						transition: opacity 0.3s ease-out, transform 0.3s cubic-bezier(1, 0, 1, 1);
 					}
 					.msg {
+						position: relative;
 						margin-bottom: 24px;
-						div {
+						.msgContent {
 							display: inline-block;
 							max-width: 80%;
 							padding: 10px 16px;
@@ -766,10 +820,35 @@ watch(() => messages.value.length, () => {
 							text-align: justify;
 							opacity: 1;
 							user-select: text;
+							@keyframes rotation {
+								from {
+									transform: rotate(0deg);
+								}
+								to {
+									transform: rotate(360deg);
+								}
+							}
+							.loading {
+								width: 18px;
+								height: 18px;
+								animation: rotation 1s steps(8) infinite;
+								margin-right: 4px;
+								vertical-align: -4px;
+								color: #33aacc77;
+							}
+						}
+						.smallText {
+							position: absolute;
+							top: calc(100% + 6px);
+							font-size: 10px;
+							opacity: 0.5;
+							button {
+								font-size: 12px;
+							}
 						}
 						&.user {
 							text-align: right;
-							div {
+							.msgContent {
 								color: #fefefe;
 								// background-color: hwb(210 5% 5% / 0.85);
 								box-shadow: 0 0 1px 0.5px hwb(var(--hoverLightBg)),
@@ -777,10 +856,13 @@ watch(() => messages.value.length, () => {
 										0 1px 0.5px 0px hwb(var(--highlight) / 0.5) inset,	// 上高光
 										0 0 0 9999px hwb(210 5% 5% / 0.85) inset;	// 背景色
 							}
+							.smallText {
+								right: 2px;
+							}
 						}
 						&.ai, &.aiErr, &.aiInfo {
 							text-align: left;
-							div {
+							.msgContent {
 								color: var(--33);
 								// background-color: hwb(var(--hoverLightBg) / 0.5);
 								box-shadow: 0 0 1px 0.5px hwb(var(--hoverLightBg)),
@@ -788,12 +870,15 @@ watch(() => messages.value.length, () => {
 										0 1px 0.5px 0px hwb(var(--highlight) / 0.5) inset,	// 上高光
 										0 0 0 9999px hwb(var(--hoverLightBg) / 0.85) inset;	// 背景色
 							}
+							.smallText {
+								left: 2px;
+							}
 						}
-						&.aiErr>div {
+						&.aiErr>.msgContent {
 							color: #dd8800;
 							font-style: italic;
 						}
-						&.aiInfo>div {
+						&.aiInfo>.msgContent {
 							color: #33aacc;
 							font-style: italic;
 						}
