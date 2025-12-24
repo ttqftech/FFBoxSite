@@ -25,6 +25,7 @@ interface ProviderConfig {
 	probabilitySum: number; // 权重和（在数组中必须递增）
 	models: ModelConfig[];
 	modelPrice?: ModelPrice; // 已使用模型的用量计算算法
+	conversationStatusUrl?: string;	// 用于查询当前大模型会话状态
 }
   
 interface ResponseKeywordMessage {

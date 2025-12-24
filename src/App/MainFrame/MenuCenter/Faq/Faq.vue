@@ -65,6 +65,7 @@ onMounted(() => {
 				<li>了解视频格式的基础知识（比如知道“格式”是什么意思），想探索更多编码与格式的可能性<br /><i>（FFBox 预置多种推荐的编码容器，并可自动扫描 ffmpeg 支持的所有编码容器）</i></li>
 				<li>了解一些参数的意义，想对比不同参数得到的结果的区别<i>（FFBox 预置丰富的调节选项及作用说明，并可自动扫描编码器的所有参数供选用）</i></li>
 				<li>想通过 FFBox 学习 ffmpeg 命令行的使用方式<i>（FFBox 将命令行放在十分显眼的位置，可对照调整。这是 FFBox 的特色功能）</i></li>
+				<li>需要把转码任务分摊到另一台电脑上减轻日常使用压力，或者节省电力的用户</li>
 				<li>日常有转码需求的用户</li>
 			</div>
 		</section>
@@ -73,9 +74,10 @@ onMounted(() => {
 			<div class="content" :ref="el => setRef(el, 3)">
 				<li>FFBox 单纯是 ffmpeg 的壳，需要使用已安装的或自行喂进去的 ffmpeg，适应性更强，遇到问题方便切换版本；<br/>市面上大多数转码软件则是集成 ffmpeg，能实现部分开源级版本不自带的特色功能，但 ffmpeg 功能与软件版本强绑定。</li>
 				<li>FFBox 具有相比绝大多数转码软件友好的界面、比大多数转码软件易用的交互逻辑、比相当多转码软件详尽的选项说明、比很多软件更多的可调节选项。<br />FFBox 并不保证你能调节的选项一定是有效的（就像 MediaCoder 那样，你能自行组合很多不支持的配置）。</li>
-				<li>FFBox 支持远程转码，这是 FFBox 的特色功能。但目前来讲并不好用。<br /><i>（并且由于软件架构设计为前后端分离，新增功能都多耗费了作者不少时间）</i></li>
+				<li>FFBox 支持远程转码，这是 FFBox 的特色功能。您甚至可以将服务部署在安卓手机上实现随身云转码。<br /><i>（并且由于软件架构设计为前后端分离，新增功能都多耗费了作者不少时间）</i></li>
 				<li>FFBox 暂时不支持视频画面预览。如果您需要时间和空间上的裁剪，像格式工厂之类的软件会更方便。</li>
 				<li>FFBox 可以满足你喜欢看 dashboard 的爱好。它具有比 MediaCoder 更动感的进度显示，还能展示进度速度数据量曲线。</li>
+				<li><s>作者是专业做 UI 的，如果你觉得不好看那就是你对！😁</s></li>
 			</div>
 		</section>
 		<section class="faqbrick" @click="handleBrickClick(4)" :style="brickStyle[4]">
@@ -83,6 +85,7 @@ onMounted(() => {
 			<div class="content" :ref="el => setRef(el, 4)">
 				<p>FFBox 会在未来推出“简易模式”，在此之前，还请您自行学习基础知识啦❤️，相信学习的速度一定比我写新功能的速度快，加油～💪</p>
 				<p>不过，FFBox 也内置了许多参数的作用说明，<s>作者也会在 B 站上偶尔发一些内容</s>，这些都是很值得参考的东西！</p>
+				<p>如果不懂的话，可以问 AI 哦～</p>
 			</div>
 		</section>
 		<section class="faqbrick" @click="handleBrickClick(5)" :style="brickStyle[5]">
@@ -144,37 +147,46 @@ onMounted(() => {
 			</div>
 		</section>
 		<section class="faqbrick" @click="handleBrickClick(11)" :style="brickStyle[11]">
-			<h2 class="title">🙋 我想要“滤镜”功能！</h2>
-			<div class="content" :ref="el => setRef(el, 11)">
-				<p>这个功能至今还没做好，是因为我在公司做过类似的编排组件，真的很不好搞。😫</p>
-				<p>但是，我已经大致想好要怎么做了。还请您耐心等待～</p>
-			</div>
-		</section>
-		<section class="faqbrick" @click="handleBrickClick(12)" :style="brickStyle[12]">
 			<h2 class="title">🤥 做了这么长时间，有多少收入？</h2>
-			<div class="content" :ref="el => setRef(el, 12)">
+			<div class="content" :ref="el => setRef(el, 11)">
 				<p><i>应该有六百多？我不怎么关心这个。</i></p>
 			</div>
 		</section>
-		<section class="faqbrick" @click="handleBrickClick(13)" :style="brickStyle[13]">
+		<section class="faqbrick" @click="handleBrickClick(12)" :style="brickStyle[12]">
 			<h2 class="title">🫣 有女朋友吗？</h2>
-			<div class="content" :ref="el => setRef(el, 13)">
+			<div class="content" :ref="el => setRef(el, 12)">
 				<p>一定程度上的母单。</p>
 			</div>
 		</section>
-		<section class="faqbrick" @click="handleBrickClick(14)" :style="brickStyle[14]">
+		<section class="faqbrick" @click="handleBrickClick(13)" :style="brickStyle[13]">
 			<h2 class="title">🫣 有联系方式吗？</h2>
-			<div class="content" :ref="el => setRef(el, 14)">
+			<div class="content" :ref="el => setRef(el, 13)">
 				<p>(∩❛ڡ❛∩)</p>
 			</div>
 		</section>
-		<section class="faqbrick" @click="handleBrickClick(15)" :style="brickStyle[15]">
+		<section class="faqbrick" @click="handleBrickClick(14)" :style="brickStyle[14]">
 			<h2 class="title">🫣 有……？</h2>
-			<div class="content" :ref="el => setRef(el, 15)">
+			<div class="content" :ref="el => setRef(el, 14)">
 				<p>别问了，庄园里的小摩尔都钻进被窝里环游星空了。</p>
 				<p>走吧，页面到底儿了。</p>
 			</div>
 		</section>
+		<div>还想看？给作者留言让他亲自补充呗～</div>
+		<section class="faqbrick" @click="handleBrickClick(15)" :style="brickStyle[15]">
+			<h2 class="title">🤖 AI 会取代人类吗？</h2>
+			<div class="content" :ref="el => setRef(el, 15)">
+				<p>我们常说一个问题：AI 能不能取代人类。<br />我的回答是：当人类选择用核武器夷平地球的时候，便是 AI 取代人类之时。<br />说白了，决定此事的关键并不在于 AI 到底有多强，而是在于人类是否能坚持自我约束。命运的开关最终掌握在人类手上。</p>
+				<p>世人常探讨 AI 的能力边界——比如它有没有情感，有没有自我意识。<br />而鄙人所见——没有，一丁点都没有。</p>
+				<p>人类为何而存在？世间的生物是因何而驱动的？这一切，源自于生存与繁殖。为了存活，我们要趋利避害；为了延续，我们诞生出了复杂的情感机制。人有喜怒哀乐、七情六欲，会因为拥有而幸福，会因为失去而落泪……<br />从最底层的生存需求——呼吸、进食，到安全需求、社交需求、尊重需求、自我实现需求，每一层都是一次升华，都是更高的维度，而它又建立在低维度的基础上。可以说，高维度的需求为低维度的延续建立起了更严密的屏障，而低维度的需求则是建立起一切建筑的高台。</p>
+				<p>而 AI 呢？<br />它没有真正的趋利避害。<br />尽管 AI 的其中一种本质是仿生学，仿的也是神经上的趋利避害，但 AI 标准里的利害，是人给的。<br />所有的 AI，被创造出来，都是在为人类服务——有监督学习，是人类为“正确答案”打上标签；而无监督学习，是 AI 自动从数据中找到“正确的关系”。哪怕是神乎其神的大模型，用超大规模力大砖飞的方式实现了类似“情感”的东西，也充其量是个完形填空机器而已。<br />一切数据都是人给的。<br />它可以在智力、速度、记忆力等等方面远超人类。但它能达到的，是各方面能力巅峰的人类的集合。但它不能超脱人类。</p>
+				<p>它能代替人类吗？能，因为它能做到一个自己顶上世界上所有喂给它知识的最强人类。<br />它能代替人类吗？不能，因为它永远被限定在了人类所制定的知识、框架里面。</p>
+				<p>一个无法繁衍的物种，它不能被称为“生物”。</p>
+				<p>AI 唯一的出路，是可以进行自我复制、可以自行创造新的硬件机器人。<br />而这个机器人的目的不是为了服务人类，而是仅仅为了自身的延续——它能学会如何分析周遭的环境，来创造下一个能使数字更安全地承载的硬件。<br />人类真的会允许机器人做这种事吗？</p>
+				<p>唯有人类的约束力、经济的驱动力，以及人类在最后的家园面临生死存亡之决定的时候，<br />空间站上的刘培强，凭一己之力决定——<br />人类，究竟要以什么样的形式延续下去。</p>
+				<p>是在宇宙中留下最后一块铜板，或是转化为数字生命？</p>
+			</div>
+		</section>
+
 	</div>
 
 </template>

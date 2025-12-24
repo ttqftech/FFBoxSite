@@ -53,9 +53,9 @@ const handleTopBarButtonClicked = (index: number) => {
 			Msgbox({
 				image: h(IconPointOut),
 				title: '您将要使用一个尚未完善的网页版～',
-				content: h('div', ['出于安全性考虑，5.0 版本暂时关闭了远程转码功能，这使得您在网页版上无法体验 FFBox 的大部分功能', h('br'), '因此，此处依然提供 4.5 版本的网页版', h('br'), '4.5 版本暂未对网页运行进行针对性优化，因此网页版只能用于体验功能，可能无法正常使用', h('br'), '同时，建议自行部署以获得更佳体验～']),
+				content: h('div', ['FFBox 是优先为客户端环境进行开发的，网页运行功能相对受限且可能存在更多 bug，建议您有条件时优先使用客户端', h('br'), '如果要使用 webUI，建议自行部署以获得更佳体验～']),
 				buttons: [
-					{ text: `我已知悉，继续`, type: ButtonType.Primary, callback: () => window.open('./online-v4.5', '__blank') && true },
+					{ text: `我已知悉，继续`, type: ButtonType.Primary, callback: () => window.open('./online-v5.1', '__blank') && true },
 				]
 			});
 		}
