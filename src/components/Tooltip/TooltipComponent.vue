@@ -41,6 +41,7 @@ const newLinedContent = computed(() => {
 		z-index: 100;
         pointer-events: none;
         max-width: calc(200px + 25%);
+		font-size: 14px;
 	}
 		.tooltipanimate-enter-from {
 			opacity: 0;
@@ -68,7 +69,7 @@ const newLinedContent = computed(() => {
 			z-index: 5;
 		}
 			.tooltip-message {
-				font-size: 14px;
+				font-size: inherit;
 				line-height: 1.3em;
 				text-align: left;
 			}

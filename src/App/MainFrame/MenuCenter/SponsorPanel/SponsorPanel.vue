@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useCssModule } from 'vue';
+import { computed, onMounted, onUnmounted, ref, useCssModule } from 'vue';
 import CryptoJS from 'crypto-js';
-import Button, { ButtonType } from '../../../../components/Button/Button';
+import WordCloud from 'wordcloud';
 import { getLimitaion } from '../../../../stores/limitaions';
+import { useAppStore } from '../../../../stores/appStore';
+import Button, { ButtonType } from '../../../../components/Button/Button';
 import BoxedSlider from '../../../../components/Slider/BoxedSlider.vue';
 import Tooltip from '../../../../components/Tooltip/Tooltip';
 import IconGithub from './github.svg?component';
@@ -12,8 +14,10 @@ import IconAfdian from './afdian.png';
 import ImageAlipay from './alipay.png';
 import ImageWechatpay from './wechatpay.svg?url';
 import ImageQQpay from './qqpay.png';
+import sponsorData from './sponsorData.txt?raw';
 
 const style = useCssModule();
+const appStore = useAppStore()
 
 const qr_alipayredenvelop = ref<HTMLCanvasElement>();
 const qr_alipay = ref<HTMLCanvasElement>();
@@ -77,6 +81,79 @@ const paintQRcode2canvas = (canvas: HTMLCanvasElement, QRcode: string[][]) => {
 		}
 	}
 };
+
+// 赞助字云绘制
+const resizeListener = ref<EventListener>();
+const sponsorCanvas2025 = ref<HTMLCanvasElement>();
+const sponsorCanvasEarly = ref<HTMLCanvasElement>();
+
+let currentHoveringContent = undefined;
+let delayLeaveTimer = undefined;
+const mouseHoverHandler: WordCloud.EventCallback = (item, dimension, event) => {
+	if (item) {
+		const [content, price] = item;
+		if (currentHoveringContent === content) return;
+
+		clearTimeout(delayLeaveTimer);
+		const canvasPos = event.target.getBoundingClientRect();
+		const topCenterPosInCanvas = [dimension.x + dimension.w / 2, dimension.y];
+		const ratio = window.devicePixelRatio;
+		const topCenterPosInDOM = [canvasPos.x + topCenterPosInCanvas[0] / ratio, canvasPos.y + topCenterPosInCanvas[1] / ratio];
+		const style = { bottom: `${window.innerHeight - topCenterPosInDOM[1]}px`, left: `${topCenterPosInDOM[0]}px`, transform: `translateX(-50%)`, fontSize: `${8 + Math.log(price) * 4}px` };
+		Tooltip.show({ content, style });
+	} else {
+		delayLeaveTimer = setTimeout(() => {
+			Tooltip.hide();
+		}, 250);
+	}
+
+}
+
+const render = () => {
+	const sponsorLinesAll = sponsorData.split('\n').filter((line) => line.length > 3);	// 按行切隔，去除空白行
+	const [sponsorLines2025, sponsorLinesEarly] = [
+		sponsorLinesAll.filter((line) => line.startsWith('2025')),
+		sponsorLinesAll.filter((line) => !line.startsWith('2025')),
+	];
+	for (let i = 0; i < 2; i++) {
+		const sponsorLines = [sponsorLines2025, sponsorLinesEarly][i];
+		const sponsorCanvass = [sponsorCanvas2025, sponsorCanvasEarly][i];
+		const sponsorItems = sponsorLines
+			.map((line) => {
+					const [date, nickName, price] = line.trim().split('\t');
+					return [nickName, +price.replace('¥', '')] as [string, number];
+				})
+			.filter((item) => item[1] >= 1)
+			.sort((a, b) => b[1] - a[1]);
+		console.log(sponsorItems);
+		WordCloud(sponsorCanvass.value, {
+			list: sponsorItems,
+			weightFactor: ((w) => w * 3),
+			drawOutOfBound: true,
+			backgroundColor: '#FFFFFF00',
+			color: appStore.colorTheme === 'themeDark' ? 'random-light' : 'random-dark',
+			wait: 50,
+			hover: mouseHoverHandler,
+		});
+	}
+};
+onMounted(() => {
+	resizeListener.value = () => {
+		const bounding = sponsorCanvas2025.value.parentElement.getBoundingClientRect();
+		const ratio = window.devicePixelRatio;
+		sponsorCanvas2025.value.width = bounding.width * ratio;
+		sponsorCanvas2025.value.height = bounding.height * ratio;
+		sponsorCanvasEarly.value.width = bounding.width * ratio;
+		sponsorCanvasEarly.value.height = bounding.height * ratio;
+		// sponsorCanvas.value.getContext('2d').scale(window.devicePixelRatio, window.devicePixelRatio);
+		render();
+	};
+	window.addEventListener('resize', resizeListener.value);
+	resizeListener.value(null);
+});
+onUnmounted(() => {
+	window.removeEventListener('resize', resizeListener.value);
+});
 
 const handleElementHover = (e: MouseEvent, content: string) => {
 	const rect = (e.target as any).getBoundingClientRect();
@@ -213,6 +290,20 @@ onMounted(() => {
 		</table>
 		<p>FFBox 是一款试用、有源、捐赠混合的软件。出厂状况下，本软件存在部分功能的使用限制</p>
 		<p>您可以通过激活码去除这些限制，详情请到官网或官方信息发布平台查询～</p>
+		<h2>栓个大Ｑ！</h2>
+		<div style="font-style: italic; font-size: 0.7em; opacity: 0.7;">此部分内容非实时更新</div>
+		<h3>感谢你们在 2025 的支持！</h3>
+		<div class="sponsorCanvasWrapper">
+			<div>
+				<canvas ref="sponsorCanvas2025"></canvas>
+			</div>
+		</div>
+		<h3>感谢在 FFBox 功能还很残缺之时你们对我的支持！</h3>
+		<div class="sponsorCanvasWrapper">
+			<div>
+				<canvas ref="sponsorCanvasEarly"></canvas>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -316,6 +407,9 @@ onMounted(() => {
 		margin: 2em 0 1em;
 		color: var(--titleText);
 	}
+	h3 {
+		margin: 1em 0 0.7em;
+	}
 	.yourLevel {
 		position: relative;
 		display: flex;
@@ -340,6 +434,28 @@ onMounted(() => {
 		}
 		th {
 			font-weight: 600;
+		}
+	}
+	.sponsorCanvasWrapper {
+		position: relative;
+		width: calc(100% - 16px);
+		height: calc(100% - 80px);
+		margin-bottom: 16px;
+		overflow: hidden;
+		border-radius: 24px;
+		box-shadow: -4px -8px 8px 0 hwb(var(--hoverLightBg) / 0.3),	// 上发光
+					4px 8px 4px -2px hwb(var(--hoverLightBg) / 0.3),	// 下折射光线
+					5px 10px 4px 0 hwb(var(--hoverShadow) / 0.08),	// 下投影
+					3px 6px 3px 0 hwb(var(--hoverShadow) / 0.08) inset,	// 内部上折射遮挡
+					-2px -4px 3px 0 hwb(var(--hoverLightBg) / 0.8) inset,	// 内部下反射
+		;
+		background-color: hwb(var(--bg100) / 0.1);
+		&>div {
+			height: 100%;
+			canvas {
+				width: 100%;
+				height: 100%;
+			}
 		}
 	}
 </style>
