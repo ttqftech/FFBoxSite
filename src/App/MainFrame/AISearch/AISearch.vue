@@ -315,7 +315,7 @@ const sendMessage = async () => {
 				total = extraScore || total;
 				const finalScore = 15 + (total / full) * 50;
 				console.log(`修行：${finalScore}`);
-				chatItem.actions.push({ label: '生成激活码', url: `ffbox:/activate?level=${finalScore}` });
+				chatItem.actions.push({ label: '生成激活码', url: `ffbox:/showActivationCodeGenMsgbox?level=${finalScore}` });
 
 				showActivateCodeGen(Math.round(finalScore));
 			}
@@ -326,7 +326,7 @@ const sendMessage = async () => {
 
 			if (matchEnd2 || extraScoreActivated) {
 				console.log(`修行：50`);
-				chatItem.actions.push({ label: '生成激活码', url: `ffbox:/activate?level=50` });
+				chatItem.actions.push({ label: '生成激活码', url: `ffbox:/showActivationCodeGenMsgbox?level=50` });
 
 				showActivateCodeGen(50);
 			}
@@ -360,7 +360,7 @@ const handleActionButtonClick = (url: string) => {
 	const urlObject = new URL(url);
 	if (urlObject.protocol === 'ffbox:') {
 		const query = new URLSearchParams(urlObject.search);
-		if (urlObject.pathname === '/activate') {
+		if (urlObject.pathname === '/showActivationCodeGenMsgbox') {
 			const level = +query.get('level');
 			if (isFinite(level)) {
 				showActivateCodeGen(level);
