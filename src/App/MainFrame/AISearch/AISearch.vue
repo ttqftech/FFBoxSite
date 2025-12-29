@@ -42,7 +42,7 @@ interface Message {
 	time?: Date;
 	refers?: string[];
 	expense?: number;
-	actions?: any;
+	actions?: { label: string; url: string }[];
 }
 
 const isOpened = ref<'closed' | 'opening' | 'opened' | 'closing'>('closed');
@@ -249,9 +249,9 @@ const sendMessage = async () => {
 		}, 800);
 		props.chatAPI(userText).then((chatResult) => {
 			const result = JSON.parse(chatResult.content);
-			const { msg, ref, ext } = result.obj;
+			const { msg, ref, lnk, ext } = result.obj;
 			const extras = (ext || '').split('&') as string[];
-			const chatItem: Message = { role: "ai", text: msg, refers: ref, actions: {}, time: new Date(), expense: chatResult.expense };
+			const chatItem: Message = { role: "ai", text: msg, refers: ref, actions: [], time: new Date(), expense: chatResult.expense };
 			messages.value.push(chatItem);
 
 			// 接收匹配关键词打开链接
@@ -276,6 +276,12 @@ const sendMessage = async () => {
 						}
 						showedResponseKeywordMessage.push(item.keywords[keywordIndex]);
 					}
+				}
+			}
+			// 链接
+			if (lnk instanceof Array) {
+				for (const link of lnk) {
+					if ('label' in link && 'url' in link) chatItem.actions.push(link);
 				}
 			}
 			// 激活 1
@@ -309,7 +315,7 @@ const sendMessage = async () => {
 				total = extraScore || total;
 				const finalScore = 15 + (total / full) * 50;
 				console.log(`修行：${finalScore}`);
-				chatItem.actions.activationScore = finalScore;
+				chatItem.actions.push({ label: '生成激活码', url: `ffbox:/activate?level=${finalScore}` });
 
 				showActivateCodeGen(Math.round(finalScore));
 			}
@@ -320,7 +326,7 @@ const sendMessage = async () => {
 
 			if (matchEnd2 || extraScoreActivated) {
 				console.log(`修行：50`);
-				chatItem.actions.activationScore = 50;
+				chatItem.actions.push({ label: '生成激活码', url: `ffbox:/activate?level=50` });
 
 				showActivateCodeGen(50);
 			}
@@ -349,6 +355,21 @@ const resetChat = () => {
 		}, 0);
 	}
 };
+
+const handleActionButtonClick = (url: string) => {
+	const urlObject = new URL(url);
+	if (urlObject.protocol === 'ffbox:') {
+		const query = new URLSearchParams(urlObject.search);
+		if (urlObject.pathname === '/activate') {
+			const level = +query.get('level');
+			if (isFinite(level)) {
+				showActivateCodeGen(level);
+			}
+		}
+	} else {
+		window.open(url);
+	}
+}
 
 let initialPlaceholderTimer: number;
 const initialPlaceholderIndex = ref(0);
@@ -479,7 +500,7 @@ watch(() => messages.value.length, () => {
 										msg.refers?.length ? '参考来源：' + msg.refers.join('；') : '',
 										msg.expense ? '算力开销：' + Math.round(msg.expense) : '',
 									].filter((text) => text).join('｜') }}
-									<button v-if="msg.actions?.activationScore" @click="showActivateCodeGen(+msg.actions.activationScore)">生成激活码</button>
+									<button v-for="action in msg.actions" @click="handleActionButtonClick(action.url)">{{ action.label }}</button>
 								</div>
 							</div>
 							<div v-if="statusText && loading" :key="messages.length" class="msg aiInfo">
@@ -843,7 +864,7 @@ watch(() => messages.value.length, () => {
 							font-size: 10px;
 							opacity: 0.5;
 							button {
-								font-size: 12px;
+								font-size: 10px;
 							}
 						}
 						&.user {

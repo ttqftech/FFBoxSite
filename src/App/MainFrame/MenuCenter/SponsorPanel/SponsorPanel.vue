@@ -120,15 +120,15 @@ const render = () => {
 		const sponsorCanvass = [sponsorCanvas2025, sponsorCanvasEarly][i];
 		const sponsorItems = sponsorLines
 			.map((line) => {
-					const [date, nickName, price] = line.trim().split('\t');
-					return [nickName, +price.replace('¥', '')] as [string, number];
-				})
+				const [date, nickName, s_price] = line.trim().split('\t');
+				let price = +s_price.replace('¥', '');
+				return [nickName, price / (nickName.length ** 0.5)] as [string, number];
+			})
 			.filter((item) => item[1] >= 1)
 			.sort((a, b) => b[1] - a[1]);
-		console.log(sponsorItems);
 		WordCloud(sponsorCanvass.value, {
 			list: sponsorItems,
-			weightFactor: ((w) => w * 3),
+			weightFactor: ((w) => (w ** 0.75) * 12),	// 在前面进行了一次 / (nickName.length ** 0.5)，使不同长度的 nickname 出来的面积相等。这里再进行一次根号，就能使字体面积而不是字体大小对应金额，这里取二者之间的值
 			drawOutOfBound: true,
 			backgroundColor: '#FFFFFF00',
 			color: appStore.colorTheme === 'themeDark' ? 'random-light' : 'random-dark',
