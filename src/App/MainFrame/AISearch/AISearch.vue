@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, nextTick, computed, onMounted, watch } from 'vue';
 import gsap from 'gsap';
-import AISearchConfig from './types';
+import AISearchConfig, { AIChatMessage } from './types';
 import { getTimeString } from '../../../common/utils';
 import { useTooltip } from '../../../common/tooltipUtil';
 import { showActivateCodeGen } from './activateCodeGen';
@@ -22,7 +22,7 @@ interface Props {
 	modelName?: string;	// 显示在标题旁的模型名，未定义则不显示
 	initialPlaceholders?: string[];	// 未激活窗口时的 placeholder，未定义则使用“智能帮助”
 	initialPlaceholderInterval?: number;	// 未激活窗口时的 placeholder 的轮换间隔（ms），未定义则使用 4000
-	initSystemMessage?: string;	// 初始化窗口以及重置对话前补充一条系统信息
+	initSystemMessage?: AIChatMessage;	// 初始化窗口以及重置对话前补充一条系统信息
 	requestKeywordLink?: AISearchConfig['requestKeywordLink'];	// 发送内容若出现关键字则打开一个链接
 	responseKeywordLink?: AISearchConfig['responseKeywordLink'];	// 返回内容若出现关键字则则打开一个链接
 	requestKeywordSystemMessage?: AISearchConfig['requestKeywordSystemMessage'];	// 发送内容若出现关键字则显示一条系统信息
@@ -36,21 +36,12 @@ interface Props {
 
 const props = defineProps<Props>();
 
-interface Message {
-	role: 'user' | 'ai' | 'aiErr' | 'aiInfo';
-	text: string;
-	time?: Date;
-	refers?: string[];
-	expense?: number;
-	actions?: { label: string; url: string }[];
-}
-
 const isOpened = ref<'closed' | 'opening' | 'opened' | 'closing'>('closed');
 let hasOpened = false;
 const showedRequestKeywordMessage: string[] = [];
 const showedResponseKeywordMessage: string[] = [];
 const inputValue = ref('');
-const messages = ref<Message[]>([]);
+const messages = ref<AIChatMessage[]>([]);
 const sessionId = ref<string | null>(null);
 const loading = ref(false);
 const statusText = ref('大模型处理中');
@@ -251,7 +242,7 @@ const sendMessage = async () => {
 			const result = JSON.parse(chatResult.content);
 			const { msg, ref, lnk, ext } = result.obj;
 			const extras = (ext || '').split('&') as string[];
-			const chatItem: Message = { role: "ai", text: msg, refers: ref, actions: [], time: new Date(), expense: chatResult.expense };
+			const chatItem: AIChatMessage = { role: "ai", text: msg, refers: ref, actions: [], time: new Date(), expense: chatResult.expense };
 			messages.value.push(chatItem);
 
 			// 接收匹配关键词打开链接
@@ -351,7 +342,7 @@ const resetChat = () => {
 	(props.resetChat || (() => {}))();
 	if (props.initSystemMessage) {
 		setTimeout(() => {
-			messages.value.push({ role: "aiInfo", text: props.initSystemMessage });
+			messages.value.push(props.initSystemMessage);
 		}, 0);
 	}
 };
@@ -391,7 +382,7 @@ watch(() => props.initialPlaceholderInterval, () => {
 watch(() => props.enabled, () => {
 	if (props.enabled) {
 		if (props.initSystemMessage) {
-			messages.value.push({ role: "aiInfo", text: props.initSystemMessage });
+			messages.value.push(props.initSystemMessage);
 		}
 	}
 }, { immediate: true });
