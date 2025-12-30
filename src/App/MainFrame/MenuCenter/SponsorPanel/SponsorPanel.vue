@@ -268,7 +268,7 @@ onMounted(() => {
 				</tr>
 				<tr>
 					<td>转码时长上限</td>
-					<td>{{ functionLevel < 45 ? '11:11' : '无限制' }}</td>
+					<td>{{ functionLevel < 45 ? '11:11' : '11:11:11' }}</td>
 				</tr>
 				<tr>
 					<td>远程单文件上传大小上限</td>
