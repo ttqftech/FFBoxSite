@@ -55,7 +55,7 @@ const handleTopBarButtonClicked = (index: number) => {
 				title: '您将要使用一个尚未完善的网页版～',
 				content: h('div', ['FFBox 是优先为客户端环境进行开发的，网页运行功能相对受限且可能存在更多 bug，建议您有条件时优先使用客户端', h('br'), '如果要使用 webUI，建议自行部署以获得更佳体验～']),
 				buttons: [
-					{ text: `我已知悉，继续`, type: ButtonType.Primary, callback: () => window.open('./online-v5.1', '__blank') && true },
+					{ text: `我已知悉，继续`, type: ButtonType.Primary, callback: () => window.open('./online-v5.2', '__blank') && true },
 				]
 			});
 		}
@@ -145,7 +145,7 @@ onMounted(async () => {
 					<button @click="handleTopBarButtonClicked(2)">使用条款</button>
 				</div>
 				<div class="versionInfo">
-					<div>版本：5.1&nbsp;&nbsp;(2025-11-19)</div>
+					<div>版本：5.2&nbsp;&nbsp;(2026-01-01)</div>
 				</div>
 			</div>
 			<div class="FFBox-topWrapper" :style="FFBoxTopWrapperStyle">
