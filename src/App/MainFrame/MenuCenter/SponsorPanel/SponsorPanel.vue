@@ -84,6 +84,7 @@ const paintQRcode2canvas = (canvas: HTMLCanvasElement, QRcode: string[][]) => {
 
 // 赞助字云绘制
 const resizeListener = ref<EventListener>();
+const sponsorCanvas2026 = ref<HTMLCanvasElement>();
 const sponsorCanvas2025 = ref<HTMLCanvasElement>();
 const sponsorCanvasEarly = ref<HTMLCanvasElement>();
 
@@ -111,13 +112,14 @@ const mouseHoverHandler: WordCloud.EventCallback = (item, dimension, event) => {
 
 const render = () => {
 	const sponsorLinesAll = sponsorData.split('\n').filter((line) => line.length > 3);	// 按行切隔，去除空白行
-	const [sponsorLines2025, sponsorLinesEarly] = [
+	const [sponsorLines2026, sponsorLines2025, sponsorLinesEarly] = [
+		sponsorLinesAll.filter((line) => line.startsWith('2026')),
 		sponsorLinesAll.filter((line) => line.startsWith('2025')),
-		sponsorLinesAll.filter((line) => !line.startsWith('2025')),
+		sponsorLinesAll.filter((line) => line.startsWith('2024') || line.startsWith('2023') || line.startsWith('2022')),
 	];
-	for (let i = 0; i < 2; i++) {
-		const sponsorLines = [sponsorLines2025, sponsorLinesEarly][i];
-		const sponsorCanvass = [sponsorCanvas2025, sponsorCanvasEarly][i];
+	for (let i = 0; i < 3; i++) {
+		const sponsorLines = [sponsorLines2026, sponsorLines2025, sponsorLinesEarly][i];
+		const sponsorCanvass = [sponsorCanvas2026, sponsorCanvas2025, sponsorCanvasEarly][i];
 		const sponsorItems = sponsorLines
 			.map((line) => {
 				const [date, nickName, s_price] = line.trim().split('\t');
@@ -141,6 +143,8 @@ onMounted(() => {
 	resizeListener.value = () => {
 		const bounding = sponsorCanvas2025.value.parentElement.getBoundingClientRect();
 		const ratio = window.devicePixelRatio;
+		sponsorCanvas2026.value.width = bounding.width * ratio;
+		sponsorCanvas2026.value.height = bounding.height * ratio;
 		sponsorCanvas2025.value.width = bounding.width * ratio;
 		sponsorCanvas2025.value.height = bounding.height * ratio;
 		sponsorCanvasEarly.value.width = bounding.width * ratio;
@@ -292,6 +296,12 @@ onMounted(() => {
 		<p>您可以通过激活码去除这些限制，详情请到官网或官方信息发布平台查询～</p>
 		<h2>栓个大Ｑ！</h2>
 		<div style="font-style: italic; font-size: 0.7em; opacity: 0.7;">此部分内容非实时更新</div>
+		<h3>祝 2026 年的大家六六大顺🤘🏻</h3>
+		<div class="sponsorCanvasWrapper">
+			<div>
+				<canvas ref="sponsorCanvas2026"></canvas>
+			</div>
+		</div>
 		<h3>感谢你们在 2025 的支持！</h3>
 		<div class="sponsorCanvasWrapper">
 			<div>
