@@ -124,7 +124,7 @@ onMounted(async () => {
 <template>
 	<div class="mainFrame" :data-color_theme="appStore.colorTheme">
 		<div class="topBar">
-			<a class="nav" style="float: left;" href="http://www.ttqf.tech/" title="滔滔清风科技馆主页（七年没更新，没啥东西看的）" onclick="alert('七年没更新，没啥东西看的')">
+			<a class="nav" style="float: left;" href="http://www.ttqf.tech/" title="滔滔清风科技馆主页（七年没更新，没啥东西看的）" onclick="alert('年久失修喵～但每份历史都值得铭记，所以不撤走链接喵～')">
 				<div class="ttqftechlogo"></div>
 			</a>
 			<a class="nav" style="float: right;" href="https://github.com/ttqftech/FFBox/" target="_blank" title="FFBox GitHub 主页">
@@ -155,12 +155,12 @@ onMounted(async () => {
 			<div class="FFBox-topWrapper" :style="FFBoxTopWrapperStyle">
 				<div class="FFBox-wrapper">
 					<div class="img" @click="() => handleScreenshotClicked()">
-						<img v-if="appStore.colorTheme === 'themeLight' && windowWidth < 1000" src="../../assets/软件截图_小_浅色.webp" />
-						<img v-if="appStore.colorTheme === 'themeDark' && windowWidth < 1000" src="../../assets/软件截图_小_深色.webp" />
-						<img v-if="appStore.colorTheme === 'themeLight' && windowWidth >= 1000 && windowWidth < 1320" src="../../assets/软件截图_中_浅色.webp" />
-						<img v-if="appStore.colorTheme === 'themeDark' && windowWidth >= 1000 && windowWidth < 1320" src="../../assets/软件截图_中_深色.webp" />
-						<img v-if="appStore.colorTheme === 'themeLight' && windowWidth >= 1320" src="../../assets/软件截图_大_浅色.webp" />
-						<img v-if="appStore.colorTheme === 'themeDark' && windowWidth >= 1320" src="../../assets/软件截图_大_深色.webp" />
+						<img v-if="appStore.colorTheme === 'themeLight' && windowWidth < 1000" alt="FFBox 软件截图" src="../../assets/软件截图_小_浅色.webp" />
+						<img v-if="appStore.colorTheme === 'themeDark' && windowWidth < 1000" alt="FFBox 软件截图" src="../../assets/软件截图_小_深色.webp" />
+						<img v-if="appStore.colorTheme === 'themeLight' && windowWidth >= 1000 && windowWidth < 1320" alt="FFBox 软件截图" src="../../assets/软件截图_中_浅色.webp" />
+						<img v-if="appStore.colorTheme === 'themeDark' && windowWidth >= 1000 && windowWidth < 1320" alt="FFBox 软件截图" src="../../assets/软件截图_中_深色.webp" />
+						<img v-if="appStore.colorTheme === 'themeLight' && windowWidth >= 1320" alt="FFBox 软件截图" src="../../assets/软件截图_大_浅色.webp" />
+						<img v-if="appStore.colorTheme === 'themeDark' && windowWidth >= 1320" alt="FFBox 软件截图" src="../../assets/软件截图_大_深色.webp" />
 					</div>
 					<div class="FFBox">
 						<button @click="handleTopBarButtonClicked(3)" class="startbutton startbutton2 startbutton-cyan">🌐网页版</button>

@@ -472,8 +472,8 @@ watch(() => messages.value.length, () => {
 							</div>
 						</div>
 						<div class="right">
-							<Button @click="resetChat" :type="ButtonType.NoBg" :disabled="loading"><IconRefresh /></Button>
-							<Button @click="closeWindow" :type="ButtonType.NoBg"><IconX style="height: 20px" /></Button>
+							<Button @click="resetChat" aria-label="重置 AI 聊天消息" :type="ButtonType.NoBg" :disabled="loading"><IconRefresh /></Button>
+							<Button @click="closeWindow" aria-label="关闭 AI 聊天弹窗" :type="ButtonType.NoBg"><IconX style="height: 20px" /></Button>
 						</div>
 					</div>
 					<div class="chatMessages" ref="messagesRef">
@@ -514,6 +514,7 @@ watch(() => messages.value.length, () => {
 					oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
 					@focus="() => isOpened === 'closed' ? openWindow() : null"
 					@keyup.enter="sendMessage"
+					aria-label="AI 聊天输入框"
 				/>
 				<div :class="['iconAI', openedClass]">
 					<IconAI />

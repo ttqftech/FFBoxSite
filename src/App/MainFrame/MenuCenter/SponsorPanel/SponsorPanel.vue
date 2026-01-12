@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, useCssModule } from 'vue';
 import CryptoJS from 'crypto-js';
-import WordCloud from 'wordcloud';
+import type WordCloud from 'wordcloud';
 import { getLimitaion } from '../../../../stores/limitaions';
 import { useAppStore } from '../../../../stores/appStore';
 import Button, { ButtonType } from '../../../../components/Button/Button';
@@ -16,6 +16,7 @@ import ImageWechatpay from './wechatpay.svg?url';
 import ImageQQpay from './qqpay.png';
 import sponsorData from './sponsorData.txt?raw';
 
+let wordCloud: typeof WordCloud;
 const style = useCssModule();
 const appStore = useAppStore()
 
@@ -128,7 +129,7 @@ const render = () => {
 			})
 			.filter((item) => item[1] >= 1)
 			.sort((a, b) => b[1] - a[1]);
-		WordCloud(sponsorCanvass.value, {
+		wordCloud(sponsorCanvass.value, {
 			list: sponsorItems,
 			weightFactor: ((w) => (w ** 0.75) * 12),	// 在前面进行了一次 / (nickName.length ** 0.5)，使不同长度的 nickname 出来的面积相等。这里再进行一次根号，就能使字体面积而不是字体大小对应金额，这里取二者之间的值
 			drawOutOfBound: true,
@@ -139,7 +140,8 @@ const render = () => {
 		});
 	}
 };
-onMounted(() => {
+onMounted(async () => {
+	wordCloud = (await import('wordcloud')).default;
 	resizeListener.value = () => {
 		const bounding = sponsorCanvas2025.value.parentElement.getBoundingClientRect();
 		const ratio = window.devicePixelRatio;
