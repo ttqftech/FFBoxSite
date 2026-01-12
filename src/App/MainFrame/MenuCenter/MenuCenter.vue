@@ -97,7 +97,7 @@ onMounted(() => appStore.selectedPanelIndex = 0);
 
 <template>
     <div class="bigicon" @click="handleBigIconClick" ref="bigIconRef">
-		<img src="/src/assets/icon_256_transparent.png" />
+		<img src="/src/assets/icon_256_transparent.png" alt="菜单面板按钮" />
 	</div>
 	<div class="pad" :style="menuCenterPadStyle">
 	</div>

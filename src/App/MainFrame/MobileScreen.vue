@@ -81,8 +81,8 @@ onMounted(() => appStore.selectedPanelIndex = -1);
 						<div>版本：5.2&nbsp;&nbsp;(2026-01-01)</div>
 					</div>
 					<div class="screenshot" @click="props.onScreenshotClicked">
-						<img v-if="appStore.colorTheme === 'themeLight'" src="../../assets/软件截图_中_浅色_完整.webp" />
-						<img v-if="appStore.colorTheme === 'themeDark'" src="../../assets/软件截图_中_深色_完整.webp" />
+						<img v-if="appStore.colorTheme === 'themeLight'" alt="FFBox 软件截图" src="../../assets/软件截图_中_浅色_完整.webp" />
+						<img v-if="appStore.colorTheme === 'themeDark'" alt="FFBox 软件截图" src="../../assets/软件截图_中_深色_完整.webp" />
 					</div>
 				</div>
 			</Transition>
