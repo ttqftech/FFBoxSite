@@ -1,4 +1,4 @@
-import{g as kt,c as St}from"./app-Cs2xE7CW.js";var vt={exports:{}};/*!
+import{g as kt,c as St}from"./app-CBfqlOFn.js";var vt={exports:{}};/*!
  * wordcloud2.js
  * http://timdream.org/wordcloud2.js/
  *
