@@ -1452,7 +1452,7 @@
         "state": "uploaded",
         "size": 15838598,
         "digest": null,
-        "download_count": 381,
+        "download_count": 382,
         "created_at": "2025-05-01T15:52:56Z",
         "updated_at": "2025-05-01T16:01:38Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.4/Windows_x86-64_FFBoxService%2BwebUI_4.4.zip"
