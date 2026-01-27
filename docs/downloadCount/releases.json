@@ -248,7 +248,7 @@
         "state": "uploaded",
         "size": 17659411,
         "digest": "sha256:f1cbcbfac6eefda43f37328f03b8f16c4227820548c30f4a52bea41417419148",
-        "download_count": 75,
+        "download_count": 77,
         "created_at": "2025-12-31T19:57:06Z",
         "updated_at": "2025-12-31T19:57:08Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.2/Windows_x86-64_FFBoxService%2BwebUI_5.2.zip"
