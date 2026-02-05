@@ -68,7 +68,7 @@
         "state": "uploaded",
         "size": 20678358,
         "digest": "sha256:b290d6521188c9da315f9cda91903ffa3507f5df6b09faccfef8ae0ae648217c",
-        "download_count": 20,
+        "download_count": 21,
         "created_at": "2025-12-31T19:56:22Z",
         "updated_at": "2025-12-31T19:56:25Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.2/Linux_x86-64_FFBoxService%2BwebUI_5.2.zip"
@@ -104,7 +104,7 @@
         "state": "uploaded",
         "size": 124149194,
         "digest": "sha256:a5e0fd73a0555ca541ba7469d040714eab32665e2c28f2351ae6912439a3d3b0",
-        "download_count": 11,
+        "download_count": 12,
         "created_at": "2025-12-31T19:56:37Z",
         "updated_at": "2025-12-31T19:57:01Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.2/Linux_x86-64_FFBox_5.2.AppImage"
@@ -140,7 +140,7 @@
         "state": "uploaded",
         "size": 84648564,
         "digest": "sha256:adadef16a1ba349202401e60a19386db54f0b5485d340aedd25f0aa55110b80a",
-        "download_count": 33,
+        "download_count": 34,
         "created_at": "2025-12-31T19:56:25Z",
         "updated_at": "2025-12-31T19:56:37Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.2/Linux_x86-64_FFBox_5.2.deb"
@@ -248,7 +248,7 @@
         "state": "uploaded",
         "size": 17659411,
         "digest": "sha256:f1cbcbfac6eefda43f37328f03b8f16c4227820548c30f4a52bea41417419148",
-        "download_count": 101,
+        "download_count": 102,
         "created_at": "2025-12-31T19:57:06Z",
         "updated_at": "2025-12-31T19:57:08Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.2/Windows_x86-64_FFBoxService%2BwebUI_5.2.zip"
@@ -284,7 +284,7 @@
         "state": "uploaded",
         "size": 92653550,
         "digest": "sha256:628f4c28e1153ffb5100f6bb1ae6372f8b76347a6bee33f35ded445d8203bd99",
-        "download_count": 639,
+        "download_count": 640,
         "created_at": "2025-12-31T19:57:08Z",
         "updated_at": "2025-12-31T19:57:21Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.2/Windows_x86-64_FFBox_5.2.exe"
