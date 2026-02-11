@@ -140,7 +140,7 @@
         "state": "uploaded",
         "size": 84648564,
         "digest": "sha256:adadef16a1ba349202401e60a19386db54f0b5485d340aedd25f0aa55110b80a",
-        "download_count": 35,
+        "download_count": 36,
         "created_at": "2025-12-31T19:56:25Z",
         "updated_at": "2025-12-31T19:56:37Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.2/Linux_x86-64_FFBox_5.2.deb"
