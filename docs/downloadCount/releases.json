@@ -68,7 +68,7 @@
         "state": "uploaded",
         "size": 20678358,
         "digest": "sha256:b290d6521188c9da315f9cda91903ffa3507f5df6b09faccfef8ae0ae648217c",
-        "download_count": 31,
+        "download_count": 32,
         "created_at": "2025-12-31T19:56:22Z",
         "updated_at": "2025-12-31T19:56:25Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.2/Linux_x86-64_FFBoxService%2BwebUI_5.2.zip"
@@ -248,7 +248,7 @@
         "state": "uploaded",
         "size": 17659411,
         "digest": "sha256:f1cbcbfac6eefda43f37328f03b8f16c4227820548c30f4a52bea41417419148",
-        "download_count": 129,
+        "download_count": 130,
         "created_at": "2025-12-31T19:57:06Z",
         "updated_at": "2025-12-31T19:57:08Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.2/Windows_x86-64_FFBoxService%2BwebUI_5.2.zip"
