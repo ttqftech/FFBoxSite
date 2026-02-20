@@ -118,7 +118,8 @@ onMounted(() => appStore.selectedPanelIndex = -1);
 		overflow: hidden;
 		z-index: 1;
 		.buttons {
-			text-align: center;
+			display: flex;
+			justify-content: space-evenly;
 			padding: 2px;
 			button {
 				display: inline-flex;

@@ -124,7 +124,7 @@ onMounted(async () => {
 <template>
 	<div class="mainFrame" :data-color_theme="appStore.colorTheme">
 		<div class="topBar">
-			<a class="nav" style="float: left;" href="http://www.ttqf.tech/" title="滔滔清风科技馆主页（七年没更新，没啥东西看的）" onclick="alert('年久失修喵～但每份历史都值得铭记，所以不撤走链接喵～')">
+			<a class="nav" style="float: left;" href="http://www.ttqf.tech/" title="滔滔清风科技馆主页">
 				<div class="ttqftechlogo"></div>
 			</a>
 			<a class="nav" style="float: right;" href="https://github.com/ttqftech/FFBox/" target="_blank" title="FFBox GitHub 主页">
