@@ -284,7 +284,7 @@
         "state": "uploaded",
         "size": 92653550,
         "digest": "sha256:628f4c28e1153ffb5100f6bb1ae6372f8b76347a6bee33f35ded445d8203bd99",
-        "download_count": 1129,
+        "download_count": 1130,
         "created_at": "2025-12-31T19:57:08Z",
         "updated_at": "2025-12-31T19:57:21Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.2/Windows_x86-64_FFBox_5.2.exe"
@@ -802,7 +802,7 @@
         "state": "uploaded",
         "size": 108224088,
         "digest": "sha256:a8a3aa4ea2e27fd512c031b80ee8b577c14ea8699453752890207cd7d2791d7a",
-        "download_count": 77,
+        "download_count": 78,
         "created_at": "2025-09-01T11:58:47Z",
         "updated_at": "2025-09-01T12:08:24Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.0/macOS_ARM64_FFBox_5.0.dmg"
