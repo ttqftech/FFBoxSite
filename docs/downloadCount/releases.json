@@ -2090,7 +2090,7 @@
         "state": "uploaded",
         "size": 85650202,
         "digest": null,
-        "download_count": 1577,
+        "download_count": 1578,
         "created_at": "2024-09-01T00:33:00Z",
         "updated_at": "2024-09-01T00:33:13Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v4.2/Windows_x86-64_FFBox_4.2.exe"
