@@ -38,16 +38,11 @@ const handleParaButtonClicked = (index: number) => {
 
 const handleTopBarButtonClicked = (index: number) => {
 	if (index === 0) {
-		// 更新说明
-		appStore.showMenuCenter = 2;
-		appStore.selectedPanelIndex = 0;
+		// API 文档
+		window.open('./apiRefrence/swagger.html', '_blank');
 	} else if (index === 1) {
 		// 开发日志
 		window.open('https://github.com/ttqftech/FFBox/blob/5.0%2B/日志.md', '_blank');
-	} else if (index === 2) {
-		// 使用条款
-		appStore.showMenuCenter = 2;
-		appStore.selectedPanelIndex = 3;
 	}
 };
 
@@ -71,11 +66,9 @@ onMounted(() => appStore.selectedPanelIndex = -1);
 				<div v-if="appStore.selectedPanelIndex === -1" class="intro">
 					<img class="title-1" src="../../assets/软件图标v1.0.png" alt="FFBox 图标" width="368" height="184" />
 					<div class="actions">
-						<button @click="handleTopBarButtonClicked(0)">更新说明</button>
+						<button @click="handleTopBarButtonClicked(0)">API 文档<span style="font-size: 0.7em;"> (即将推出)</span></button>
 						<div class="seperator"></div>
-						<button @click="handleTopBarButtonClicked(1)" class="涩话草坪">涩话草坪</button>
-						<div class="seperator"></div>
-						<button @click="handleTopBarButtonClicked(2)">使用条款</button>
+						<button @click="handleTopBarButtonClicked(1)">涩话草坪</button>
 					</div>
 					<div class="versionInfo">
 						<div>版本：5.2&nbsp;&nbsp;(2026-01-01)</div>
@@ -211,8 +204,8 @@ onMounted(() => appStore.selectedPanelIndex = -1);
 				align-items: center;
 				isolation: isolate;
 				button {
-					padding: 6px 14px 6px 18px;
-					letter-spacing: 4px;
+					padding: 6px 14px 6px calc(14px + 0.2em);
+					letter-spacing: 0.2em;
 					color: var(--66);
 					background: none;
 					border-radius: 6px;
