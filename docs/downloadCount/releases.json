@@ -212,7 +212,7 @@
         "state": "uploaded",
         "size": 113924032,
         "digest": "sha256:be950de6e4660dccef2a1a6d4998eb5b4c26f3063f03b97f8553fad47ff3ae16",
-        "download_count": 57,
+        "download_count": 58,
         "created_at": "2025-12-31T19:55:54Z",
         "updated_at": "2025-12-31T19:56:22Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.2/macOS_ARM64_FFBox_5.2.dmg"
@@ -507,7 +507,7 @@
         "state": "uploaded",
         "size": 113923339,
         "digest": "sha256:915b9d6e4befd03dbc55825ed73e41d0227ce9f52e3ed23c3fe2260f2dfd6088",
-        "download_count": 56,
+        "download_count": 57,
         "created_at": "2025-11-19T14:33:11Z",
         "updated_at": "2025-11-19T14:33:36Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.1/macOS_ARM64_FFBox_5.1.dmg"
