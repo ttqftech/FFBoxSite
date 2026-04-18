@@ -579,7 +579,7 @@
         "state": "uploaded",
         "size": 92699259,
         "digest": "sha256:768f714ca96eb82ef60347f08c49a2d886fc5199e4d95e924a524b59bcf1a70b",
-        "download_count": 1073,
+        "download_count": 1074,
         "created_at": "2025-11-19T14:32:01Z",
         "updated_at": "2025-11-19T14:32:25Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.1/Windows_x86-64_FFBox_5.1.exe"
