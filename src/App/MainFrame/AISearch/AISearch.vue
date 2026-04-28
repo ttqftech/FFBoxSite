@@ -381,13 +381,16 @@ const handleActionButtonClick = (url: string) => {
 	}
 };
 
-const handleModelChange = (event: Event) => {
-	const value = (event.target as HTMLSelectElement).value;
-	const newModel = (props.modelOptions || []).find((model) => model.key === value);
-	const currentModel = (props.modelOptions || []).find((model) => model.key === selectedModelKey.value);
-	if (!newModel || newModel === currentModel) return;
+const handleModelChange = (value: string) => {
+	const newModel = props.modelOptions.find((model) => model.key === value);
+	const currentModel = props.modelOptions.find((model) => model.key === selectedModelKey.value);
+	if (!newModel || newModel === currentModel) {
+		return;
+	}
 	selectedModelKey.value = newModel.key;
-	if (currentModel && newModel.provider !== currentModel.provider) resetChat();
+	if (newModel.provider !== currentModel.provider) {
+		resetChat();
+	}
 };
 
 watch(() => props.modelOptions, (newOptions) => {
