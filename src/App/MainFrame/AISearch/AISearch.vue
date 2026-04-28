@@ -1,11 +1,13 @@
-<script setup lang="ts">
-import { ref, nextTick, computed, onMounted, watch } from 'vue';
+﻿<script setup lang="ts">
+import { ref, nextTick, computed, watch } from 'vue';
 import gsap from 'gsap';
-import AISearchConfig, { AIChatMessage } from './types';
+import AISearchConfig, { AIChatMessage, AIModelOption } from './types';
 import { getTimeString } from '../../../common/utils';
 import { useTooltip } from '../../../common/tooltipUtil';
 import { showActivateCodeGen } from './activateCodeGen';
 import Button, { ButtonType } from '../../../components/Button/Button';
+import DropdownInput from '../../../components/DropdownInput/DropdownInput.vue';
+import type { MenuItem } from '../../../components/Menu/Menu';
 import GradientRect from './gradientRect.svg?skipsvgo';	// svgo 存在 bug 导致 svg 中的 id 跨 svg 产生重复，见 https://svgo.dev/docs/plugins/cleanupIds/
 import IconRefresh from './refresh.svg';
 import IconLoading from './loading.svg';
@@ -14,12 +16,12 @@ import IconX from '../../../assets/×.svg';
 
 interface Props {
 	enabled?: boolean;	// 是否启用并显示该组件，未定义则启用
-	chatAPI?: (message: string) => Promise<{ content: string, expense?: number }>;	// 聊天 API，未定义则将在对话框中输出当前时间，出错将显示错误信息
-	resetChat?: () => any;	// 点击重置对话时需要处理的副作用
-	init?: () => any;	// 首次打开窗口时需要处理的副作用
-	statusAPI?: () => Promise<string>;
+	chatAPI?: (message: string, modelKey?: string) => Promise<{ content: string, expense?: number }>;	// 聊天 API，未定义则将在对话框中输出当前时间，出错将显示错误信息
+	resetChat?: (modelKey?: string) => any;	// 点击重置对话时需要处理的副作用
+	init?: (modelKey?: string) => any;	// 首次打开窗口时需要处理的副作用
+	statusAPI?: (modelKey?: string) => Promise<string>;
 	titleName?: string;	// 标题名，未定义则使用“FFBox AI 帮助”
-	modelName?: string;	// 显示在标题旁的模型名，未定义则不显示
+	modelOptions?: AIModelOption[];
 	initialPlaceholders?: string[];	// 未激活窗口时的 placeholder，未定义则使用“智能帮助”
 	initialPlaceholderInterval?: number;	// 未激活窗口时的 placeholder 的轮换间隔（ms），未定义则使用 4000
 	initSystemMessage?: AIChatMessage;	// 初始化窗口以及重置对话前补充一条系统信息
@@ -45,6 +47,7 @@ const messages = ref<AIChatMessage[]>([]);
 const sessionId = ref<string | null>(null);
 const loading = ref(false);
 const statusText = ref('大模型处理中');
+const selectedModelKey = ref<string | undefined>(undefined);
 
 const defaultAnchorRef = ref<HTMLDivElement>(null);
 const anchorRef = ref<HTMLDivElement>(null);
@@ -89,12 +92,27 @@ const roundsSvgPiePath = computed(() => {
 			Z`;
 });
 
+// const modelDisplayEntries = computed(() => (props.modelOptions || []).map((item) => ({
+// 	key: item.key,
+// 	display: item.label,
+// })));
+const modelDropdownList = computed<MenuItem[]>(() => {
+	const entries = props.modelOptions || [];
+	if (!entries.length) {
+		return [];
+	}
+	const first = { type: 'normal' as const, value: entries[0].key, label: entries[0].label };
+	const rest = entries.slice(1).map((item) => ({ type: 'normal' as const, value: item.key, label: item.label }));
+	return rest.length ? [first, { type: 'separator' as const }, ...rest] : [first];
+});
+const selectedModelDisplayText = computed(() => selectedModelKey.value ? props.modelOptions.find((model) => model.key === selectedModelKey.value)?.key || '' : '');
+
 const openWindow = () => {
 	if (!defaultAnchorRef.value) return;
 
 	if (!hasOpened && props.init) {
 		hasOpened = true;
-		props.init();
+		props.init(selectedModelKey.value);
 	}
 
 	const defaultRect = defaultAnchorRef.value.getBoundingClientRect();	// 记录默认位置
@@ -111,18 +129,18 @@ const openWindow = () => {
 	isOpened.value = 'opening';
 	const targetLeftRight = window.innerWidth * 0.30 - 100;
 	const targetBottom = -40 + window.innerHeight * 0.15;
-	const targetStyle = {
+	const targetStyle: Record<string, string> = {
 		position: 'fixed',
 		bottom: targetBottom + 'px',
 		left: targetLeftRight + 'px',
 		right: targetLeftRight + 'px',
 		height: '32px',
 		zIndex: '10',
-	}
+	};
 	gsap.to(anchorStyle.value, {
 		...targetStyle,
 		duration: 0.7,
-		ease: "power3.inOut",
+		ease: 'power3.inOut',
 		// onUpdate() {
 		// 	// 强制触发响应式更新
 		// 	console.log('update');
@@ -166,18 +184,17 @@ const closeWindow = async () => {
 		width: defaultRect.width + 'px',
 		height: defaultRect.height + 'px',
 		zIndex: '10',
-	}
+	};
 	gsap.to(anchorStyle.value, {
 		...targetStyle,
 		duration: 0.7,
-		ease: "power3.inOut",
+		ease: 'power3.inOut',
 		onComplete() {
 			anchorStyle.value = {};
 			isOpened.value = 'closed';
 		}
 	});
-
-}
+};
 
 const sendMessage = async () => {
 	if (!inputValue.value.trim() || loading.value) return;
@@ -191,8 +208,8 @@ const sendMessage = async () => {
 	}
 
 	const userText = inputValue.value.trim();
-	messages.value.push({ role: "user", text: userText, time: new Date() });
-	inputValue.value = "";
+	messages.value.push({ role: 'user', text: userText, time: new Date() });
+	inputValue.value = '';
 
 	// 发送匹配关键词打开链接
 	if (props.requestKeywordLink) {
@@ -234,11 +251,13 @@ const sendMessage = async () => {
 	if (props.chatAPI) {
 		statusText.value = '呼叫大模型工作流';
 		const pollingTimer = setInterval(() => {
-			props.statusAPI().then((result) => {
-				if (result && loading.value) statusText.value = result;
-			});
+			if (props.statusAPI) {
+				props.statusAPI(selectedModelKey.value).then((result) => {
+					if (result && loading.value) statusText.value = result;
+				});
+			}
 		}, 800);
-		props.chatAPI(userText).then((chatResult) => {
+		props.chatAPI(userText, selectedModelKey.value).then((chatResult) => {
 			const result = JSON.parse(chatResult.content);
 			const { msg, ref, lnk, ext } = result.obj;
 			const extras = (ext || '').split('&') as string[];
@@ -339,7 +358,7 @@ const sendMessage = async () => {
 const resetChat = () => {
 	messages.value = [];
 	sessionId.value = null;
-	(props.resetChat || (() => {}))();
+	(props.resetChat || (() => {}))(selectedModelKey.value);
 	if (props.initSystemMessage) {
 		setTimeout(() => {
 			messages.value.push(props.initSystemMessage);
@@ -360,7 +379,26 @@ const handleActionButtonClick = (url: string) => {
 	} else {
 		window.open(url);
 	}
-}
+};
+
+const handleModelChange = (event: Event) => {
+	const value = (event.target as HTMLSelectElement).value;
+	const newModel = (props.modelOptions || []).find((model) => model.key === value);
+	const currentModel = (props.modelOptions || []).find((model) => model.key === selectedModelKey.value);
+	if (!newModel || newModel === currentModel) return;
+	selectedModelKey.value = newModel.key;
+	if (currentModel && newModel.provider !== currentModel.provider) resetChat();
+};
+
+watch(() => props.modelOptions, (newOptions) => {
+	const options = newOptions || [];
+	if (!options.length) {
+		selectedModelKey.value = undefined;
+		return;
+	}
+	const hasCurrent = options.some((item) => item.key === selectedModelKey.value);
+	if (!hasCurrent) selectedModelKey.value = options[0].key;
+}, { immediate: true });
 
 let initialPlaceholderTimer: number;
 const initialPlaceholderIndex = ref(0);
@@ -397,13 +435,20 @@ watch(() => messages.value.length, () => {
 	<div class="defaultAnchor" ref="defaultAnchorRef" :class="props.enabled === false ? 'disabled' : ''">
 		<div class="aiSearchPositionAnchor" :style="anchorStyle" ref="anchorRef">
 			<transition name="panelAnim">
-				<div v-show="openedClass || true" :class="['panel', openedClass]" >
+				<div v-show="openedClass || true" :class="['panel', openedClass]">
 					<!-- <GradientRect /> -->
 					<div class="chatHeader">
 						<div class="left">
 							<IconAI />
 							<h3>{{ props.titleName ?? 'FFBox AI 帮助' }}</h3>
-							<span class="modelName" v-if="props.modelName">{{ props.modelName }}</span>
+							<DropdownInput
+								v-if="modelDropdownList.length"
+								class="modelName"
+								:readonly="true"
+								:text="selectedModelDisplayText"
+								:list="modelDropdownList"
+								:onChange="handleModelChange"
+							/>
 							<!-- Three Concentric Progress Rings (SVG only) -->
 							<div
 								v-if="props.quotaUsed"
@@ -415,7 +460,7 @@ watch(() => messages.value.length, () => {
 									${props.maxRounds !== undefined ? `本次对话：${messages.filter((msg) => msg.role === 'user').length} / ${props.maxRounds}\n` : ''}`
 								.slice(0, -1))"
 							>
-								<svg class="usageRing" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AI 使用量">
+							<svg class="usageRing" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AI 使用量">
 									<defs>
 										<filter id="quotaUsageBgShadow" x="-50%" y="-50%" width="200%" height="200%">
 											<feDropShadow dx="0" dy="0" stdDeviation="2" :flood-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" flood-opacity="0.4"/>
@@ -723,13 +768,15 @@ watch(() => messages.value.length, () => {
 							font-weight: 500;
 						}
 						.modelName {
-							display: inline-block;
-							padding: 2px 4px;
 							margin-left: 4px;
-							font-size: 10px;
 							border: hwb(255 50% 0% / 0.5) 1px solid;
-							border-radius: 4px;
+							border-radius: 8px;
 							background-color: hwb(255 50% 0% / 0.2);
+							width: 180px;
+							// max-width: 220px;
+							:deep(input) {
+								font-size: 11px;
+							}
 						}
 						.usage {
 							display: flex;
