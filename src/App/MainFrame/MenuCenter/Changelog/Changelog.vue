@@ -1,5 +1,15 @@
 <template>
 	<div class="updatelog-box">
+		<h2>版本 5.3<span>(2026-05-01)</span></h2>
+		<ul>
+			<li>API 层重构，改用 RESTful HTTP 接口和更正常的登录逻辑，支持 OpenAPI 和 webhook 供第三方程序接入 FFBox，提高安全性</li>
+			<li>全新“切割”面板，用于输入和输出时间切割操作，支持基于 ffmpeg 解码的远程也能用的视频预览，支持关键帧等信息扫描</li>
+			<li>新增切割时间输入框组件</li>
+			<li>AI 帮助现支持手动模型切换</li>
+			<li>AI 帮助改用 FFBox 域名接口，不再硬编码提供商相关逻辑</li>
+			<li>主菜单新增帮助链接</li>
+			<li>修复 macOS 上无法使用复制粘贴等功能的问题（更新主菜单）</li>
+		</ul>
 		<h2>版本 5.2<span>(2026-01-01)</span></h2>
 		<ul>
 			<li>史诗级提升任务列表渲染性能</li>
