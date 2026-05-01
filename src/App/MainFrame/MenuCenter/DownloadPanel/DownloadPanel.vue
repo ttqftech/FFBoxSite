@@ -26,8 +26,8 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 	switch (os) {
 		case 'Windows':
 			url = [
-				'https://github.com/ttqftech/FFBox/releases/download/v5.2/Windows_x86-64_FFBox_5.2.exe',
-				'https://github.com/ttqftech/FFBox/releases/download/v5.2/Windows_x86-64_FFBoxService+webUI_5.2.zip',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.3/Windows_x86-64_FFBox_5.3.exe',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.3/Windows_x86-64_FFBoxService+webUI_5.3.zip',
 				'./directDownload/ffmpegOnekey_Windows.ps1'
 			][selection];
 			if (selection === 2) {
@@ -51,8 +51,8 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 			break;
 		case 'MacOS':
 			url = [
-				'https://github.com/ttqftech/FFBox/releases/download/v5.2/macOS_ARM64_FFBox_5.2.dmg',
-				'https://github.com/ttqftech/FFBox/releases/download/v5.2/macOS_ARM64_FFBoxService+webUI_5.2.zip',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.3/macOS_ARM64_FFBox_5.3.dmg',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.3/macOS_ARM64_FFBoxService+webUI_5.3.zip',
 			][selection];
 			Msgbox({
 				image: h(IconPointOut),
@@ -72,16 +72,16 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 			break;
 		case 'Linux':
 			url = [
-				'https://github.com/ttqftech/FFBox/releases/download/v5.2/Linux_x86-64_FFBox_5.2.deb',
-				'https://github.com/ttqftech/FFBox/releases/download/v5.2/Linux_x86-64_FFBox_5.2.AppImage',
-				'https://github.com/ttqftech/FFBox/releases/download/v5.2/Linux_x86-64_FFBoxService+webUI_5.2.zip',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.3/Linux_x86-64_FFBox_5.3.deb',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.3/Linux_x86-64_FFBox_5.3.AppImage',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.3/Linux_x86-64_FFBoxService+webUI_5.3.zip',
 			][selection];
 			window.open(url, '__blank');
 			break;
 		case 'web':
 			url = [
-				'./online-v5.2',
-				'./FFBox_v5.2_web.zip',
+				'./online-v5.3',
+				'./FFBox_v5.3_web.zip',
 			][selection];
 			if (selection === 0) {
 				Msgbox({

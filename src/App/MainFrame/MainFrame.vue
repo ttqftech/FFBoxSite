@@ -54,7 +54,7 @@ const handleTopBarButtonClicked = (index: number) => {
 				title: '您将要使用一个尚未完善的网页版～',
 				content: h('div', ['FFBox 是优先为客户端环境进行开发的，网页运行功能相对受限且可能存在更多 bug，建议您有条件时优先使用客户端', h('br'), '如果要使用 webUI，建议自行部署以获得更佳体验～']),
 				buttons: [
-					{ text: `我已知悉，继续`, type: ButtonType.Primary, callback: () => window.open('./online-v5.2', '__blank') && true },
+					{ text: `我已知悉，继续`, type: ButtonType.Primary, callback: () => window.open('./online-v5.3', '__blank') && true },
 				]
 			});
 		}
@@ -141,12 +141,12 @@ onMounted(async () => {
 			<div class="lrCenter">
 				<img class="title-1" src="../../assets/软件图标v1.0.png" alt="FFBox 图标" width="368" height="184" />
 				<div class="actions">
-					<button @click="handleTopBarButtonClicked(0)">API 文档<span style="font-size: 0.7em;"> (即将推出)</span></button>
+					<button @click="handleTopBarButtonClicked(0)">API 文档</button>
 					<div class="seperator"></div>
 					<button @click="handleTopBarButtonClicked(1)">涩话草坪</button>
 				</div>
 				<div class="versionInfo">
-					<div>版本：5.2&nbsp;&nbsp;(2026-01-01)</div>
+					<div>版本：5.3&nbsp;&nbsp;(2026-05-01)</div>
 				</div>
 			</div>
 			<div class="FFBox-topWrapper" :style="FFBoxTopWrapperStyle">
