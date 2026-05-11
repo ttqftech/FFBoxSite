@@ -176,7 +176,7 @@
         "state": "uploaded",
         "size": 19784558,
         "digest": "sha256:c1e6670854fad8c6c28b62b9faaecf03b0e3e1c7030f6add4437a88bed42f359",
-        "download_count": 8,
+        "download_count": 9,
         "created_at": "2026-04-30T20:13:42Z",
         "updated_at": "2026-04-30T20:13:49Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.3/macOS_ARM64_FFBoxService%2BwebUI_5.3.zip"
