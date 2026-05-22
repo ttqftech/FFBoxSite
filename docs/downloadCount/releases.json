@@ -140,7 +140,7 @@
         "state": "uploaded",
         "size": 84652510,
         "digest": "sha256:8b59527e1f4442357d89bc1a249e5e86384e94511d634829767e4af0d1c477db",
-        "download_count": 26,
+        "download_count": 27,
         "created_at": "2026-04-30T20:13:56Z",
         "updated_at": "2026-04-30T20:14:23Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.3/Linux_x86-64_FFBox_5.3.deb"
