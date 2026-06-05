@@ -1,0 +1,23 @@
+[
+    {
+        "from": "5.3",
+        "to": "5.4-alpha",
+        "category": "FFBox 版本互转",
+        "description": "",
+        "link": "http://FFBox.ttqf.tech/api/v1/FFBoxPresetConverter/FFBox5.3-FFBox5.4.js"
+    },
+    {
+        "from": "5.4-alpha",
+        "to": "5.3",
+        "category": "FFBox 版本互转",
+        "description": "",
+        "link": "http://FFBox.ttqf.tech/api/v1/FFBoxPresetConverter/FFBox5.4-FFBox5.3.js"
+    },
+    {
+        "from": "备份",
+        "to": "备份",
+        "category": "FFBox 版本互转",
+        "description": "",
+        "link": "https://FFBox.ttqf.tech/api/v1/FFBoxPresetConverter/FFBox5.4-FFBox5.3.js"
+    }
+]
