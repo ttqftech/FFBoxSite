@@ -26,15 +26,15 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 	switch (os) {
 		case 'Windows':
 			url = [
-				'https://github.com/ttqftech/FFBox/releases/download/v5.3/Windows_x86-64_FFBox_5.3.exe',
-				'https://github.com/ttqftech/FFBox/releases/download/v5.3/Windows_x86-64_FFBoxService+webUI_5.3.zip',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.4/Windows_x86-64_FFBox_5.4.exe',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.4/Windows_x86-64_FFBoxService+webUI_5.4.zip',
 				'./directDownload/ffmpegOnekey_Windows.ps1'
 			][selection];
 			if (selection === 2) {
 				Msgbox({
 					image: h(IconPointOut),
 					title: '使用说明',
-					content: h('div', { style: `text-align: center` }, ['本脚本只是备选方案，请优先使用 winget install ffmpeg --version 7.1 命令进行安装！', h('br'), h('br'), '一般情况下，Windows 会对从互联网上下载的 Powershell 脚本在运行前进行询问，同意后即可运行', h('br'), '如果您的 Windows 安全设置较高，则会提示“此系统上禁止运行脚本”。您需要使用管理员身份执行 Set-ExecutionPolicy RemoteSigned 后才可运行该脚本']),
+					content: h('div', { style: `text-align: center` }, ['本脚本只是备选方案，请优先使用 winget install ffmpeg --version 8.1 命令进行安装！', h('br'), h('br'), '一般情况下，Windows 会对从互联网上下载的 Powershell 脚本在运行前进行询问，同意后即可运行', h('br'), '如果您的 Windows 安全设置较高，则会提示“此系统上禁止运行脚本”。您需要使用管理员身份执行 Set-ExecutionPolicy RemoteSigned 后才可运行该脚本']),
 					buttons: [
 						{ text: `我已知悉，继续`, type: ButtonType.Primary, callback: () => {
 							const a = document.createElement('a');
@@ -51,8 +51,8 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 			break;
 		case 'MacOS':
 			url = [
-				'https://github.com/ttqftech/FFBox/releases/download/v5.3/macOS_ARM64_FFBox_5.3.dmg',
-				'https://github.com/ttqftech/FFBox/releases/download/v5.3/macOS_ARM64_FFBoxService+webUI_5.3.zip',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.4/macOS_ARM64_FFBox_5.4.dmg',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.4/macOS_ARM64_FFBoxService+webUI_5.4.zip',
 			][selection];
 			Msgbox({
 				image: h(IconPointOut),
@@ -72,16 +72,16 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 			break;
 		case 'Linux':
 			url = [
-				'https://github.com/ttqftech/FFBox/releases/download/v5.3/Linux_x86-64_FFBox_5.3.deb',
-				'https://github.com/ttqftech/FFBox/releases/download/v5.3/Linux_x86-64_FFBox_5.3.AppImage',
-				'https://github.com/ttqftech/FFBox/releases/download/v5.3/Linux_x86-64_FFBoxService+webUI_5.3.zip',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.4/Linux_x86-64_FFBox_5.4.deb',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.4/Linux_x86-64_FFBox_5.4.AppImage',
+				'https://github.com/ttqftech/FFBox/releases/download/v5.4/Linux_x86-64_FFBoxService+webUI_5.4.zip',
 			][selection];
 			window.open(url, '__blank');
 			break;
 		case 'web':
 			url = [
-				'./online-v5.3',
-				'./FFBox_v5.3_web.zip',
+				'./online-v5.4',
+				'./FFBox_v5.4_web.zip',
 			][selection];
 			if (selection === 0) {
 				Msgbox({
@@ -147,7 +147,7 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 				<Button size="large" @click="handleDownloadClick('web', 1)"><IconZip />v5.1 版本</Button>
 			</div>
 		</div>
-		<h2>ffmpeg 一键安装脚本<span>(但从下载到运行脚本的操作不是一键的)</span></h2>
+		<h2>ffmpeg 一键安装脚本<span>(一键指的是脚本本身，而不是这个下载按钮)</span></h2>
 		<div class="oss">
 			<div class="os">
 				<span>Windows (x86-64)</span>

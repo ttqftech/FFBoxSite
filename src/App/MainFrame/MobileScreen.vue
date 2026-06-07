@@ -71,7 +71,7 @@ onMounted(() => appStore.selectedPanelIndex = -1);
 						<button @click="handleTopBarButtonClicked(1)">涩话草坪</button>
 					</div>
 					<div class="versionInfo">
-						<div>版本：5.3&nbsp;&nbsp;(2026-05-01)</div>
+						<div>版本：5.4&nbsp;&nbsp;(2026-06-07)</div>
 					</div>
 					<div class="screenshot" @click="props.onScreenshotClicked">
 						<img v-if="appStore.colorTheme === 'themeLight'" alt="FFBox 软件截图" src="../../assets/软件截图_中_浅色_完整.webp" />

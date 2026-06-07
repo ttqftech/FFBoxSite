@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "FFBox API",
-    "version": "5.3.0",
+    "version": "5.4.0",
     "description": "FFBox 后端服务 API 文档",
     "contact": {
       "name": "滔滔清风",
@@ -310,6 +310,9 @@
       "InputFile": {
         "type": "object",
         "properties": {
+          "skipFrame": {
+            "type": "string"
+          },
           "hwaccel": {
             "type": "string"
           },
@@ -325,8 +328,8 @@
           "end": {
             "type": "string"
           },
-          "realtime": {
-            "type": "boolean"
+          "readrate": {
+            "type": "string"
           },
           "detail": {
             "type": "object"
@@ -579,12 +582,6 @@
           "ratecontrol": {
             "type": "string"
           },
-          "ratevalue": {
-            "type": [
-              "number",
-              "string"
-            ]
-          },
           "detail": {
             "type": "object"
           },
@@ -594,10 +591,6 @@
         },
         "required": [
           "vcodec",
-          "resolution",
-          "framerate",
-          "ratecontrol",
-          "ratevalue",
           "detail"
         ],
         "additionalProperties": false
@@ -611,15 +604,6 @@
           "ratecontrol": {
             "type": "string"
           },
-          "ratevalue": {
-            "type": [
-              "number",
-              "string"
-            ]
-          },
-          "vol": {
-            "type": "number"
-          },
           "detail": {
             "type": "object"
           },
@@ -629,9 +613,6 @@
         },
         "required": [
           "acodec",
-          "ratecontrol",
-          "ratevalue",
-          "vol",
           "detail"
         ],
         "additionalProperties": false
@@ -1836,7 +1817,7 @@
               }
             }
           },
-          "404": {
+          "400": {
             "description": "任务未找到",
             "content": {
               "application/json": {
@@ -2197,6 +2178,197 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{id}/frame-info": {
+      "post": {
+        "summary": "扫描视频帧信息",
+        "description": "扫描指定视频流的帧信息，等待扫描完成后返回帧数据数组",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fileIndex": {
+                    "type": "integer",
+                    "description": "输入文件索引"
+                  },
+                  "videoStreamIndex": {
+                    "type": "integer",
+                    "description": "视频流索引（第 n 个 type 为 video 的 stream）"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "fast",
+                      "full",
+                      "stop"
+                    ],
+                    "default": "fast",
+                    "description": "扫描类型"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "帧扫描完成，返回帧数据数组",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "n": {
+                        "type": "integer",
+                        "description": "帧号"
+                      },
+                      "pts": {
+                        "type": "number",
+                        "description": "时间戳（ffprobe 快速扫描不提供）"
+                      },
+                      "pts_time": {
+                        "type": "number",
+                        "description": "换算为秒的时间戳"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "I",
+                          "P",
+                          "B"
+                        ],
+                        "description": "帧类型"
+                      },
+                      "mean": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "description": "YUV 平均值（可能是 2 或 3 个数字，ffprobe 快速扫描不提供）"
+                      },
+                      "stdev": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "description": "YUV 标准差（可能是 2 或 3 个数字，ffprobe 快速扫描不提供）"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数缺失/任务或输入文件不存在"
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{id}/thumbnail-stream": {
+      "get": {
+        "summary": "获取视频缩略图流",
+        "description": "生成视频关键帧缩略图的 MP4 流，使用 MSE 兼容的分片格式",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "任务 ID"
+          },
+          {
+            "in": "query",
+            "name": "fileIndex",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "输入文件索引"
+          },
+          {
+            "in": "query",
+            "name": "videoStreamIndex",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "视频流索引（第 n 个 type 为 video 的 stream）"
+          },
+          {
+            "in": "query",
+            "name": "width",
+            "schema": {
+              "type": "integer",
+              "default": 768
+            },
+            "description": "缩略图宽度（最大 768，会自动等比缩放）"
+          },
+          {
+            "in": "query",
+            "name": "height",
+            "schema": {
+              "type": "integer",
+              "default": 768
+            },
+            "description": "缩略图高度（最大 768，会自动等比缩放）"
+          },
+          {
+            "in": "query",
+            "name": "density",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "M",
+                "H"
+              ],
+              "default": "M"
+            },
+            "description": "缩略图间隔模式（'H' 高密度模式，'M' 中等密度模式）"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "MP4 视频流",
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "任务不存在或没有输入文件"
           }
         }
       }

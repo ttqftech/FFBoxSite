@@ -21,16 +21,17 @@ FFBox 源代码和二进制文件均免费向所有个体开放。
 
 如果使用者存在或曾经存在以下行为致他人受到未明确作出谅解的伤害，则不得使用 FFBox，亦不得通过他人协助或协助他人的方式使用 FFBox（但若您仅开启了 FFBox 服务，而服务使用者与您并不存在交往，则不受此条款限制）：
 
-- 无中生有编造他人言论或想法或客观事实
-- 拒绝他人理性参与讨论、坚持使用主观想法代表客观世界
-- 同时与多个对象维持『任何一方不知情或不同意』的『恋爱关系或模糊的亲密关系』
-- 通过隐瞒、欺骗他人等方式满足自身情感需求
-- 操纵或滥用他人感情（如过度控制或索取）
-- 对他人进行情感上的信任背离（含背叛、空洞承诺等）行为
+- 主观故意地，或反复无意地无中生有、编造他人言论或想法；长期依据虚构事实、片段事件、主观想法认定他人或代表世界
+- 对已经被明确指出且具有可改正条件的影响他人的问题，长期、反复地拒绝纠正或补救，并持续造成他人损害
+- 以无理由禁止发言、强烈不文明用语、威胁等低劣形式，拒绝必要的理性讨论的进行和结果
+- 同时与多个对象维持『任何一方不知情或不同意』的『存在排他期待或事实排他性质的恋爱/准恋爱关系』
+- 通过隐瞒、欺骗、误导等方式使他人在错误认知下投入情感、时间或资源以满足自身情感需求
+- 对他人进行情感上的信任背离（含背叛、空洞承诺等）行为，包括但不限于明知无法或无意履行时
+- 操纵或滥用他人感情（如过度控制或索取、排他性施压等）
 
 FFBox 作者将保留对本许可与使用条款的解释权及随时修改的权利。
 
-*2025-11-19*
+*2026-06-07*
 `;
 
 const content = computed(() => {
@@ -42,15 +43,17 @@ const content = computed(() => {
 const handleCheckboxClicked = () => {
 	if (!appStore.termsAgreed) {
 		const 未曾存在 = h('font', { style: "color: #3C3" }, '未曾存在');
-		const behavior1 = '- 无中生有编造他人言论或想法或客观事实';
-		const behavior2 = '- 拒绝他人理性参与讨论、坚持使用主观想法代表客观世界';
-		const behavior3 = '- 同时与多个对象维持『任何一方不知情或不同意』的『恋爱关系或模糊的亲密关系』';
-		const behavior4 = '- 通过隐瞒、欺骗他人等方式满足自身情感需求';
-		const behavior5 = '- 操纵或滥用他人感情（如过度控制或索取）';
-		const behavior6 = '- 对他人进行情感上的信任背离（含背叛、空洞承诺等）行为';
+		const behavior1 = '- 投射、诽谤、断章取义、拒绝认知';
+		const behavior2 = '- 拒绝反思修正';
+		const behavior3 = '- 拉黑、威胁';
+		const behavior4 = '- 脚踏多条船';
+		const behavior5 = '- 欺骗';
+		const behavior6 = '- 失信';
+		const behavior7 = '- 情感操纵';
+		const 请以协议为准 = h('font', { style: "opacity: 0.8; font-style: italic" }, '*上述词语是对协议的简化表达，请以协议为准*');
 		const licenseSlice = h(
 			'div',
-			['您是否', 未曾存在, '以下行为致他人受到未明确作出谅解的伤害：', h('br'), ...[behavior1, behavior2, behavior3, behavior4, behavior5, behavior6].reduce((prev, curr) => prev.concat([curr, h('br')]), []).slice(0, -1)]
+			['简单来说，您是否', 未曾存在, '以下行为致他人受到未明确作出谅解的伤害：', h('br'), ...[behavior1, behavior2, behavior3, behavior4, behavior5, behavior6, behavior7, 请以协议为准].reduce((prev, curr) => prev.concat([curr, h('br')]), []).slice(0, -1)]
 		);
 		Msgbox({
 			image: h(IconReadBook),
