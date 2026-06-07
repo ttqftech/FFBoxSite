@@ -1,14 +1,14 @@
 [
     {
-        "from": "5.3",
-        "to": "5.4-alpha",
+        "from": "FFBox 5.3",
+        "to": "FFBox 5.4",
         "category": "FFBox 版本互转",
         "description": "【beta 不一定能正常工作】将 5.3 版本的 ratevalue（滑杆位置）转换为 5.4 版本 detail 中的实际 ffmpeg 参数值",
         "link": "http://FFBox.ttqf.tech/api/v1/FFBoxPresetConverter/FFBox5.3-FFBox5.4.js"
     },
     {
-        "from": "5.4-alpha",
-        "to": "5.3",
+        "from": "FFBox 5.4",
+        "to": "FFBox 5.3",
         "category": "FFBox 版本互转",
         "description": "【beta 不一定能正常工作】将 5.4 版本 detail 中的实际 ffmpeg 参数值转换回 5.3 版本的 ratevalue（滑杆位置）",
         "link": "http://FFBox.ttqf.tech/api/v1/FFBoxPresetConverter/FFBox5.4-FFBox5.3.js"
