@@ -265,7 +265,7 @@ onMounted(() => {
 		<div class="yourLevel">
 			<BoxedSlider title="用户等级演示" :min="0" :max="100" adsorption="int" :tags="[[20, '20']]" :value="functionLevel" @change="(value) => functionLevel = +value" />
 		</div>
-		<p>此处用户等级演示适用于 FFBox v5.3 版本</p>
+		<p>此处用户等级演示适用于 FFBox v5.4 版本</p>
 		<table>
 			<tbody>
 				<tr>

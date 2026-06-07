@@ -1,5 +1,15 @@
 <template>
 	<div class="updatelog-box">
+		<h2>版本 5.4<span>(2026-06-07)</span></h2>
+		<ul>
+			<li>切割操作器新增进度条鼠标悬浮缩略图（带后端缓存）；改用 ffprobe 扫描关键帧信息，大幅提高速度</li>
+			<li>切割时间输入框组件新增清空按钮</li>
+			<li>hwaccel 支持自定义字符串；支持 skip_frame 参数；支持 readrate 参数</li>
+			<li>新增预设导入导出功能，并支持跨版本预设转换插件</li>
+			<li>码率控制选项重构，ratevalue→详细参数；码率控制支持不选择（自动）模式</li>
+			<li>音频采样频率和声道布局在无定义情况下支持手动输入；去除 -vol 选项</li>
+			<li>修复一大批音频编码的采样频率、码率控制等的不正确定义</li>
+		</ul>
 		<h2>版本 5.3<span>(2026-05-01)</span></h2>
 		<ul>
 			<li>API 层重构，改用 RESTful HTTP 接口和更正常的登录逻辑，支持 OpenAPI 和 webhook 供第三方程序接入 FFBox，提高安全性</li>
