@@ -140,7 +140,7 @@
         "state": "uploaded",
         "size": 84663524,
         "digest": "sha256:afb5b469bf8c96f65e08e9bbdca01eb13f34764b08c89056c139da51ac9f1e53",
-        "download_count": 12,
+        "download_count": 13,
         "created_at": "2026-06-07T15:30:33Z",
         "updated_at": "2026-06-07T15:30:54Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.4/Linux_x86-64_FFBox_5.4.deb"
