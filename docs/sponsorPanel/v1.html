@@ -283,7 +283,7 @@
 			Ko-Fi
 		</button>
 		<button class="ffbox-button" id="btn-afdian" tooltip="这个似乎更适合中国宝宝的体质❤️～">
-			<img src="../assets/afdian.png" alt="" style="width:20px;height:20px;vertical-align:-4px;margin-right:4px;">爱发电
+			<img src="./afdian.png" alt="" style="width:20px;height:20px;vertical-align:-4px;margin-right:4px;">爱发电
 		</button>
 		<button class="ffbox-button" id="btn-auto-proxy" tooltip="如果有哪天左边的某个按钮失效了就点这个吧🌚（当然也不排除这个按钮会失效">
 			帮我挑个合适的
@@ -364,6 +364,7 @@
 
 	<p>FFBox 是一款试用、有源、捐赠混合的软件。出厂状况下，本软件存在部分功能的使用限制</p>
 	<p>您可以通过激活码去除这些限制，详情请到官网或官方信息发布平台查询～</p>
+	<button class="ffbox-button" id="btn-morality-exam">人品考核</button>
 
 	<div class="ffbox-input" id="activate-input">
 		<div class="input-title">激活码</div>
@@ -597,6 +598,9 @@
 				activateCode = e.target.value;
 			});
 
+			// Morality exam button
+			document.getElementById('btn-morality-exam').addEventListener('click', () => request('popup', { message: '请回到主面板，向 AI 咨询相关事项～', level: 0 }));
+
 			// Activation buttons
 			document.getElementById('btn-activate-frontend').addEventListener('click', () => handleActivate('frontend'));
 			document.getElementById('btn-activate-backend').addEventListener('click', () => handleActivate('backend'));
@@ -674,6 +678,8 @@
 
 		// ==================== Initialization ====================
 		function init() {
+			window.parent.postMessage({ type: 'childReady' }, '*');
+
 			// Paint QR codes
 			paintQRcode2canvas(document.getElementById('qr_alipayredenvelop'), alipayRedEnvelopQR());
 			paintQRcode2canvas(document.getElementById('qr_alipay'), alipayQR());
