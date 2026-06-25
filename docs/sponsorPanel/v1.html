@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>FFBox - 支持作者</title>
+	<style>
+		/* ==================== Base Reset ==================== */
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			padding: 0 16px;
+			font-family: MiSans, PingFang SC, 苹方, 微软雅黑, HarmonyOS Sans, HarmonyOS Sans SC, Noto Sans S Chinese, 思源黑体, Product Sans, Segoe UI, Avenir, Arial, Consolas, Helvetica, sans-serif, 黑体;
+			font-size: 15px;
+			line-height: 1.5;
+			text-align: center;
+			color: inherit;
+			background: transparent;
+			overflow-x: hidden;
+			user-select: none;
+		}
+
+		/* ==================== Theme Variables ==================== */
+		.themeLight {
+			color: #333333;
+			--fontColor: #333333;
+			--bg100: 0 100% 0%; --bg99: 0 99% 1%; --bg98: 0 98% 2%; --bg97: 0 97% 3%;
+			--bg96: 0 96% 4%; --bg95: 0 95% 5%; --bg94: 0 94% 6%; --bg93: 0 93% 7%;
+			--bg92: 0 92% 8%; --bg91: 0 91% 9%; --bg90: 0 90% 10%;
+			--ff: #FFFFFF; --f7: #F7F7F7; --e7: #E7E7E7; --66: #666; --33: #333;
+			--highlight: 0 100% 0%;
+			--hoverLightBg: 0 100% 0%;
+			--hoverShadow: 0 0% 100%;
+			--opposite: 0 0% 100%;
+			--errorBorder: #E77; --errorBg: #FEE; --errorBgActive: #FEE;
+			--paraBoxButtonDropFilterSvg: drop-shadow(0 0 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.15));
+			--titleText: #25e;
+			--articleBorder: hwb(30 70% 10%); --articleLightBg: hwb(30 85% 2% / 0.6);
+		}
+		.themeDark {
+			color: #EEE;
+			--fontColor: #EEEEEE;
+			--bg100: 0 20.0% 80.0%; --bg99: 0 18.5% 81.5%; --bg98: 0 17.0% 83.0%;
+			--bg97: 0 15.5% 84.5%; --bg96: 0 14.0% 86.0%; --bg95: 0 12.5% 87.5%;
+			--bg94: 0 11.0% 89.0%; --bg93: 0 9.5% 90.5%; --bg92: 0 8.0% 92.0%;
+			--bg91: 0 6.5% 93.5%; --bg90: 0 5.0% 95.0%;
+			--ff: black; --f7: #222; --e7: #333; --66: #B7B7B7; --33: #DDD;
+			--highlight: 0 25% 75%;
+			--hoverLightBg: 0 20% 80%;
+			--hoverShadow: 0 0% 100%;
+			--opposite: 0 100% 0%;
+			--errorBorder: #D66; --errorBg: #472727; --errorBgActive: #522;
+			--paraBoxButtonDropFilterSvg: drop-shadow(0 2px 2px hwb(0 100% 0% / 0.1));
+			--titleText: #37f;
+			--articleBorder: hwb(30 30% 40%); --articleLightBg: hwb(30 5% 40% / 0.6);
+		}
+
+		/* ==================== Typography ==================== */
+		p { font-size: 15px; line-height: 20px; }
+		h2 {
+			font-size: 20px; font-weight: 600;
+			margin: 2em 0 1em;
+			color: var(--titleText);
+		}
+
+		/* ==================== Layout ==================== */
+		.paragram {
+			display: flex; justify-content: center; flex-wrap: wrap;
+			margin-bottom: 24px; gap: 8px 0;
+		}
+		.paragram > button svg, .paragram > button img {
+			width: 20px; height: 20px; vertical-align: -4px; margin-right: 4px;
+		}
+
+		/* ==================== ffbox-button ==================== */
+		button.ffbox-button {
+			display: inline-flex; align-items: center; justify-content: center;
+			position: relative;
+			min-width: 100px; height: 28px; padding: 0 12px;
+			font-size: 14px; text-align: center;
+			background: linear-gradient(180deg, hwb(var(--bg99)), hwb(var(--bg94)));
+			color: var(--33); font-family: inherit;
+			border-radius: 8px; border: none; outline: none;
+			transition: box-shadow 0.3s cubic-bezier(0, 1.5, 0.3, 1);
+		}
+		button.ffbox-button:not(:last-child) { margin-right: 16px; }
+		button.ffbox-button:active { transition: none; transform: translateY(0.5px); }
+
+		.themeLight button.ffbox-button {
+			box-shadow: 0 0 1px 0.5px hwb(var(--bg99)), 0 1px 3px 0 hwb(var(--hoverShadow) / 0.3);
+		}
+		.themeLight button.ffbox-button:hover {
+			box-shadow: 0 0 1px 0.5px hwb(var(--bg99)), 0 0 0 0.5px hwb(var(--highlight)) inset, 0 1px 4px 0 hwb(var(--hoverShadow) / 0.4);
+		}
+		.themeLight button.ffbox-button:active {
+			box-shadow: 0 0px 2px 0.5px hwb(var(--hoverShadow) / 0.15), 0 8px 12px hwb(var(--hoverShadow) / 0.1) inset;
+		}
+		.themeDark button.ffbox-button {
+			box-shadow: 0 0 1px 0.5px hwb(var(--bg99)), 0 0 0 0.5px hwb(var(--highlight) / 0.5) inset, 0 1px 3px 0 hwb(var(--hoverShadow) / 0.3);
+		}
+		.themeDark button.ffbox-button:hover {
+			box-shadow: 0 0 1px 0.5px hwb(var(--bg99)), 0 0 0 0.75px hwb(var(--highlight)) inset, 0 1px 4px 0 hwb(var(--hoverShadow) / 0.4);
+		}
+		.themeDark button.ffbox-button:active {
+			box-shadow: 0 0px 2px 0.5px hwb(var(--hoverShadow) / 0.15), 0 8px 18px hwb(var(--hoverShadow) / 0.4) inset;
+		}
+		button.ffbox-button[disabled] { pointer-events: none; opacity: 0.6; }
+
+		/* ==================== ffbox-input ==================== */
+		.ffbox-input {
+			display: flex; align-items: center;
+			height: 56px; width: 100%;
+			margin: 4px 0;
+			gap: 4px;
+		}
+		.ffbox-input .input-title {
+			min-width: 88px; font-size: 14px; text-align: center;
+		}
+		.ffbox-input .inputbox-selector {
+			position: relative; height: 24px; flex-grow: 1;
+			border-radius: 24px; background: var(--f7);
+			border: #AAA 1px solid;
+			box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+			transition: box-shadow 0.2s linear, border 0.2s linear;
+		}
+		.ffbox-input .inputbox-selector:hover { background: var(--ff); }
+		.ffbox-input .inputbox-selector:active { background: var(--e7); }
+		.ffbox-input .inputbox-selector > input {
+			position: absolute; left: 6px;
+			width: calc(100% - 12px); height: 24px; line-height: 24px;
+			background: none; border: none; margin: 0; padding: 0; outline: none;
+			font-family: inherit; font-size: 13px; color: inherit;
+		}
+		.ffbox-input .inputbox-selector > input::placeholder {
+			font-size: 13px; opacity: 0.1; font-style: italic;
+			transition: opacity 0.15s linear;
+		}
+		.ffbox-input .inputbox-selector > input:hover::placeholder {
+			font-size: 13px; opacity: 0.25;
+		}
+
+		/* ==================== Tooltip ==================== */
+		.tooltip {
+			position: fixed; z-index: 99999;
+			padding: 4px 8px; border-radius: 6px;
+			font-size: 12px; line-height: 1.4;
+			color: #FFF; background: hwb(0 0% 100% / 0.85);
+			backdrop-filter: blur(4px);
+			pointer-events: none;
+			white-space: pre-wrap; word-break: break-all;
+			max-width: 240px;
+			opacity: 0; transition: opacity 0.15s ease;
+		}
+		.tooltip.visible { opacity: 1; }
+
+		/* ==================== QR Screens ==================== */
+		.QRscreen {
+			position: relative; width: 216px; height: 296px;
+			border-radius: 10px; margin: 16px; overflow: hidden;
+			transition: transform 0.1s ease;
+		}
+		.QRscreen.pressed { transform: scale(0.95); }
+		.QRuppertext {
+			position: absolute; top: 14px; width: 100%;
+			text-align: center; font-size: 18px; color: #FFF;
+		}
+		.QRbox {
+			position: absolute; margin: auto; left: 0; right: 0; top: 48px;
+			width: 156px; height: 156px; box-sizing: border-box;
+			background: #FFF; display: flex; justify-content: center; align-items: center;
+		}
+		.QRbox canvas { font-size: 0; width: 144px; height: 144px; }
+		.QRlowertext {
+			position: absolute; top: 212px; width: 100%;
+			text-align: center; font-size: 16px; color: #FFF;
+		}
+		.QRtitle {
+			position: absolute; bottom: 0; height: 48px; width: 100%; background: #FFF;
+		}
+		.QRtitle img {
+			position: absolute; margin: auto; left: 0; right: 0; top: 0; bottom: 0; height: 60%;
+		}
+		.QRscreen-alipayredenvelop { background: #e72446; box-shadow: hwb(350 14% 9% / 0.5) 0px 6px 20px; }
+		.QRscreen-alipay { background: #019fe8; box-shadow: hwb(199 0% 31% / 0.5) 0px 6px 20px; }
+		.QRscreen-wechatpay { background: #22ab38; box-shadow: hwb(130 10% 50% / 0.5) 0px 6px 20px; }
+		.QRscreen-qqpay { background: #12b7f5; box-shadow: hwb(196 8% 4% / 0.5) 0px 6px 20px; }
+
+		/* ==================== Progress Bar ==================== */
+		.yourLevel-item {
+			position: relative; width: 80%; height: 48px;
+			margin-left: 10%; margin: 24px auto;
+			border-radius: 24px;
+			box-shadow: -4px -8px 8px 0 hwb(var(--hoverLightBg) / 0.3),
+						4px 8px 4px -2px hwb(var(--hoverLightBg) / 0.3),
+						5px 10px 4px 0 hwb(var(--hoverShadow) / 0.08),
+						3px 6px 3px 0 hwb(var(--hoverShadow) / 0.08) inset,
+						-2px -4px 3px 0 hwb(var(--hoverLightBg) / 0.8) inset;
+			background-color: hwb(var(--hoverShadow) / 0.02);
+		}
+		.yourLevel-middleNoOverflow {
+			position: absolute; left: 12px; top: 12px; right: 12px; bottom: 12px;
+			display: flex; justify-content: center; border-radius: 12px;
+			background-color: hwb(var(--bg95) / 0.5); overflow: hidden;
+		}
+		.yourLevel-middleNoOverflow .yourLevel-bar {
+			position: relative; height: 24px; border-radius: 12px;
+			outline: red solid dashed;
+			box-shadow: 0 0 64px 12px hwb(50 15% 0% / 0.6);
+			mix-blend-mode: hard-light;
+		}
+		.yourLevel-middle {
+			position: absolute; left: 12px; top: 12px; right: 12px; bottom: 12px;
+			display: flex; justify-content: center; border-radius: 12px;
+			box-shadow: 0 4px 3px 0px hwb(var(--hoverShadow) / 0.08) inset,
+						0 -1.5px 2px 0px hwb(var(--hoverLightBg) / 0.8) inset;
+		}
+		.yourLevel-middle .yourLevel-bar {
+			position: relative; height: 24px; border-radius: 12px;
+			background: linear-gradient(180deg, hwb(50 0% 0% / 0.9), hwb(50 5% 0% / 0.9));
+			box-shadow: 0 0 10px 0 hwb(50 5% 0% / 0.5),
+						4px 8px 12px -2px hwb(50 5% 0% / 0.15),
+						5px 10px 6px 0 hwb(50 0% 100% / 0.08),
+						3px 6px 2px 0 hwb(50 0% 30% / 0.16) inset,
+						-2px -4px 3px 0 hwb(50 65% 0% / 0.8) inset;
+		}
+		.yourLevel-middle .yourLevel-bar .yourLevel-bar-highlight {
+			position: absolute; left: 2px; top: 2px; right: 2px; height: 12px;
+			border-radius: 10px 10px 2px 2px;
+			background: linear-gradient(to bottom, hwb(50 100% 0% / 0.4), hwb(50 100% 0% / 0.3), hwb(50 100% 0% / 0.0));
+		}
+		.yourLevel-middle .yourLevel-bar span {
+			position: relative; font-size: 14px; line-height: 24px;
+			color: #333; text-shadow: 1px 2px 1px hwb(0 0% 100% / 0.1);
+		}
+		.yourLevel-middle-highlight {
+			position: absolute; top: 0; bottom: 0; left: 0; right: 0;
+			margin: auto; padding: 48px 24px;
+			-webkit-mask-image: linear-gradient(to right, transparent, black, transparent);
+			mix-blend-mode: soft-light;
+		}
+		.yourLevel-middle-highlight::before {
+			content: ""; position: absolute; top: 24px; height: 48px;
+			left: -12px; right: -12px;
+			box-shadow: 0 -2px 6px 0px hwb(50 0% 0% / 0.6) inset,
+						0 2px 16px 0 hwb(50 0% 0% / 0.4);
+			pointer-events: none;
+		}
+
+		/* ==================== Table ==================== */
+		table {
+			margin: 2em auto; border-spacing: 0; border-collapse: collapse;
+			font-size: 14px; box-shadow: 0px 2px 4px var(--articleLightBg);
+		}
+		tbody > tr:nth-child(2n-1) { background-color: var(--articleLightBg); }
+		td, th {
+			border: var(--articleBorder) 1.5px solid;
+			border-collapse: collapse; padding: 5px 12px;
+		}
+		th { font-weight: 600; }
+	</style>
+</head>
+<body class="themeLight">
+
+	<p>开发者想要你来 GitHub / Gitee 点个星～</p>
+	<p>（或者提点建议也行，比如如何让下面这些花花绿绿的二维码没那么丑🤪</p>
+
+	<div class="paragram">
+		<button class="ffbox-button" id="btn-github" tooltip="如果你打不开，那就努力再尝试！反复尝试！尝试到国家都为你而感动！">
+			<svg viewBox="0 0 1024 1024" width="20" height="20" fill="#24292e" xmlns="http://www.w3.org/2000/svg"><path d="M960 512c0 97.76-28.704 185.216-85.664 263.264-56.96 78.016-130.496 131.84-220.64 161.856-10.304 1.824-18.368 0.448-22.848-4.032a22.4 22.4 0 0 1-7.2-17.504v-122.88c0-37.632-10.304-65.44-30.464-82.912a409.856 409.856 0 0 0 59.616-10.368 222.752 222.752 0 0 0 54.72-22.816c18.848-10.784 34.528-23.36 47.104-38.592 12.544-15.232 22.848-35.904 30.912-61.44 8.096-25.568 12.128-54.688 12.128-87.904 0-47.072-15.232-86.976-46.208-120.16 14.368-35.456 13.024-74.912-4.48-118.848-10.752-3.616-26.432-1.344-47.072 6.272s-38.56 16.16-53.824 25.568l-21.984 13.888c-36.32-10.304-73.536-15.232-112.096-15.232s-75.776 4.928-112.096 15.232a444.48 444.48 0 0 0-24.672-15.68c-10.336-6.272-26.464-13.888-48.896-22.432-21.952-8.96-39.008-11.232-50.24-8.064-17.024 43.936-18.368 83.424-4.032 118.848-30.496 33.632-46.176 73.536-46.176 120.608 0 33.216 4.032 62.336 12.128 87.456 8.032 25.12 18.368 45.76 30.496 61.44 12.544 15.68 28.224 28.704 47.072 39.04 18.848 10.304 37.216 17.92 54.72 22.816a409.6 409.6 0 0 0 59.648 10.368c-15.712 13.856-25.12 34.048-28.704 60.064a99.744 99.744 0 0 1-26.464 8.512 178.208 178.208 0 0 1-33.184 2.688c-13.024 0-25.568-4.032-38.144-12.544-12.544-8.512-23.296-20.64-32.256-36.32a97.472 97.472 0 0 0-28.256-30.496c-11.232-8.064-21.088-12.576-28.704-13.92l-11.648-1.792c-8.096 0-13.92 0.928-17.056 2.688-3.136 1.792-4.032 4.032-2.688 6.72s3.136 5.408 5.376 8.096 4.928 4.928 7.616 7.168l4.032 2.688c8.544 4.032 17.056 11.232 25.568 21.984 8.544 10.752 14.368 20.64 18.4 29.6l5.824 13.44c4.928 14.816 13.44 26.912 25.568 35.872 12.096 8.992 25.088 14.816 39.008 17.504 13.888 2.688 27.36 4.032 40.352 4.032s23.776-0.448 32.288-2.24l13.472-2.24c0 14.784 0 32.288 0.416 52.032 0 19.744 0.48 30.496 0.48 31.392a22.624 22.624 0 0 1-7.648 17.472c-4.928 4.48-12.992 5.824-23.296 4.032-90.144-30.048-163.68-83.84-220.64-161.888C92.256 697.216 64 609.312 64 512c0-81.152 20.192-156.064 60.096-224.672s94.176-122.88 163.232-163.232C355.936 84.192 430.816 64 512 64s156.064 20.192 224.672 60.096 122.88 94.176 163.232 163.232C939.808 355.488 960 430.848 960 512"/></svg>
+			GitHub
+		</button>
+		<button class="ffbox-button" id="btn-gitee" tooltip="这个是备用哒～">
+			<svg viewBox="0 0 1024 1024" width="20" height="20" fill="#d90013" xmlns="http://www.w3.org/2000/svg"><path d="M512 1024C229.248 1024 0 794.752 0 512S229.248 0 512 0s512 229.248 512 512-229.248 512-512 512z m259.168-568.896h-290.752a25.28 25.28 0 0 0-25.28 25.28l-0.032 63.232c0 13.952 11.296 25.28 25.28 25.28h177.024a25.28 25.28 0 0 1 25.28 25.28v12.64a75.84 75.84 0 0 1-75.84 75.84h-240.224a25.28 25.28 0 0 1-25.28-25.28v-240.192a75.84 75.84 0 0 1 75.84-75.84h353.92a25.28 25.28 0 0 0 25.28-25.28l0.064-63.2a25.312 25.312 0 0 0-25.28-25.312H417.184a189.632 189.632 0 0 0-189.632 189.6v353.952c0 13.952 11.328 25.28 25.28 25.28h372.928a170.656 170.656 0 0 0 170.656-170.656v-145.376a25.28 25.28 0 0 0-25.28-25.28z"/></svg>
+			Gitee
+		</button>
+	</div>
+
+	<p>如果你不只是想给我送⭐，还想送我奶茶🧋，那么可以点下面两个按钮～</p>
+
+	<div class="paragram">
+		<button class="ffbox-button" id="btn-kofi" tooltip="一直都没人点这个，我是不是该考虑把它撤了🤔">
+			<svg viewBox="0 0 800 800" width="20" height="20" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(1.3333333,0,0,-1.3333333,0,800)"><g transform="scale(0.1)"><path d="M 6000,3000 C 6000,4656.86 4656.86,6000 3000,6000 1343.14,6000 0,4656.86 0,3000 0,1343.14 1343.14,0 3000,0 4656.86,0 6000,1343.14 6000,3000" fill="#50aee4"/><path d="m 5484.27,3458.67 c -63.19,333.74 -242.84,541.64 -426.97,670.19 -190.41,132.95 -418.48,201.26 -650.72,201.26 H 1110.73 c -114.656,0 -158.574,-111.94 -159.007,-168.01 -0.059,-7.31 0.207,-36.57 0.207,-36.57 0,0 -5.407,-1458.13 4.832,-2236.93 31.105,-459.78 491.768,-459.63 491.768,-459.63 0,0 1504.04,4.41 2225.35,8.89 33.83,0.22 67.61,3.86 100.44,12.07 410.68,102.75 453.17,484.28 448.78,696.96 825.48,-45.86 1407.92,536.64 1261.17,1311.77 m -927.31,-756.75 c -176.05,-22 -319.08,-5.48 -319.08,-5.48 v 1077.95 h 216.62 c 143.17,0 281.27,-59.61 374.69,-168.1 65.76,-76.38 118.37,-183.88 118.37,-332.37 0,-362.99 -187.04,-506 -390.6,-572" fill="#fff"/><path d="m 2566.14,2033.67 c 35.85,-18.05 58.75,4.38 58.75,4.38 0,0 524.57,478.78 760.89,754.51 210.2,246.66 223.9,662.34 -137.07,817.66 -360.97,155.31 -657.95,-182.72 -657.95,-182.72 -257.55,283.26 -647.34,268.92 -827.63,77.22 -180.28,-191.7 -117.32,-520.73 17.17,-703.84 126.25,-171.9 681.18,-666.5 765.29,-750.15 0,0 6.13,-6.4 20.55,-17.06" fill="#f14255"/></g></g></svg>
+			Ko-Fi
+		</button>
+		<button class="ffbox-button" id="btn-afdian" tooltip="这个似乎更适合中国宝宝的体质❤️～">
+			<img src="../assets/afdian.png" alt="" style="width:20px;height:20px;vertical-align:-4px;margin-right:4px;">爱发电
+		</button>
+		<button class="ffbox-button" id="btn-auto-proxy" tooltip="如果有哪天左边的某个按钮失效了就点这个吧🌚（当然也不排除这个按钮会失效">
+			帮我挑个合适的
+		</button>
+	</div>
+
+	<p>🍲赛博红包来咯~</p>
+
+	<div class="paragram">
+		<div id="envelop-screen" class="QRscreen QRscreen-alipayredenvelop" tooltip="支付宝每隔一段时间就会搞活动把这个红包变大，只要它不改链接，红包二维码就一直能用～">
+			<div class="QRuppertext"><strong>扫码领红包</strong></div>
+			<div class="QRbox"><canvas id="qr_alipayredenvelop"></canvas></div>
+			<div class="QRlowertext">打开支付宝[<strong>扫一扫</strong>]</div>
+			<div class="QRtitle"><img src="../assets/alipay-SASEP7DL.png" alt="支付宝"></div>
+		</div>
+	</div>
+
+	<p>如果您不愿奶茶被平台抽掉一口，那就用下面 3 个🙃</p>
+
+	<div class="paragram">
+		<div class="QRscreen QRscreen-alipay" tooltip="（你有没有发现，我把支付宝跟微信支付的标语互换了👀">
+			<div class="QRuppertext">推荐使用<strong>支付宝</strong></div>
+			<div class="QRbox"><canvas id="qr_alipay"></canvas></div>
+			<div class="QRlowertext">滔滔清风</div>
+			<div class="QRtitle"><img src="../assets/alipay-SASEP7DL.png" alt="支付宝"></div>
+		</div>
+		<div class="QRscreen QRscreen-wechatpay" tooltip="（你有没有发现，我把支付宝跟微信支付的标语互换了👀">
+			<div class="QRuppertext">支付就用微信支付</div>
+			<div class="QRbox"><canvas id="qr_wechatpay"></canvas></div>
+			<div class="QRlowertext">滔滔清风</div>
+			<div class="QRtitle"><img src="../assets/wechatpay-B4iiNRIT.svg" alt="微信支付"></div>
+		</div>
+		<div class="QRscreen QRscreen-qqpay" tooltip="听说好多人不用 QQ 支付的原因是要实名？🤔">
+			<div class="QRuppertext">QQ 支付</div>
+			<div class="QRbox"><canvas id="qr_qqpay"></canvas></div>
+			<div class="QRlowertext">滔滔清风</div>
+			<div class="QRtitle"><img src="../assets/qqpay-HJbZiF2o.png" alt="QQ支付"></div>
+		</div>
+	</div>
+
+	<h2>功能解限</h2>
+
+	<div id="frontend-level-item" class="yourLevel-item">
+		<div class="yourLevel-middleNoOverflow">
+			<div id="frontend-bar-bg" class="yourLevel-bar"></div>
+		</div>
+		<div class="yourLevel-middle">
+			<div id="frontend-bar" class="yourLevel-bar">
+				<div class="yourLevel-bar-highlight"></div>
+				<span id="frontend-bar-text">前端：--</span>
+			</div>
+		</div>
+		<div id="frontend-highlight" class="yourLevel-middle-highlight"></div>
+	</div>
+	<div id="backend-level-item" class="yourLevel-item" style="display:none;">
+		<div class="yourLevel-middleNoOverflow">
+			<div id="backend-bar-bg" class="yourLevel-bar"></div>
+		</div>
+		<div class="yourLevel-middle">
+			<div id="backend-bar" class="yourLevel-bar">
+				<div class="yourLevel-bar-highlight"></div>
+				<span id="backend-bar-text">本地服务器：--</span>
+			</div>
+		</div>
+		<div id="backend-highlight" class="yourLevel-middle-highlight"></div>
+	</div>
+
+	<table>
+		<tbody>
+			<tr><td>媒体时长上限</td><td id="limit-mediaDuration">--</td></tr>
+			<tr><td>转码时长上限</td><td id="limit-workingDuration">--</td></tr>
+			<tr><td>远程单文件上传大小上限</td><td id="limit-uploadSize">--</td></tr>
+			<tr><td>任务列表数量上限</td><td id="limit-taskCount">--</td></tr>
+			<tr><td>同时转码任务数量设定上限</td><td id="limit-threads">--</td></tr>
+			<tr><td>滤镜功能节点数量上限</td><td id="limit-filterNodes">--</td></tr>
+		</tbody>
+	</table>
+
+	<p>FFBox 是一款试用、有源、捐赠混合的软件。出厂状况下，本软件存在部分功能的使用限制</p>
+	<p>您可以通过激活码去除这些限制，详情请到官网或官方信息发布平台查询～</p>
+
+	<div class="ffbox-input" id="activate-input">
+		<div class="input-title">激活码</div>
+		<div class="inputbox-selector">
+			<input type="text" id="activate-code-input" placeholder="一份激活码对应唯一的机器码，请您输入与本机机器码对应的激活码进行激活🫡">
+		</div>
+	</div>
+
+	<div class="paragram" style="margin-top: 8px;">
+		<button class="ffbox-button" id="btn-activate-frontend">激活前端</button>
+		<button class="ffbox-button" id="btn-activate-backend">激活本地服务器</button>
+	</div>
+
+	<p>机器码（前端）：<span id="frontend-machine-id" style="user-select:all;cursor:pointer;">--</span></p>
+	<p>机器码（本地服务器）：<span id="backend-machine-id" style="user-select:all;cursor:pointer;">--</span></p>
+
+	<div id="tooltip" class="tooltip"></div>
+
+	<script>
+		// ==================== Communication Bridge ====================
+		let requestIdCounter = 0;
+		const pendingRequests = new Map();
+
+		function request(type, payload = {}) {
+			return new Promise((resolve) => {
+				const requestId = 'req_' + (++requestIdCounter);
+				pendingRequests.set(requestId, resolve);
+				window.parent.postMessage({ type, requestId, ...payload }, '*');
+			});
+		}
+
+		// Handle responses from parent
+		window.addEventListener('message', (event) => {
+			const data = event.data;
+			if (!data) return;
+
+			if (data.type === 'response' && data.requestId) {
+				const resolve = pendingRequests.get(data.requestId);
+				if (resolve) {
+					pendingRequests.delete(data.requestId);
+					resolve(data.data);
+				}
+			} else if (data.type === 'stateUpdate') {
+				applyState(data.state);
+			} else if (data.type === 'popup') {
+				showLocalPopup(data.message, data.level);
+			}
+		});
+
+		// ==================== Local State ====================
+		let state = {
+			functionLevel: 20,
+			localServerConnected: false,
+			localServerFunctionLevel: 0,
+			localServerMachineId: '',
+			env: 'browser',
+			colorTheme: 'themeLight',
+		};
+
+		function applyState(s) {
+			Object.assign(state, s);
+			updateUI();
+		}
+
+		// ==================== getLimitaion ====================
+		function getLimitaion(type, functionLevel) {
+			const n = functionLevel !== undefined ? functionLevel : state.functionLevel;
+			switch (type) {
+				case 'maxMediaDuration':    return n < 50 ? 671 : undefined;
+				case 'maxWorkingDuration':  return n < 45 ? 671 : 40271;
+				case 'maxUploadSizeGB':     return n < 15 ? 1 : n < 30 ? 4 : n < 45 ? 10 : n < 65 ? 32 : 1024;
+				case 'maxTaskListCount':    return n < 20 ? 20 : n < 55 ? 99 : n < 70 ? 256 : 2048;
+				case 'maxThreads':          return n < 20 ? 4 : n < 35 ? 6 : n < 50 ? 9 : n < 70 ? 99 : 256;
+				case 'maxFilterNodeCount':  return n < 20 ? 20 : n < 40 ? 66 : n < 60 ? 99 : 999;
+			}
+		}
+
+		// ==================== QR Code Rendering ====================
+		function getQR(hexString, size, linesize) {
+			const QRstring = hexString.replace(/ /g, '');
+			const QRcode = [];
+			for (let i = 0; i < size; i++) {
+				QRcode[i] = [];
+				for (let j = 0; j < size; j++) {
+					QRcode[i][j] = QRstring[i * linesize + j];
+				}
+			}
+			return QRcode;
+		}
+
+		function paintQRcode2canvas(canvas, QRcode) {
+			const dpr = window.devicePixelRatio || 1;
+			const width = 144 * dpr;
+			const height = 144 * dpr;
+			canvas.width = width;
+			canvas.height = height;
+			const ctx = canvas.getContext('2d');
+			ctx.fillStyle = '#FF0000';
+			ctx.fillRect(0, 0, width, height);
+			const size = QRcode.length;
+			const d = width / size;
+			for (let i = 0; i < size; i++) {
+				for (let j = 0; j < size; j++) {
+					ctx.fillStyle = '#' + QRcode[i][j] + QRcode[i][j] + QRcode[i][j];
+					ctx.fillRect(
+						Math.floor(j * d), Math.floor(i * d),
+						Math.floor((j + 1) * d) - Math.floor(j * d),
+						Math.floor((i + 1) * d) - Math.floor(i * d)
+					);
+				}
+			}
+		}
+
+		// QR Data
+		const qrData = {
+			alipayredenvelop: `00 00 00 0F 00 FF F0 FF 00 F0 00 FF 0F 00 00 00 00 00 0F FF 0F FF FF 0F FF 0F 00 0F F0 F0 F0 0F 0F 0F FF FF 00 00 0F 00 0F 00 0F 0F 0F F0 0F 00 FF 00 00 F0 0F 0F 00 0F 00 00 0F 00 0F 00 0F 0F FF F0 00 F0 F0 F0 F0 FF FF 0F 00 0F 00 00 0F 00 0F 00 0F 0F 00 FF FF 00 F0 0F F0 FF 0F 0F 00 0F 00 00 0F FF 0F FF FF 0F FF F0 FF 00 FF 0F FF FF FF 0F FF FF 00 00 00 00 00 00 00 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 00 00 00 00 00 FF FF FF FF FF FF 00 00 F0 00 0F FF FF FF 0F FF FF FF F0 00 FF FF FF FF F0 0F F0 FF 0F 00 00 00 0F 0F FF 0F 0F 0F 00 00 F0 00 F0 00 F0 FF FF 0F 00 00 F0 FF 00 0F F0 FF 0F 00 F0 00 00 0F 00 0F 00 0F 0F 0F 0F 00 FF 00 FF 0F 00 00 F0 0F F0 00 00 0F 00 0F 0F F0 0F 00 FF F0 00 F0 F0 FF 0F 0F 00 0F F0 00 F0 00 F0 00 FF 00 0F 0F F5 55 55 55 F0 FF FF 00 00 F0 00 00 F0 00 F0 00 00 FF 0F 0F 64 44 44 44 4F F0 FF 00 00 FF 00 00 F0 00 F0 00 00 00 FF 0F 54 44 F6 44 40 0F FF F0 0F F0 F0 00 FF 00 FF 00 FF FF F0 FF 5F 6F FF 4F 3F 00 0F 00 F0 FF F0 00 F0 00 F0 00 00 00 F0 F0 64 4E 4C 44 4F F0 FF FF 0F 0F 00 00 0F FF 0F FF FF FF FF 0F 64 4F 5F 44 4F 00 00 0F FF 0F F0 00 F0 FF F0 FF 0F 00 0F 00 64 44 44 44 40 00 F0 00 0F F0 00 00 F0 FF F0 FF F0 FF F0 F0 64 44 44 44 4F 0F 00 FF 0F 0F F0 00 FF 0F FF 0F F0 00 0F F0 F4 44 44 44 FF 0F 0F F0 00 F0 F0 00 00 00 00 00 F0 FF FF 0F 1F FF 11 FF 1F FF F0 00 0F 00 F0 00 0F 0F 0F 0F FF 0F 0F 00 00 0F 0F 00 00 00 0F FF FF F0 F0 00 0F 0F 0F 0F 00 FF F0 00 FF 0F FF FF 0F 00 FF F0 00 0F 00 00 00 FF 00 FF 0F 0F 00 FF 00 F0 FF 0F 00 FF 00 00 00 FF 00 00 FF FF FF FF FF FF 0F 00 FF 0F F0 F0 0F F0 0F FF 00 F0 00 00 00 00 00 00 00 0F F0 0F 00 F0 FF F0 00 F0 0F 0F 0F FF F0 00 0F FF 0F FF FF 0F 0F FF F0 FF 0F FF FF FF 0F FF 00 0F F0 00 0F 00 0F 00 0F 0F FF 00 00 F0 FF FF 00 FF 00 00 0F F0 F0 00 0F 00 0F 00 0F 0F FF 0F F0 FF FF 00 00 0F FF F0 0F 00 F0 00 0F 00 0F 00 0F 0F FF 00 00 FF FF F0 FF 00 0F FF 0F 00 00 00 0F FF 0F FF FF 0F F0 F0 0F FF F0 F0 FF FF F0 00 FF 0F F0 00 00 00 00 00 00 0F F0 FF F0 FF F0 00 FF 00 00 F0 F0 00 F0 00 00 00 00 00`,
+			alipay: `00 00 00 0F 00 F0 FF 0F FF 00 0F FF F0 FF 0F 00 0F 00 00 00 00 00 0F FF 0F FF FF 0F 0F FF 0F F0 00 F0 0F 00 F0 00 0F 0F FF 0F FF FF 00 00 0F 00 0F 00 0F 0F 0F 0F 0F 0F F0 F0 0F 00 00 F0 0F FF 0F 0F 00 0F 00 00 0F 00 0F 00 0F 0F F0 0F F0 F0 F0 0F FF 0F 0F 00 0F 0F FF 0F 00 0F 00 00 0F 00 0F 00 0F 0F FF 0F 00 F0 FF 0F 0F 0F F0 FF FF F0 0F 0F 00 0F 00 00 0F FF 0F FF FF 0F 0F F0 F0 FF FF F0 0F 0F 00 F0 FF 0F FF 0F FF FF 00 00 00 00 00 00 00 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 00 00 00 00 00 FF FF FF FF FF FF 00 FF F0 F0 0F 0F FF F0 FF 00 FF F0 0F FF FF FF F0 00 FF 00 FF 00 0F 0F 00 00 00 FF F0 0F FF FF 00 00 F0 FF 00 00 FF 00 00 00 0F FF 0F FF F0 FF 00 0F F0 FF 0F 00 FF 0F 0F 0F 00 F0 0F 00 0F 00 F0 00 00 FF 00 FF FF 00 F0 0F FF 00 00 00 FF 0F F0 00 F0 0F 00 F0 FF F0 F0 00 F0 FF F0 FF 00 F0 F0 F0 00 FF 0F FF F0 00 F0 00 0F F0 0F F0 00 F0 F0 00 F0 FF F0 FF 00 0F 00 0F 0F 00 0F F0 0F FF F0 FF 00 F0 F0 FF F0 00 00 00 FF F0 FF F0 00 FF FF 00 F0 00 F0 0F F0 FF FF F0 F0 FF 0F F0 0F FF 00 00 F0 00 F0 00 FF 00 FF 0F F0 F0 F0 FF 0F F0 0F F0 0F 00 F0 F0 F0 FF F0 00 0F 0F 0F 0F 0F F0 00 FF 00 F0 0F 0F 0F F0 F0 00 FF F0 0F 0F 00 FF F0 00 F0 00 F0 00 F0 00 FF F0 0F FF 00 00 FF 0F 0F 00 F0 F0 F0 F0 F0 00 00 00 00 FF 00 FF FF FF FF FF FF 0F 0F FF DF FF FF 0F 00 00 0F 00 00 F0 00 00 FF F0 FF F0 F0 0F FF 0F 00 F0 FF B4 07 FF 0F F0 F0 FF 0F 0F 00 FF F0 00 F0 00 F0 00 00 F0 0F 0F 0F FF FF 8D D5 F8 FF F0 F0 0F 0F 0F 00 F0 F0 00 F0 00 F0 00 FF 00 FF F0 F0 0F 0E 29 B3 9E FF F0 0F FF FF FF 00 00 F0 00 F0 F0 F0 F0 00 FF F0 F0 F0 FF 0F CD 4F FB 00 0F FF 00 00 00 F0 00 00 00 00 FF 00 FF 0F 00 F0 00 F0 F0 FF F2 DF 5F FF 00 00 0F 00 FF FF 0F F0 00 F0 00 F0 00 0F FF 0F 0F F0 FF 0F FF 7B FF F0 00 0F 00 0F 00 F0 0F F0 00 FF F0 FF F0 FF 00 00 0F 00 00 00 00 F0 FF F0 00 F0 00 FF F0 FF FF 00 00 F0 F0 F0 F0 0F FF FF 00 FF 00 F0 00 0F F0 0F 0F 00 00 F0 00 00 FF 00 00 0F 0F 0F 0F FF 0F 0F FF FF 0F 0F F0 F0 00 00 F0 0F 0F 0F 00 FF F0 F0 00 F0 0F F0 0F 00 F0 00 0F FF 00 0F 00 00 F0 FF F0 FF 00 00 00 00 FF 00 00 FF F0 FF F0 FF 00 00 FF 00 F0 0F F0 00 0F 0F 00 F0 00 0F 0F F0 00 F0 00 0F 0F 0F 0F 0F FF FF 0F FF 00 FF F0 FF F0 FF 00 00 FF F0 F0 0F 0F 00 00 0F 00 0F 00 00 00 F0 00 FF 0F 00 FF 0F FF FF 0F FF 0F 00 0F F0 F0 F0 00 0F F0 0F F0 00 FF FF F0 FF 00 FF 0F 0F 0F 0F FF 0F 0F F0 00 FF F0 F0 00 0F FF 0F FF FF 00 F0 00 0F 0F 00 FF F0 0F 0F FF 00 FF 00 00 0F 0F F0 00 FF FF FF FF FF FF 00 00 F0 00 0F FF FF F0 FF FF FF F0 0F FF 00 FF 00 00 00 00 00 00 00 0F FF FF FF 00 F0 FF F0 FF 0F F0 0F 00 0F 0F 0F 0F FF FF 0F FF 0F FF FF 0F F0 0F 00 0F FF F0 FF 0F F0 00 0F F0 0F FF 00 FF F0 00 0F 00 0F 00 0F 0F 00 0F 0F 00 FF 0F 00 0F 00 F0 0F 0F 00 00 00 00 00 00 0F 00 0F 00 0F 0F 00 FF 0F 0F 0F F0 00 0F F0 0F F0 FF 00 F0 FF F0 00 00 0F 00 0F 00 0F 0F 0F FF 0F FF 00 F0 00 0F FF 00 F0 F0 F0 00 00 F0 F0 00 0F FF 0F FF FF 0F F0 00 00 FF 0F F0 F0 0F 0F F0 FF 0F 0F 0F 0F F0 F0 00 00 00 00 00 00 0F FF F0 FF F0 0F F0 F0 00 F0 F0 F0 FF FF F0 00 FF F5 89 F7 00 00 00`,
+			wechatpay: `00 00 00 0F FF F0 0F F0 FF 00 00 FF 0F F0 0F 00 00 00 07 00 0F FF FF 0F F0 F0 0F FF FF 00 F0 00 00 FF FF 0F FF FF 00 00 0F 00 0F 0F F0 FF 00 00 FF FF FF F0 FF FF FF 0F 00 0F 00 00 0F 00 0F 0F F0 FF FF F0 F0 00 00 0F 0F F0 0F 0F 00 0F 00 00 0F 00 0F 0F 00 F0 F0 F0 00 F0 0F 00 FF F0 0F 0F 00 0F 00 00 0F FF FF 0F F0 00 0F 0F F0 00 0F 0F FF 00 0F 0F FF FF 00 00 00 00 00 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 00 00 00 00 00 FF FF FF FF 00 00 00 FF FF 00 0F FF 00 F0 FF FF FF FF F0 00 FF 00 FF 00 0F F0 FF 00 F0 0F F0 F0 F0 FF 00 0F 0F FF F0 00 00 FF F0 FF 00 00 0F 0F 0F F0 00 0F FF FF FF 0F FF F0 00 00 0F 00 F0 0F F0 F0 FF 0F 0F 0F F0 0F 00 FF FF F0 F0 FF 00 00 0F F0 FF FF 0F F0 F0 00 0F 00 F0 FF 00 F0 F0 0F FF FF F0 00 00 FF FF 0F F0 F0 FF 0F 0F 0F 0F 00 F0 00 0F 0F F0 00 00 00 0F F0 00 F0 F0 FF FF 00 FF 00 FF FF FF 0F F0 FF 0F F0 F0 00 F0 00 0F 00 00 00 F0 FF FF FF FF F0 FF 0F FF FF 0F FF F0 00 F0 FF 0F F0 0F 0F 00 FF FF FF FF F0 0F FF F0 F0 F0 00 F0 00 F0 FF 0F 0F FF FF F0 FF FF FF FF FF F0 FF 00 FF 0F 00 F0 00 F0 00 F0 FF F0 0F 00 FF F7 55 FF FF F0 FF 0F FF F0 0F F0 00 00 F0 F0 0F 0F 00 F0 FF FA B8 FF FF 00 F0 0F 00 F0 00 00 00 0F 0F F0 F0 0F F0 FF FF FF CF FF FF F0 FF 0F 00 00 00 00 00 00 F0 F0 0F FF 00 FF FF FF FF FF FF 00 FF FF F0 F0 0F 00 00 FF 0F FF FF 0F FF 0F FF FF FF FF EF 0F FF 0F 0F 00 FF F0 00 0F 00 FF 0F 0F F0 00 FF FF FF FC F8 F0 00 FF F0 F0 0F F0 00 0F FF F0 F0 0F 00 FF 0F F0 F0 FE DA 0F 00 0F FF FF F0 00 00 FF 00 00 0F 0F 00 F0 F0 0F FF 00 00 0F F0 0F F0 FF F0 00 00 FF 0F 0F F0 F0 0F F0 0F 00 F0 0F 00 FF 0F F0 F0 F0 F0 F0 00 F0 FF 00 0F 0F FF F0 FF FF F0 00 0F FF F0 FF F0 0F F0 F0 00 0F 0F F0 FF 0F 00 00 00 00 0F 00 0F 0F 00 00 F0 FF 0F 00 00 FF F0 F0 00 0F F0 0F F0 00 F0 F0 F0 00 0F 00 00 00 0F F0 00 FF FF FF FF 0F 0F F0 FF 00 FF 00 00 F0 FF 0F FF 00 0F 00 00 00 00 00 0F 0F F0 F0 FF F0 0F 0F 0F FF 00 0F 0F 0F 00 00 00 0F FF FF 0F F0 00 0F 0F FF F0 FF 0F 00 00 0F FF 00 F0 00 00 0F 00 0F 0F F0 0F 0F 0F 0F 0F F0 FF FF FF 00 00 00 F0 F0 00 0F 00 0F 0F 0F F0 0F 0F 0F F0 F0 F0 FF F0 FF F0 FF F0 00 00 0F 00 0F 0F 00 FF 00 FF 00 0F F0 F0 0F F0 F0 00 0F 00 FF F0 0F FF FF 0F FF FF 0F FF 00 F0 0F 00 FF FF 0F FF F0 00 00 00 00 00 00 0F F0 FF FF 00 F0 0F F0 FF 00 00 00 F0 FF F0 00 00 00 00`,
+			qqpay: `00 00 00 0F F0 00 0F FF F0 FF FF F0 F0 F0 00 0F FF FF 0F 00 00 00 00 00 0F FF FF 0F 0F 00 00 0F F0 F0 F0 00 0F 0F 0F F0 0F F0 FF 0F FF FF 00 00 0F 00 0F 0F F0 F0 F0 FF FF 00 F0 FF F0 FF 00 00 00 F0 FF 0F 00 0F 08 08 0F 00 0F 0F 00 FF F0 FF 00 0F 00 00 FF 00 FF 0F FF F0 0F 0F 00 0F 08 08 0F 00 0F 0F F0 00 FF F0 FF F0 00 00 0F FF FF 00 FF 00 0F 0F 00 0F 00 00 0F FF FF 0F 0F 0F 0F FF 00 0F 0F FF 0F 0F F0 F0 FF FF FF 0F FF FF 08 08 00 00 00 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 00 00 00 00 00 FF FF FF FF FF F0 F0 F0 FF F0 0F FF 0F 00 00 0F 00 F0 FF FF FF FF F8 08 00 00 0F 00 0F F0 FF F0 0F 0F 00 00 0F F0 F0 00 FF F0 F0 F0 F0 F0 F8 08 F0 FF 0F F0 00 0F 00 00 FF FF F0 F0 F0 FF F0 0F FF F0 00 FF FF F0 00 00 FF F0 F0 00 00 F0 0F FF F0 FF F0 FF 00 0F F0 F0 0F 0F FF 00 F0 00 F0 00 F0 00 00 F0 00 F0 00 00 0F 00 FF F0 00 F0 FF 00 00 F0 F0 F0 00 0F F0 00 0F 00 0F 0F 0F 00 00 F0 00 00 F0 00 00 FF F0 0F FF 00 00 F0 FF F0 F0 00 FF FF FF F0 00 F0 0F FF FF F0 FF FF F0 FF FF 00 0F F0 0F FF FF 00 F0 00 00 F0 FF 0F 00 00 0F FF F0 0F 0F F0 0F FF F0 F0 F0 0F 00 0F FF 00 F8 08 0F 00 00 FF 00 0F F0 00 F0 00 FF F0 00 F0 00 0F 00 FF FF 0F 00 00 F0 00 FF 0F 0F 0F FF 00 FF FF 00 00 00 F0 0F FF FF 00 FF FF F0 FF F0 F0 00 00 00 F0 F0 FF F0 FF FF 00 FF 00 F0 FF 00 F0 FF 00 F0 FF 00 F0 0F F0 08 08 00 F0 F0 0F 00 0F 0F FF F0 0F 0F F0 0F 0F FF FF F0 00 FF 0F 00 00 F8 08 0F FF 0F FF 00 F0 00 FF F0 0F FF F0 0F F0 00 00 00 00 FF FF F0 0F F8 08 00 F0 00 00 00 FF F0 F0 00 0F 00 00 0F 00 FF 0F FF F0 00 00 00 F0 F0 00 F0 FF 0F FF 00 0F 0F FF F0 FF 05 A6 00 FF FF 00 FF F0 0F FF 0F 0F F8 08 0F 00 0F 0F 00 0F 00 F0 0F 00 0B B9 0F FF 00 FF 00 00 0F 0F 00 F0 F0 00 0F F0 0F FF 0F 0F F0 FF FF FF 0F 5F 00 00 00 FF 0F 0F 0F FF 0F 00 F0 00 00 0F 00 00 0F FF 0F F0 FF 00 00 00 00 FF F0 F0 F0 0F 00 00 00 FF F0 00 00 0F 0F F0 F0 F0 F0 0F F0 F0 0F 00 0F FF 00 00 0F FF 00 0F FF 00 00 00 0F 0F F0 00 0F 0F F0 FF F0 0F 00 FF F0 0F 00 F0 F0 00 00 FF 00 00 F8 08 0F 00 FF FF FF F0 F0 FF FF 0F 00 00 0F FF 0F F0 0F F0 FF FF F0 0F F8 08 FF FF FF 00 F0 0F 00 F0 0F 00 0F FF 0F 00 FF 0F FF 0F FF F0 00 FF 00 00 00 F0 FF FF 00 00 00 F0 FF F0 F0 F0 0F F0 0F 00 FF FF 00 F0 FF F0 F8 08 F0 00 0F 00 0F F0 0F 0F FF FF 00 0F FF 0F 00 F0 00 0F F0 FF FF F0 F0 00 0F FF 0F FF F0 FF FF F0 FF 0F FF FF 00 00 0F 00 00 F0 FF 00 0F 0F F8 08 FF F0 00 0F 00 00 00 F0 0F 00 00 FF 00 0F F0 F0 FF 0F 00 F0 0F FF F8 08 00 0F 0F FF F0 0F 0F F0 FF F0 F0 00 00 FF 00 00 0F FF 0F FF F0 0F 08 08 FF FF 0F 00 00 00 0F FF F0 0F F0 F0 FF 00 F0 F0 00 00 00 FF F0 00 F8 08 F0 00 0F FF F0 0F 00 FF FF F0 00 00 00 F0 0F F0 0F 00 F0 FF 00 00 08 08 0F F0 0F 00 0F F0 FF FF 00 0F 00 00 00 FF F0 0F F0 0F 00 00 0F 00 F8 08 FF FF FF FF 0F F0 00 00 FF F0 0F FF 0F F0 0F 00 F0 FF 0F FF 00 F0 00 00 00 00 00 0F 0F 00 F0 FF F0 00 0F 0F 00 0F F0 F0 F0 00 0F 0F 00 FF F0 00 0F FF FF 0F F0 0F 00 FF 00 0F 0F FF 00 00 0F 0F 0F 0F 0F FF 0F 00 08 08 0F 00 0F 0F 0F 0F 0F FF 0F 0F 00 00 00 FF F0 0F FF 0F 00 00 0F F0 00 00 0F 00 0F 0F 0F 00 FF F0 F0 F0 F0 F0 0F F0 00 00 FF F0 F0 00 00 F0 F0 00 0F 00 0F 0F 0F FF F0 F0 FF 00 F0 00 F0 00 F0 F0 00 00 0F 0F FF 0F 00 00 0F FF FF 0F 00 F0 FF 00 00 0F 0F F0 FF 00 0F 00 0F F0 F0 FF 0F 0F F0 00 00 00 00 0F 0F 00 F0 FF 0F 00 F0 0F 00 F0 FF 00 F0 00 FF 0F 0F F0 F8 08 00 00`
+		};
+
+		function alipayRedEnvelopQR() { return getQR(qrData.alipayredenvelop, 33, 33 + 7); }
+		function alipayQR() { return getQR(qrData.alipay, 41, 41 + 7); }
+		function wechatpayQR() { return getQR(qrData.wechatpay, 37, 37 + 3); }
+		function qqpayQR() { return getQR(qrData.qqpay, 45, 45 + 3); }
+
+		// ==================== Tooltip ====================
+		const tooltipEl = document.getElementById('tooltip');
+
+		function initTooltips() {
+			document.querySelectorAll('[tooltip]').forEach((el) => {
+				el.addEventListener('mouseenter', (e) => {
+					const content = el.getAttribute('tooltip');
+					if (!content) return;
+					const rect = el.getBoundingClientRect();
+					tooltipEl.textContent = content;
+					tooltipEl.style.left = (rect.left + rect.width + 4) + 'px';
+					tooltipEl.style.top = (rect.top + 4) + 'px';
+					tooltipEl.classList.add('visible');
+				});
+				el.addEventListener('mouseleave', () => {
+					tooltipEl.classList.remove('visible');
+				});
+			});
+		}
+
+		// ==================== UI Update ====================
+		function updateUI() {
+			// Theme
+			document.body.className = state.colorTheme || 'themeLight';
+
+			// Frontend level bar
+			const fl = state.functionLevel;
+			document.getElementById('frontend-bar-bg').style.width = fl + '%';
+			document.getElementById('frontend-bar').style.width = fl + '%';
+			document.getElementById('frontend-highlight').style.width = fl + '%';
+			document.getElementById('frontend-bar-text').textContent = '前端：' + fl;
+
+			// Backend level bar
+			const backendItem = document.getElementById('backend-level-item');
+			if (state.localServerConnected && state.localServerFunctionLevel) {
+				backendItem.style.display = '';
+				const bl = state.localServerFunctionLevel;
+				document.getElementById('backend-bar-bg').style.width = bl + '%';
+				document.getElementById('backend-bar').style.width = bl + '%';
+				document.getElementById('backend-highlight').style.width = bl + '%';
+				document.getElementById('backend-bar-text').textContent = '本地服务器：' + bl;
+			} else {
+				backendItem.style.display = 'none';
+			}
+
+			// Limitations table
+			document.getElementById('limit-mediaDuration').textContent = fl < 50 ? '11:11' : '无限制';
+			document.getElementById('limit-workingDuration').textContent = fl < 45 ? '11:11' : '11:11:11';
+			const uploadSize = getLimitaion('maxUploadSizeGB');
+			document.getElementById('limit-uploadSize').textContent = uploadSize ? uploadSize + 'GB' : '无限制';
+			document.getElementById('limit-taskCount').textContent = getLimitaion('maxTaskListCount') || '无限制';
+			document.getElementById('limit-threads').textContent = getLimitaion('maxThreads') || '无限制';
+			document.getElementById('limit-filterNodes').textContent = getLimitaion('maxFilterNodeCount') || '无限制';
+
+			// Button states
+			document.getElementById('btn-activate-frontend').toggleAttribute('disabled', state.env === 'browser');
+			document.getElementById('btn-activate-backend').toggleAttribute('disabled', !state.localServerConnected);
+
+			// Machine IDs
+			document.getElementById('backend-machine-id').textContent =
+				state.localServerConnected
+					? (state.localServerMachineId || '（服务器版本不匹配，无法读取）')
+					: '（未连接，请连接本地服务器后获取）';
+		}
+
+		// ==================== Notification (local popup) ====================
+		function showLocalPopup(message, level) {
+			const popup = document.createElement('div');
+			const colors = { 0: '#666', 1: '#4CAF50', 2: '#FF9800', 3: '#F44336' };
+			const icons = { 0: '💬', 1: '✅', 2: '⚠️', 3: '❌' };
+			Object.assign(popup.style, {
+				position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)',
+				padding: '10px 20px', borderRadius: '8px', fontSize: '14px', color: '#fff',
+				background: colors[level] || colors[0], boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+				zIndex: '999999', opacity: '0', transition: 'opacity 0.3s, top 0.3s',
+				pointerEvents: 'none', whiteSpace: 'nowrap',
+			});
+			popup.textContent = (icons[level] || '') + ' ' + message;
+			document.body.appendChild(popup);
+			requestAnimationFrame(() => { popup.style.opacity = '1'; popup.style.top = '30px'; });
+			setTimeout(() => {
+				popup.style.opacity = '0';
+				popup.style.top = '10px';
+				setTimeout(() => popup.remove(), 300);
+			}, 3000);
+		}
+
+		// ==================== Envelope Easter Egg ====================
+		let envelopPressed = false;
+		let envelopNum = -2;
+		let frontendMachineId = '';
+		let activateCode = '';
+
+		// ==================== Event Handlers ====================
+		function setupEventHandlers() {
+			// Navigation buttons
+			document.getElementById('btn-github').addEventListener('click', () => request('jumpToUrl', { url: 'https://github.com/ttqftech/FFBox' }));
+			document.getElementById('btn-gitee').addEventListener('click', () => request('jumpToUrl', { url: 'https://gitee.com/ttqf/FFBox' }));
+			document.getElementById('btn-kofi').addEventListener('click', () => request('jumpToUrl', { url: 'https://ko-fi.com/N4N26F2WR' }));
+			document.getElementById('btn-afdian').addEventListener('click', () => request('jumpToUrl', { url: 'https://afdian.com/a/ttqftech' }));
+			document.getElementById('btn-auto-proxy').addEventListener('click', () => request('jumpToUrl', { url: 'http://ffbox.ttqf.tech/AutoSponsorProxy.html' }));
+
+			// Activation code input
+			document.getElementById('activate-code-input').addEventListener('input', (e) => {
+				activateCode = e.target.value;
+			});
+
+			// Activation buttons
+			document.getElementById('btn-activate-frontend').addEventListener('click', () => handleActivate('frontend'));
+			document.getElementById('btn-activate-backend').addEventListener('click', () => handleActivate('backend'));
+
+			// Machine ID copy
+			document.getElementById('frontend-machine-id').addEventListener('click', () => {
+				if (frontendMachineId) {
+					navigator.clipboard.writeText(frontendMachineId);
+					request('popup', { message: '已复制机器码到剪贴板🫡', level: 0 });
+				}
+			});
+			document.getElementById('backend-machine-id').addEventListener('click', () => {
+				const text = document.getElementById('backend-machine-id').textContent;
+				if (text && !text.startsWith('（')) {
+					navigator.clipboard.writeText(text);
+					request('popup', { message: '已复制机器码到剪贴板🫡', level: 0 });
+				}
+			});
+
+			// Envelope easter egg
+			const envelopScreen = document.getElementById('envelop-screen');
+			envelopScreen.addEventListener('mousedown', handleEnvelopMouseDown);
+			envelopScreen.addEventListener('mouseup', () => {
+				envelopPressed = false;
+				envelopScreen.classList.remove('pressed');
+			});
+			envelopScreen.addEventListener('contextmenu', (e) => e.preventDefault());
+		}
+
+		async function handleActivate(end) {
+			if (!activateCode.length) {
+				request('popup', { message: '这不还没写激活码嘛~🤷', level: 0 });
+				return;
+			}
+			let frontendResult, backendResult;
+			if (end === 'frontend') {
+				frontendResult = await request('activateFrontend', { code: activateCode });
+				backendResult = '-';
+			} else if (end === 'backend') {
+				frontendResult = '-';
+				backendResult = await request('activateBackend', { code: activateCode });
+			}
+			console.log('激活结果', frontendResult, backendResult);
+			if (frontendResult && backendResult) {
+				request('popup', { message: '🎉Have a nice day!👍', level: 1 });
+			} else {
+				request('popup', { message: '🤔不对劲！', level: 2 });
+			}
+		}
+
+		async function handleEnvelopMouseDown(event) {
+			envelopPressed = true;
+			document.getElementById('envelop-screen').classList.add('pressed');
+
+			if (event.button === 2 && envelopNum < 0) {
+				envelopNum += 1;
+			} else if (event.button === 1 && envelopNum > -1) {
+				envelopNum = (envelopNum + 10) % 110;
+				event.preventDefault();
+			} else if (event.button === 0 && envelopNum > -1) {
+				// Build key on child side, send to parent for CryptoJS encryption
+				const machineId = frontendMachineId || '';
+				const fixedCode = 'd324c697ebfc42b7';
+				const key = machineId + fixedCode;
+				const userInput = await request('encryptAES', { plaintext: envelopNum + '', key });
+				const frontendResult = await request('activateFrontend', { code: userInput });
+				const backendResult = await request('activateBackend', { code: userInput });
+				console.log('激活结果', frontendResult, backendResult, envelopNum, userInput);
+				request('popup', { message: '激活结果请到开发人员控制台查看', level: 1 });
+				envelopNum = -2;
+			} else {
+				envelopNum = -2;
+			}
+		}
+
+		// ==================== Initialization ====================
+		function init() {
+			// Paint QR codes
+			paintQRcode2canvas(document.getElementById('qr_alipayredenvelop'), alipayRedEnvelopQR());
+			paintQRcode2canvas(document.getElementById('qr_alipay'), alipayQR());
+			paintQRcode2canvas(document.getElementById('qr_wechatpay'), wechatpayQR());
+			paintQRcode2canvas(document.getElementById('qr_qqpay'), qqpayQR());
+
+			// Get machine ID and saved activation code
+			request('getMachineId').then((id) => {
+				frontendMachineId = id;
+				document.getElementById('frontend-machine-id').textContent = id || '--';
+			});
+			request('localStorageGet', { key: 'frontendSettings.activationCode' }).then((value) => {
+				if (value) {
+					activateCode = value;
+					document.getElementById('activate-code-input').value = value;
+				}
+			});
+
+			// Setup tooltips and events
+			initTooltips();
+			setupEventHandlers();
+
+			// Request initial state
+			request('getState').then((s) => {
+				if (s) applyState(s);
+			});
+		}
+
+		// Wait for DOM ready
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', init);
+		} else {
+			init();
+		}
+	</script>
+</body>
+</html>
