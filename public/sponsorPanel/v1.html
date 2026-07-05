@@ -351,15 +351,8 @@
 		<div id="backend-highlight" class="yourLevel-middle-highlight"></div>
 	</div>
 
-	<table>
-		<tbody>
-			<tr><td>媒体时长上限</td><td id="limit-mediaDuration">--</td></tr>
-			<tr><td>转码时长上限</td><td id="limit-workingDuration">--</td></tr>
-			<tr><td>远程单文件上传大小上限</td><td id="limit-uploadSize">--</td></tr>
-			<tr><td>任务列表数量上限</td><td id="limit-taskCount">--</td></tr>
-			<tr><td>同时转码任务数量设定上限</td><td id="limit-threads">--</td></tr>
-			<tr><td>滤镜功能节点数量上限</td><td id="limit-filterNodes">--</td></tr>
-		</tbody>
+	<table id="limit-table">
+		<tbody id="limit-table-body"></tbody>
 	</table>
 
 	<p>FFBox 是一款试用、有源、捐赠混合的软件。出厂状况下，本软件存在部分功能的使用限制</p>
@@ -430,17 +423,8 @@
 		}
 
 		// ==================== getLimitaion ====================
-		function getLimitaion(type, functionLevel) {
-			const n = functionLevel !== undefined ? functionLevel : state.functionLevel;
-			switch (type) {
-				case 'maxMediaDuration':    return n < 50 ? 671 : undefined;
-				case 'maxWorkingDuration':  return n < 45 ? 671 : 40271;
-				case 'maxUploadSizeGB':     return n < 15 ? 1 : n < 30 ? 4 : n < 45 ? 10 : n < 65 ? 32 : 1024;
-				case 'maxTaskListCount':    return n < 20 ? 20 : n < 55 ? 99 : n < 70 ? 256 : 2048;
-				case 'maxThreads':          return n < 20 ? 4 : n < 35 ? 6 : n < 50 ? 9 : n < 70 ? 99 : 256;
-				case 'maxFilterNodeCount':  return n < 20 ? 20 : n < 40 ? 66 : n < 60 ? 99 : 999;
-			}
-		}
+	// NOTE: 限制值统一由父页面（SponsorPanel）从 @common/limitaions.ts 计算后通过 stateUpdate 下发，
+	// 此处不再维护任何硬编码的限制逻辑。如需修改，请编辑 src/common/limitaions.ts
 
 		// ==================== QR Code Rendering ====================
 		function getQR(hexString, size, linesize) {
@@ -536,14 +520,30 @@
 				backendItem.style.display = 'none';
 			}
 
-			// Limitations table
-			document.getElementById('limit-mediaDuration').textContent = fl < 50 ? '11:11' : '无限制';
-			document.getElementById('limit-workingDuration').textContent = fl < 45 ? '11:11' : '11:11:11';
-			const uploadSize = getLimitaion('maxUploadSizeGB');
-			document.getElementById('limit-uploadSize').textContent = uploadSize ? uploadSize + 'GB' : '无限制';
-			document.getElementById('limit-taskCount').textContent = getLimitaion('maxTaskListCount') || '无限制';
-			document.getElementById('limit-threads').textContent = getLimitaion('maxThreads') || '无限制';
-			document.getElementById('limit-filterNodes').textContent = getLimitaion('maxFilterNodeCount') || '无限制';
+			// Limitations table (data from parent page via stateUpdate)
+			const tbody = document.getElementById('limit-table-body');
+			tbody.innerHTML = '';
+			const rows = state.limitationTable;
+			if (rows && rows.length) {
+				rows.forEach((row) => {
+					const tr = document.createElement('tr');
+					const tdLabel = document.createElement('td');
+					tdLabel.textContent = row.label || '';
+					const tdValue = document.createElement('td');
+					tdValue.textContent = row.value !== undefined && row.value !== null ? row.value : '--';
+					tr.appendChild(tdLabel);
+					tr.appendChild(tdValue);
+					tbody.appendChild(tr);
+				});
+			} else {
+				const tr = document.createElement('tr');
+				const td = document.createElement('td');
+				td.textContent = '等待加载限制信息…';
+				td.colSpan = 2;
+				td.style.textAlign = 'center';
+				tr.appendChild(td);
+				tbody.appendChild(tr);
+			}
 
 			// Button states
 			document.getElementById('btn-activate-frontend').toggleAttribute('disabled', state.env === 'browser');
