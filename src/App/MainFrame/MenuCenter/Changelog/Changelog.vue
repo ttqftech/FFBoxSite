@@ -1,5 +1,52 @@
+<script setup lang="tsx">
+import { reactive } from 'vue';
+
+const expanded = reactive<Record<string, boolean>>({
+	'6.0': false,
+});
+
+const toggle = (key: string) => {
+	expanded[key] = !expanded[key];
+};
+</script>
+
 <template>
 	<div class="updatelog-box">
+		<h2 class="collapsible" @click="toggle('6.0')">
+			<span class="arrow">{{ expanded['6.0'] ? '▼' : '▶' }}</span>
+			版本 6.0<span>(开发中)</span>
+		</h2>
+		<ul v-show="expanded['6.0']">
+			<li style="color: #EE8822; font-style: italic;">6.0 版本将为您带来性能大飞升！版本开发正在进行中，若想体验测试版，请从页面右上角的按钮进入 QQ 群获取测试包～</li>
+			<li>【飞升】💥TNT 级（千倍）任务列表性能大提升！！！千任务添加时间 5 分钟降至 1 秒！</li>
+			<li>【飞升】💥核弹级（万倍）任务列表容量大提升！！！正常使用容量从百任务级提升至百万任务级！</li>
+			<li style="opacity: 0.5; font-style: italic;">余下 <strong style="color: #EE8822; font-size: 2em">25</strong> 条更新内容请打开开发者工具查看……（没错，别的程序员都不希望你打开这玩意，我比较独树一帜🙃）</li>
+			<!-- <li>【飞升】所有任务相关接口改为批量操作，大幅降低大批量操作下的接口性能损耗！</li>
+			<li>【飞升】后端 任务列表全新使用分块链表数组 + 任务状态桶结构，有效提高超大任务列表下的整体性能！</li>
+			<li>【飞升】后端 新增协作式任务让出管理器，支持打断，超大批量操作不再卡住傻等！</li>
+			<li>【飞升】前端 任务列表使用粗调 + 细调双滑块无限滚动机制（几乎首创👍），按需拉取和订阅监听，支持自定义启用阈值、页面大小、自动隐藏</li>
+			<li>【飞升】前端 进展图标支持调整图表密度，大幅提高性能</li>
+			<li>【新增】新增异步任务列表，前端可在状态栏观察——后端在忙什么，前端一目了然！</li>
+			<li>【新增】新增运行历史机制，已完成的任务调整参数不再需要重置任务，此前的运行结果也得以保留</li>
+			<li>【新增】输出路径新增 [taskId]、[taskIndex]、[outputIndex]、[runIndex] 占位符</li>
+			<li>【新增】支持按任务状态选择任务，代替此前的“所有任务操作”功能</li>
+			<li>【新增】后端 任务输出日志中新增任务启动停止相关信息</li>
+			<li>【新增】前端 任务列表现新增显示任务 ID 与序号</li>
+			<li>【优化】taskUpdate 剥离 cmdData 和 progressLog，大幅减少不必要的 JSON 序列化/反序列化，超长耗时任务下的操作性能有可见幅度提升</li>
+			<li>【优化】后端 ffmpeg 退出监听行为修正，删除任务性能大幅提升（百倍）</li>
+			<li>【优化】后端 ffmpeg 日志状态机让出机制小优化，中幅提升日志扫描性能（avOptions 扫描速度提升至约 2.5 倍）</li>
+			<li>【优化】后端 FFBoxHelper 优化逻辑避免重复启动</li>
+			<li>【优化】前端 dashboardTimer 改为全局唯一，减少大任务列表下定时器的性能消耗</li>
+			<li>【优化】前端 dashboardTimer 隐藏时自动暂停，大幅减少长任务下恢复窗口的卡死时间</li>
+			<li>【优化】前端 进度条信息超采样算法优化，减少低速任务信息的数字大幅波动</li>
+			<li>【优化】前端 气泡组件新增了过度繁殖限制逻辑，有效避免气泡过多导致前端卡死（提升幅度未知，反正从卡死变成基本满帧🙃）</li>
+			<li>【优化】前端 气泡组件关闭后自动穿透，优化连关手感</li>
+			<li>【优化】前端 切换服务器标签页时记住此前的滚动位置</li>
+			<li>【优化】前端 文件上传流水线随机序改为顺序</li>
+			<li>【修复】修复全局进度状态显示的逻辑故障</li>
+			<li>【修复】前端 修复文件上传 2 处会导致校验工作在特定情况下卡住的 bug</li>
+			<li>【修复】前端 添加任务弹窗拖入文件时的反斜杠转斜杠逻辑</li> -->
+		</ul>
 		<h2>版本 5.4<span>(2026-06-07)</span></h2>
 		<ul>
 			<li>切割操作器新增进度条鼠标悬浮缩略图（带后端缓存）；改用 ffprobe 扫描关键帧信息，大幅提高速度</li>
@@ -240,7 +287,6 @@
 		</ul>
 		<h2>版本 1.0<span>(2019-11-11)</span></h2>
 	</div>
-
 </template>
 
 <style scoped lang="less">
@@ -263,6 +309,21 @@
 			font-size: 0.5em;
 			opacity: 0.5;
 			margin-left: 1em;
+		}
+		h2.collapsible {
+			cursor: pointer;
+			user-select: none;
+			text-indent: -13.5px;
+			&:hover {
+				opacity: 0.8;
+			}
+			.arrow {
+				font-size: 0.7em;
+				opacity: 0.7;
+				margin-right: 0.4em;
+				margin-left: 0;
+				display: inline-block;
+			}
 		}
 	}
 </style>
