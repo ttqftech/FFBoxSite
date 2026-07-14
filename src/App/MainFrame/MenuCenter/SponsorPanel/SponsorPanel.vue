@@ -6,6 +6,7 @@ import { getLimitaion } from '../../../../stores/limitaions';
 import { useAppStore } from '../../../../stores/appStore';
 import Button, { ButtonType } from '../../../../components/Button/Button';
 import BoxedSlider from '../../../../components/Slider/BoxedSlider.vue';
+import Popup from '../../../../components/Popup/Popup.tsx';
 import Tooltip from '../../../../components/Tooltip/Tooltip';
 import IconGithub from './github.svg?component';
 import IconGitee from './gitee.svg?component';
@@ -296,6 +297,7 @@ onMounted(() => {
 		</table>
 		<p>FFBox 是一款试用、有源、捐赠混合的软件。出厂状况下，本软件存在部分功能的使用限制</p>
 		<p>您可以通过激活码去除这些限制，详情请到官网或官方信息发布平台查询～</p>
+		<Button @click="() => Popup({ message: '请回到主面板，向 AI 咨询相关事项～', level: 0 })">人品考核</Button>
 		<h2>栓个大Ｑ！</h2>
 		<div style="font-style: italic; font-size: 0.7em; opacity: 0.7;">此部分内容非实时更新</div>
 		<h3>祝 2026 年的大家六六大顺🤘🏻</h3>
