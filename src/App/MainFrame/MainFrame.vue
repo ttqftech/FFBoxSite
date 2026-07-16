@@ -5,7 +5,7 @@ import Button, { ButtonType } from '../../components/Button/Button';
 import Popup from '../../components/Popup/Popup';
 import Msgbox from '../../components/Msgbox/Msgbox';
 import MenuCenter from './MenuCenter/MenuCenter.vue';
-import AISearch from './AISearch/AISearchWithConfig.vue';
+import AISearch from './AISearch/AISearchIframeHost.vue';
 import MobileScreen from './MobileScreen.vue';
 import IconPointOut from '../../assets/warnings/pointOut.svg?component';
 
