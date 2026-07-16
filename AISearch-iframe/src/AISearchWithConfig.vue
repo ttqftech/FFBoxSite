@@ -1,12 +1,30 @@
-﻿<script setup lang="ts">
-import axios, { AxiosError } from 'axios';
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import AISearchConfig, { AIModelOption } from './types';
-import { randomString } from '../../../common/utils';
-import ImprovedLocalStorage from '../../../common/ImprovedLocalStorage';
+import axios, { AxiosError } from 'axios';
 import AISearch from './AISearch.vue';
-import Msgbox from '../../../components/Msgbox/Msgbox';
-import { ButtonType } from '../../../components/Button/Button';
+import AISearchConfig, { AIModelOption } from './types';
+import { randomString } from './utils';
+import ImprovedLocalStorage from './storage';
+
+/**
+ * AISearchWithConfig —— 从主项目转移而来。
+ * 负责拉取 AI 帮助配置并渲染 AISearch 组件。
+ *
+ * 与原主项目版本的差异：
+ * - initMsgbox 不在 iframe 中显示，通过 onInitMsgbox 回调转发给父页面
+ * - 增加 iframe 通讯相关回调（onAction / onBoundsChange / onStateChange / onMouseLeaveContent）
+ */
+
+interface Props {
+	// iframe 通讯回调
+	onInitMsgbox?: (content: string) => void;	// 配置要求显示初始化弹窗（iframe 无法显示 Msgbox，转发父页面）
+	onAction?: (url: string) => void;	// 需要父页面处理的动作（如 ffbox:/ 协议）
+	onBoundsChange?: (rect: { top: number, left: number, width: number, height: number } | null) => void;	// 内容边界变化
+	// onStateChange?: (state: 'closed' | 'opening' | 'opened' | 'closing') => void;	// 开关状态变化
+	onMouseLeaveContent?: () => void;	// 鼠标离开内容区域，父页面据此关闭 iframe 的 pointer-events
+}
+
+const props = defineProps<Props>();
 
 const fetchedConfig = ref<AISearchConfig>();
 const modelOptions = ref<AIModelOption[]>([]);
@@ -65,10 +83,8 @@ const initWindow = async (modelKey?: string) => {
 	if (!fetchedConfig.value) return;
 
 	if (fetchedConfig.value.initMsgbox) {
-		Msgbox({
-			content: fetchedConfig.value.initMsgbox,
-			buttons: [{ text: '我已知悉，继续', type: ButtonType.Primary }]
-		});
+		// iframe 中无法显示 Msgbox，转发给父页面
+		props.onInitMsgbox?.(fetchedConfig.value.initMsgbox);
 	}
 
 	const selected = getModelOption(modelKey);
@@ -230,11 +246,11 @@ const init = async () => {
 };
 
 onMounted(() => {
+	// 延迟初始化配置，与原项目保持一致
 	setTimeout(() => {
 		init();
 	}, 100);
 });
-
 </script>
 
 <template>
@@ -250,5 +266,8 @@ onMounted(() => {
 		:maxInputLength="fetchedConfig?.maxInputLength"
 		:maxRounds="fetchedConfig?.maxRounds" :maxRoundsMessage="fetchedConfig?.maxRoundsMessage"
 		:quotaUsed="quotaUsed"
+		:onAction="props.onAction"
+		:onBoundsChange="props.onBoundsChange"
+		:onMouseLeaveContent="props.onMouseLeaveContent"
 	/>
 </template>

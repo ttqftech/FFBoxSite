@@ -1,18 +1,17 @@
-﻿<script setup lang="ts">
-import { ref, nextTick, computed, watch } from 'vue';
+<script setup lang="ts">
+import { ref, nextTick, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import gsap from 'gsap';
 import AISearchConfig, { AIChatMessage, AIModelOption } from './types';
-import { getTimeString } from '../../../common/utils';
-import { useTooltip } from '../../../common/tooltipUtil';
-import { showActivateCodeGen } from './activateCodeGen';
-import Button, { ButtonType } from '../../../components/Button/Button';
-import DropdownInput from '../../../components/DropdownInput/DropdownInput.vue';
-import type { MenuItem } from '../../../components/Menu/Menu';
-import GradientRect from './gradientRect.svg?skipsvgo';	// svgo 存在 bug 导致 svg 中的 id 跨 svg 产生重复，见 https://svgo.dev/docs/plugins/cleanupIds/
-import IconRefresh from './refresh.svg';
-import IconLoading from './loading.svg';
-import IconAI from './AI.svg';
-import IconX from '../../../assets/×.svg';
+import { getTimeString } from './utils';
+import { useTooltip } from './useTooltip';
+import Button, { ButtonType } from './components/Button';
+import DropdownInput from './components/DropdownInput.vue';
+import type { MenuItem } from './components/DropdownInput.vue';
+import GradientRect from './assets/gradientRect.svg?skipsvgo';	// svgo 存在 bug 导致 svg 中的 id 跨 svg 产生重复
+import IconRefresh from './assets/refresh.svg';
+import IconLoading from './assets/loading.svg';
+import IconAI from './assets/AI.svg';
+import IconX from './assets/close.svg';
 
 interface Props {
 	enabled?: boolean;	// 是否启用并显示该组件，未定义则启用
@@ -34,12 +33,186 @@ interface Props {
 	maxRounds?: number;	// 用户允许在单个对话中发送的消息回合数，未定义则无限
 	maxRoundsMessage?: string;	// 用户允许在单个对话中发送的消息回合数达到上限时显示一条系统信息
 	quotaUsed?: AISearchConfig['tokenLimit'];	// 用户已使用的额度，0~1，达到 1 后不允许再使用
+
+	// iframe 相关回调
+	onAction?: (url: string) => void;	// 需要父页面处理的动作（如 ffbox:/ 协议）
+	onBoundsChange?: (rect: { top: number, left: number, width: number, height: number } | null) => void;	// 内容边界变化
+	// onStateChange?: (state: 'closed' | 'opening' | 'opened' | 'closing') => void;	// 开关状态变化
+	onMouseLeaveContent?: () => void;	// 鼠标离开内容区域，父页面据此关闭 iframe 的 pointer-events
 }
 
 const props = defineProps<Props>();
 
+// #region 窗口开关逻辑
+
 const isOpened = ref<'closed' | 'opening' | 'opened' | 'closing'>('closed');
 let hasOpened = false;
+
+const defaultAnchorRef = ref<HTMLDivElement>(null);
+const anchorRef = ref<HTMLDivElement>(null);
+const panelRef = ref<HTMLDivElement>(null);
+const anchorStyle = ref<Record<string, string> | null>(null);
+
+const openedClass = computed(() => isOpened.value === 'opening' || isOpened.value === 'opened' ? 'opened' : '');
+
+/** 上报内容边界给父页面，用于 pointer-events 切换 */
+const reportBounds = () => {
+	if (!props.onBoundsChange) return;
+	// console.log('reportBounds');
+	const anchorEl = anchorRef.value;
+	const panelEl = panelRef.value;
+	if (!anchorEl) {
+		props.onBoundsChange(null);
+		return;
+	}
+	const anchorRect = anchorEl.getBoundingClientRect();
+	// 关闭状态下只报 anchor（输入框区域）
+	if (isOpened.value === 'closed' || !panelEl) {
+		props.onBoundsChange({
+			top: anchorRect.top,
+			left: anchorRect.left,
+			width: anchorRect.width,
+			height: anchorRect.height,
+		});
+		return;
+	}
+	// 打开状态下报 anchor 和 panel 的并集
+	const panelRect = panelEl.getBoundingClientRect();
+	const top = Math.min(anchorRect.top, panelRect.top);
+	const left = Math.min(anchorRect.left, panelRect.left);
+	const right = Math.max(anchorRect.right, panelRect.right);
+	const bottom = Math.max(anchorRect.bottom, panelRect.bottom);
+	props.onBoundsChange({
+		top,
+		left,
+		width: right - left,
+		height: bottom - top,
+	});
+};
+
+let boundsRafId: number;
+/** 使用 requestAnimationFrame 上报边界，避免高频调用 */
+const reportBoundsRaf = () => {
+	cancelAnimationFrame(boundsRafId);
+	boundsRafId = requestAnimationFrame(reportBounds);
+};
+
+const openWindow = () => {
+	if (!defaultAnchorRef.value) return;
+
+	if (!hasOpened && props.init) {
+		hasOpened = true;
+		props.init(selectedModelKey.value);
+	}
+
+	const defaultRect = defaultAnchorRef.value.getBoundingClientRect();	// 记录默认位置
+	// 按默认位置转换为 fixed 定位
+	anchorStyle.value = {
+		position: 'fixed',
+		bottom: window.innerHeight - defaultRect.top - defaultRect.height + 'px',
+		left: defaultRect.left + 'px',
+		right: window.innerWidth - defaultRect.left - defaultRect.width + 'px',
+		height: '32px',
+		zIndex: '10',
+	};
+
+	isOpened.value = 'opening';
+	// props.onStateChange?.('opening');
+	reportBoundsRaf();
+	const targetLeftRight = window.innerWidth * 0.30 - 100;
+	const targetBottom = -40 + window.innerHeight * 0.15;
+	const targetStyle: Record<string, string> = {
+		position: 'fixed',
+		bottom: targetBottom + 'px',
+		left: targetLeftRight + 'px',
+		right: targetLeftRight + 'px',
+		height: '32px',
+		zIndex: '10',
+	};
+	gsap.to(anchorStyle.value, {
+		...targetStyle,
+		duration: 0.7,
+		ease: 'power3.inOut',
+		onUpdate() {
+			reportBoundsRaf();
+		},
+		onComplete() {
+			targetStyle.bottom = 'calc(-40px + 15vh)';	// 改为 CSS 能动态计算的格式
+			targetStyle.left = 'calc(30vw - 100px)';
+			targetStyle.right = 'calc(30vw - 100px)';
+			anchorStyle.value = targetStyle;
+			isOpened.value = 'opened';
+			// props.onStateChange?.('opened');
+			reportBoundsRaf();
+		}
+	});
+};
+
+const closeWindow = async () => {
+	const defaultRect = defaultAnchorRef.value.getBoundingClientRect();
+	const currentRect = anchorRef.value.getBoundingClientRect();
+	inputValue.value = '';
+	textRef.value.value = '';
+	const event = document.createEvent('HTMLEvents');
+	event.initEvent('input', false, true);
+	textRef.value.dispatchEvent(event);
+	// 按当前位置转换为 fixed 定位
+	anchorStyle.value = {
+		position: 'fixed',
+		bottom: window.innerHeight - currentRect.top - currentRect.height + 'px',
+		left: currentRect.left + 'px',
+		width: currentRect.width + 'px',
+		height: '32px',
+		zIndex: '10',
+	};
+
+	isOpened.value = 'closing';
+	// props.onStateChange?.('closing');
+	reportBoundsRaf();
+	const targetStyle = {
+		position: 'fixed',
+		bottom: window.innerHeight - defaultRect.top - defaultRect.height + 'px',
+		left: defaultRect.left + 'px',
+		width: defaultRect.width + 'px',
+		height: defaultRect.height + 'px',
+		zIndex: '10',
+	};
+	gsap.to(anchorStyle.value, {
+		...targetStyle,
+		duration: 0.7,
+		ease: 'power3.inOut',
+		onUpdate() {
+			reportBoundsRaf();
+		},
+		onComplete() {
+			anchorStyle.value = {};
+			isOpened.value = 'closed';
+			// props.onStateChange?.('closed');
+			reportBoundsRaf();
+		}
+	});
+};
+
+// 窗口大小变化时重新上报边界
+const handleResize = () => {
+	reportBoundsRaf();
+};
+
+onMounted(() => {
+	window.addEventListener('resize', handleResize);
+	// 初始上报一次边界
+	nextTick(() => reportBounds());
+});
+
+onBeforeUnmount(() => {
+	window.removeEventListener('resize', handleResize);
+	cancelAnimationFrame(boundsRafId);
+});
+
+// #endregion
+
+// #region 聊天逻辑
+
 const showedRequestKeywordMessage: string[] = [];
 const showedResponseKeywordMessage: string[] = [];
 const inputValue = ref('');
@@ -49,18 +222,12 @@ const loading = ref(false);
 const statusText = ref('大模型处理中');
 const selectedModelKey = ref<string | undefined>(undefined);
 
-const defaultAnchorRef = ref<HTMLDivElement>(null);
-const anchorRef = ref<HTMLDivElement>(null);
 const textRef = ref<HTMLTextAreaElement>(null);
 const messagesRef = ref<HTMLDivElement>(null);
 
-const anchorStyle = ref<Record<string, string> | null>(null);
-
-const openedClass = computed(() => isOpened.value === 'opening' || isOpened.value === 'opened' ? 'opened' : '');
-
 const currentRoundsPerMax = computed(() => props.maxRounds && messages.value.filter((msg) => msg.role === 'user').length / (props.maxRounds || Number.MAX_SAFE_INTEGER));
 
-const usageTouchedWarning = computed(() => 
+const usageTouchedWarning = computed(() =>
 	props.quotaUsed?.day >= 0.75 || props.quotaUsed?.week >= 0.75 || props.quotaUsed?.total >= 0.75 ||
 	(currentRoundsPerMax.value >= 0.75)
 );
@@ -92,10 +259,6 @@ const roundsSvgPiePath = computed(() => {
 			Z`;
 });
 
-// const modelDisplayEntries = computed(() => (props.modelOptions || []).map((item) => ({
-// 	key: item.key,
-// 	display: item.label,
-// })));
 const modelDropdownList = computed<MenuItem[]>(() => {
 	const entries = props.modelOptions || [];
 	if (!entries.length) {
@@ -106,95 +269,6 @@ const modelDropdownList = computed<MenuItem[]>(() => {
 	return rest.length ? [first, { type: 'separator' as const }, ...rest] : [first];
 });
 const selectedModelDisplayText = computed(() => selectedModelKey.value ? props.modelOptions.find((model) => model.key === selectedModelKey.value)?.key || '' : '');
-
-const openWindow = () => {
-	if (!defaultAnchorRef.value) return;
-
-	if (!hasOpened && props.init) {
-		hasOpened = true;
-		props.init(selectedModelKey.value);
-	}
-
-	const defaultRect = defaultAnchorRef.value.getBoundingClientRect();	// 记录默认位置
-	// 按默认位置转换为 fixed 定位
-	anchorStyle.value = {
-		position: 'fixed',
-		bottom: window.innerHeight - defaultRect.top - defaultRect.height + 'px',
-		left: defaultRect.left + 'px',
-		right: window.innerWidth - defaultRect.left - defaultRect.width + 'px',
-		height: '32px',
-		zIndex: '10',
-	};
-
-	isOpened.value = 'opening';
-	const targetLeftRight = window.innerWidth * 0.30 - 100;
-	const targetBottom = -40 + window.innerHeight * 0.15;
-	const targetStyle: Record<string, string> = {
-		position: 'fixed',
-		bottom: targetBottom + 'px',
-		left: targetLeftRight + 'px',
-		right: targetLeftRight + 'px',
-		height: '32px',
-		zIndex: '10',
-	};
-	gsap.to(anchorStyle.value, {
-		...targetStyle,
-		duration: 0.7,
-		ease: 'power3.inOut',
-		// onUpdate() {
-		// 	// 强制触发响应式更新
-		// 	console.log('update');
-		// 	anchorStyle.value = { ...anchorStyle.value! };
-		// },
-		onComplete() {
-			targetStyle.bottom = 'calc(-40px + 15vh)';	// 改为 CSS 能动态计算的格式
-			targetStyle.left = 'calc(30vw - 100px)';
-			targetStyle.right = 'calc(30vw - 100px)';
-			// targetStyle.height = undefined;
-			anchorStyle.value = targetStyle;
-			isOpened.value = 'opened';
-		}
-	});
-};
-
-const closeWindow = async () => {
-	const defaultRect = defaultAnchorRef.value.getBoundingClientRect();
-	const currentRect = anchorRef.value.getBoundingClientRect();
-	// console.log(currentRect, defaultRect);
-	inputValue.value = '';
-	textRef.value.value = '';
-	const event = document.createEvent('HTMLEvents');
-	event.initEvent('input', false, true);
-	textRef.value.dispatchEvent(event);
-	// 按当前位置转换为 fixed 定位
-	anchorStyle.value = {
-		position: 'fixed',
-		bottom: window.innerHeight - currentRect.top - currentRect.height + 'px',
-		left: currentRect.left + 'px',
-		width: currentRect.width + 'px',
-		height: '32px',
-		zIndex: '10',
-	};
-
-	isOpened.value = 'closing';
-	const targetStyle = {
-		position: 'fixed',
-		bottom: window.innerHeight - defaultRect.top - defaultRect.height + 'px',
-		left: defaultRect.left + 'px',
-		width: defaultRect.width + 'px',
-		height: defaultRect.height + 'px',
-		zIndex: '10',
-	};
-	gsap.to(anchorStyle.value, {
-		...targetStyle,
-		duration: 0.7,
-		ease: 'power3.inOut',
-		onComplete() {
-			anchorStyle.value = {};
-			isOpened.value = 'closed';
-		}
-	});
-};
 
 const sendMessage = async () => {
 	if (!inputValue.value.trim() || loading.value) return;
@@ -326,8 +400,6 @@ const sendMessage = async () => {
 				const finalScore = 15 + (total / full) * 50;
 				console.log(`修行：${finalScore}`);
 				chatItem.actions.push({ label: '生成激活码', url: `ffbox:/showActivationCodeGenMsgbox?level=${finalScore}` });
-
-				showActivateCodeGen(Math.round(finalScore));
 			}
 
 			// 激活 2
@@ -337,8 +409,6 @@ const sendMessage = async () => {
 			if (matchEnd2 || extraScoreActivated) {
 				console.log(`修行：50`);
 				chatItem.actions.push({ label: '生成激活码', url: `ffbox:/showActivationCodeGenMsgbox?level=50` });
-
-				showActivateCodeGen(50);
 			}
 		}).catch((error) => {
 			messages.value.push({ role: "aiErr", text: error });
@@ -369,13 +439,8 @@ const resetChat = () => {
 const handleActionButtonClick = (url: string) => {
 	const urlObject = new URL(url);
 	if (urlObject.protocol === 'ffbox:') {
-		const query = new URLSearchParams(urlObject.search);
-		if (urlObject.pathname === '/showActivationCodeGenMsgbox') {
-			const level = +query.get('level');
-			if (isFinite(level)) {
-				showActivateCodeGen(level);
-			}
-		}
+		// ffbox:/ 协议交给父页面处理
+		props.onAction?.(url);
 	} else {
 		window.open(url);
 	}
@@ -410,7 +475,6 @@ watch(() => props.initialPlaceholderInterval, () => {
 	clearInterval(initialPlaceholderTimer);
 	if (props.initialPlaceholderInterval) {
 		initialPlaceholderTimer = setInterval(() => {
-			// initialPlaceholderIndex.value = initialPlaceholderIndex.value >= (props.initialPlaceholders?.length ?? 1) - 1 ? 0 : initialPlaceholderIndex.value + 1;
 			let newIndex = 0;
 			do {
 				newIndex = Math.floor(Math.random() * props.initialPlaceholders?.length || 1);
@@ -420,25 +484,30 @@ watch(() => props.initialPlaceholderInterval, () => {
 	}
 }, { immediate: true });
 
+watch(() => messages.value.length, () => {
+	nextTick(() => messagesRef.value.scrollTo(0, Number.MAX_SAFE_INTEGER));
+});
+
+// #endregion
+
 watch(() => props.enabled, () => {
 	if (props.enabled) {
 		if (props.initSystemMessage) {
 			messages.value.push(props.initSystemMessage);
 		}
+		setTimeout(() => {
+			reportBounds();
+		}, 500);
 	}
 }, { immediate: true });
-
-watch(() => messages.value.length, () => {
-	nextTick(() => messagesRef.value.scrollTo(0, Number.MAX_SAFE_INTEGER));
-});
 
 </script>
 
 <template>
-	<div class="defaultAnchor" ref="defaultAnchorRef" :class="props.enabled === false ? 'disabled' : ''">
+	<div class="defaultAnchor" ref="defaultAnchorRef" :class="props.enabled === false ? 'disabled' : ''" @mouseleave="props.onMouseLeaveContent?.()">
 		<div class="aiSearchPositionAnchor" :style="anchorStyle" ref="anchorRef">
 			<transition name="panelAnim">
-				<div v-show="openedClass || true" :class="['panel', openedClass]">
+				<div v-show="openedClass || true" :class="['panel', openedClass]" ref="panelRef">
 					<!-- <GradientRect /> -->
 					<div class="chatHeader">
 						<div class="left">
@@ -464,126 +533,123 @@ watch(() => messages.value.length, () => {
 								.slice(0, -1))"
 							>
 							<svg class="usageRing" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AI 使用量">
-									<defs>
-										<filter id="quotaUsageBgShadow" x="-50%" y="-50%" width="200%" height="200%">
-											<feDropShadow dx="0" dy="0" stdDeviation="2" :flood-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" flood-opacity="0.4"/>
-										</filter>
-										<filter id="quotaUsageRingShadow" x="-50%" y="-50%" width="200%" height="200%">
-											<feDropShadow dx="0" dy="0" stdDeviation="1" flood-color="hwb(var(--bg97))" flood-opacity="1"/>
-										</filter>
-	
-										<!-- 渐变（外/中/内） -->
-										<linearGradient id="gOuter" x1="0" y1="0" x2="1" y2="1">
-											<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
-											<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
-										</linearGradient>
-										<linearGradient id="gMiddle" x1="1" y1="0" x2="0" y2="1">
-											<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
-											<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
-										</linearGradient>
-										<linearGradient id="gInner" x1="0" y1="1" x2="1" y2="0">
-											<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
-											<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
-										</linearGradient>
-									</defs>
-	
-									<!-- 背景 -->
-									<circle cx="24" cy="24" r="22" fill="hwb(var(--bg97))" filter="url(#quotaUsageBgShadow)" />
-									<!-- <circle cx="24" cy="24" r="24" fill="none" stroke="#F5F7FB" stroke-width="1"/> -->
-	
-									<!-- 进度圆 -->
-									<path
-										v-if="props.maxRounds !== undefined"
-										:d="roundsSvgPiePath"
-										:fill="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" opacity="0.1"
-									/>
-	
-									<!-- 外圈 -->
-									<circle v-if="props.quotaUsed.day !== undefined" class="track"
-										cx="24" cy="24" r="18" />
-									<circle v-if="props.quotaUsed.day !== undefined" class="progress" :style="`stroke: url(#gOuter); stroke-dasharray: ${props.quotaUsed.day * 100} 100`"
-										cx="24" cy="24" r="18" pathLength="100" filter="url(#quotaUsageRingShadow)" />
-	
-									<!-- 中圈 -->
-									<circle v-if="props.quotaUsed.week !== undefined" class="track"
-										cx="24" cy="24" r="13"/>
-									<circle v-if="props.quotaUsed.week !== undefined" class="progress" :style="`stroke: url(#gMiddle); stroke-dasharray: ${props.quotaUsed.week * 100} 100`"
-										cx="24" cy="24" r="13" pathLength="100" filter="url(#quotaUsageRingShadow)" />
-	
-									<!-- 内圈 -->
-									<circle v-if="props.quotaUsed.total !== undefined" class="track"
-										cx="24" cy="24" r="8"/>
-									<circle v-if="props.quotaUsed.total !== undefined" class="progress" :style="`stroke: url(#gInner); stroke-dasharray: ${props.quotaUsed.total * 100} 100`"
-										cx="24" cy="24" r="8" pathLength="100" filter="url(#quotaUsageRingShadow)" />
-								</svg>
-								<span class="text" v-if="usageTouchedWarning">注意用量</span>
-							</div>
-						</div>
-						<div class="right">
-							<Button @click="resetChat" aria-label="重置 AI 聊天消息" :type="ButtonType.NoBg" :disabled="loading"><IconRefresh /></Button>
-							<Button @click="closeWindow" aria-label="关闭 AI 聊天弹窗" :type="ButtonType.NoBg"><IconX style="height: 20px" /></Button>
+								<defs>
+									<filter id="quotaUsageBgShadow" x="-50%" y="-50%" width="200%" height="200%">
+										<feDropShadow dx="0" dy="0" stdDeviation="2" :flood-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" flood-opacity="0.4"/>
+									</filter>
+									<filter id="quotaUsageRingShadow" x="-50%" y="-50%" width="200%" height="200%">
+										<feDropShadow dx="0" dy="0" stdDeviation="1" flood-color="hwb(var(--bg97))" flood-opacity="1"/>
+									</filter>
+
+									<!-- 渐变（外/中/内） -->
+									<linearGradient id="gOuter" x1="0" y1="0" x2="1" y2="1">
+										<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
+										<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
+									</linearGradient>
+									<linearGradient id="gMiddle" x1="1" y1="0" x2="0" y2="1">
+										<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
+										<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
+									</linearGradient>
+									<linearGradient id="gInner" x1="0" y1="1" x2="1" y2="0">
+										<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
+										<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
+									</linearGradient>
+								</defs>
+
+								<!-- 背景 -->
+								<circle cx="24" cy="24" r="22" fill="hwb(var(--bg97))" filter="url(#quotaUsageBgShadow)" />
+
+								<!-- 进度圆 -->
+								<path
+									v-if="props.maxRounds !== undefined"
+									:d="roundsSvgPiePath"
+									:fill="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" opacity="0.1"
+								/>
+
+								<!-- 外圈 -->
+								<circle v-if="props.quotaUsed.day !== undefined" class="track"
+									cx="24" cy="24" r="18" />
+								<circle v-if="props.quotaUsed.day !== undefined" class="progress" :style="`stroke: url(#gOuter); stroke-dasharray: ${props.quotaUsed.day * 100} 100`"
+									cx="24" cy="24" r="18" pathLength="100" filter="url(#quotaUsageRingShadow)" />
+
+								<!-- 中圈 -->
+								<circle v-if="props.quotaUsed.week !== undefined" class="track"
+									cx="24" cy="24" r="13"/>
+								<circle v-if="props.quotaUsed.week !== undefined" class="progress" :style="`stroke: url(#gMiddle); stroke-dasharray: ${props.quotaUsed.week * 100} 100`"
+									cx="24" cy="24" r="13" pathLength="100" filter="url(#quotaUsageRingShadow)" />
+
+								<!-- 内圈 -->
+								<circle v-if="props.quotaUsed.total !== undefined" class="track"
+									cx="24" cy="24" r="8"/>
+								<circle v-if="props.quotaUsed.total !== undefined" class="progress" :style="`stroke: url(#gInner); stroke-dasharray: ${props.quotaUsed.total * 100} 100`"
+									cx="24" cy="24" r="8" pathLength="100" filter="url(#quotaUsageRingShadow)" />
+							</svg>
+							<span class="text" v-if="usageTouchedWarning">注意用量</span>
 						</div>
 					</div>
-					<div class="chatMessages" ref="messagesRef">
-						<TransitionGroup name="msgAnim">
-							<div v-for="(msg, idx) in messages" :key="idx" :class="['msg', msg.role]">
-								<div class="msgContent">
-									<!-- {{ msg.text }} -->
-									<template v-for="(line, index) in msg.text.split('\n')" :key="index">
-										{{ line }}<br />
-									</template>
-								</div>
-								<div class="smallText">
-									{{ [
-										msg.time ? getTimeString(msg.time) : '',
-										msg.refers?.length ? '参考来源：' + msg.refers.join('；') : '',
-										msg.expense ? '算力开销：' + Math.round(msg.expense) : '',
-									].filter((text) => text).join('｜') }}
-									<button v-for="action in msg.actions" @click="handleActionButtonClick(action.url)">{{ action.label }}</button>
-								</div>
-							</div>
-							<div v-if="statusText && loading" :key="messages.length" class="msg aiInfo">
-								<div class="msgContent"><IconLoading class="loading" />{{ statusText }}</div>
-							</div>
-						</TransitionGroup>
+					<div class="right">
+						<Button @click="resetChat" aria-label="重置 AI 聊天消息" :type="ButtonType.NoBg" :disabled="loading"><IconRefresh /></Button>
+						<Button @click="closeWindow" aria-label="关闭 AI 聊天弹窗" :type="ButtonType.NoBg"><IconX style="height: 20px" /></Button>
 					</div>
 				</div>
-			</transition>
-			<div class="inputArea" :class="openedClass">
-				<textarea
-					type="text"
-					rows="1"
-					:class="openedClass"
-					ref="textRef"
-					v-model="inputValue"
-					:placeholder="openedClass.length ? '输入问题...' : ''"
-					:disabled="loading"
-					:maxlength="props.maxInputLength ?? 10000"
-					oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
-					@focus="() => isOpened === 'closed' ? openWindow() : null"
-					@keyup.enter="sendMessage"
-					aria-label="AI 聊天输入框"
-				/>
-				<div :class="['iconAI', openedClass]">
-					<IconAI />
-					<span>{{ initialPlaceholderText }}</span>
+				<div class="chatMessages" ref="messagesRef">
+					<TransitionGroup name="msgAnim">
+						<div v-for="(msg, idx) in messages" :key="idx" :class="['msg', msg.role]">
+							<div class="msgContent">
+								<template v-for="(line, index) in msg.text.split('\n')" :key="index">
+									{{ line }}<br />
+								</template>
+							</div>
+							<div class="smallText">
+								{{ [
+									msg.time ? getTimeString(msg.time) : '',
+									msg.refers?.length ? '参考来源：' + msg.refers.join('；') : '',
+									msg.expense ? '算力开销：' + Math.round(msg.expense) : '',
+								].filter((text) => text).join('｜') }}
+								<button v-for="action in msg.actions" @click="handleActionButtonClick(action.url)">{{ action.label }}</button>
+							</div>
+						</div>
+						<div v-if="statusText && loading" :key="messages.length" class="msg aiInfo">
+							<div class="msgContent"><IconLoading class="loading" />{{ statusText }}</div>
+						</div>
+					</TransitionGroup>
 				</div>
-				<!-- <div class="gradientTemparory"></div> -->
-				<GradientRect v-if="isOpened === 'closed'" class="gradientRect" />
-				<Button @click="sendMessage" :disabled="loading" :class="openedClass">🚀</Button>
-				<!-- <div v-if="loading" class="loading-overlay">
-					<div class="spinner"></div>
-				</div> -->
 			</div>
+		</transition>
+		<div class="inputArea" :class="openedClass">
+			<textarea
+				type="text"
+				rows="1"
+				:class="openedClass"
+				ref="textRef"
+				v-model="inputValue"
+				:placeholder="openedClass.length ? '输入问题...' : ''"
+				:disabled="loading"
+				:maxlength="props.maxInputLength ?? 10000"
+				oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+				@focus="() => isOpened === 'closed' ? openWindow() : null"
+				@keyup.enter="sendMessage"
+				aria-label="AI 聊天输入框"
+			/>
+			<div :class="['iconAI', openedClass]">
+				<IconAI />
+				<span>{{ initialPlaceholderText }}</span>
+			</div>
+			<GradientRect v-if="isOpened === 'closed'" class="gradientRect" />
+			<Button @click="sendMessage" :disabled="loading" :class="openedClass">🚀</Button>
 		</div>
+	</div>
 	</div>
 </template>
 
 <style scoped lang="less">
+	/* iframe 内容需要显式启用 pointer-events，因为 body 设置了 pointer-events: none */
 	.defaultAnchor {
 		position: relative;
 		height: 32px;
+		width: 100%;
 		transition: width 0.5s ease;
+		pointer-events: auto;
 		&.disabled {
 			width: 0 !important;
 			overflow: hidden;
@@ -592,6 +658,7 @@ watch(() => messages.value.length, () => {
 			position: relative;	// 激活时由 js 改为 fixed
 			height: 100%;	// 激活时由 js 控制
 			.inputArea {
+				pointer-events: auto;
 				position: absolute;
 				bottom: 0;
 				height: 32px;	// 关闭状态
@@ -694,37 +761,11 @@ watch(() => messages.value.length, () => {
 						opacity: 1;
 					}
 				}
-				.loading-overlay {
-					position: absolute;
-					inset: 0;
-					background: rgba(255, 255, 255, 0.7);
-					display: flex;
-					align-items: center;
-					justify-content: center;
-	
-					.spinner {
-						width: 32px;
-						height: 32px;
-						border: 3px solid #ccc;
-						border-top-color: #007bff;
-						border-radius: 50%;
-						animation: spin 1s linear infinite;
-					}
-				}
 			}
-			// .panelAnim-enter-from {
-			// 	top: 0;
-			// }
-			// .panelAnim-enter-active {
-			// 	transition: all 2s linear;
-			// }
-			// .panelAnim-enter-to {
-			// 	top: calc(-80px - 70vh + 60px);
-			// }
 			.panel {
+				pointer-events: auto;
 				position: absolute;
 				top: 0;
-				// top: calc(-80px - 70vh + 60px);
 				left: -8px;
 				right: -8px;
 				bottom: -8px;
@@ -747,12 +788,6 @@ watch(() => messages.value.length, () => {
 					top: calc(-80px - 70vh + 60px);
 					transition: top 0.7s cubic-bezier(0.8, 0, 0.2, 1) 0.1s, opacity 0.1s linear;
 				}
-				// svg {
-				// 	position: absolute;
-				// 	width: 100%;
-				// 	height: 100%;
-				// 	pointer-events: none;
-				// }
 				.chatHeader {
 					display: flex;
 					justify-content: space-between;
@@ -776,7 +811,6 @@ watch(() => messages.value.length, () => {
 							border-radius: 8px;
 							background-color: hwb(255 50% 0% / 0.2);
 							width: 180px;
-							// max-width: 220px;
 							:deep(input) {
 								font-size: 11px;
 							}
@@ -791,8 +825,6 @@ watch(() => messages.value.length, () => {
 								--green2: #2ED573;
 								--red1: hwb(20 20% 0%);
 								--red2: hwb(5 40% 5%);
-								// --red1: #FAD961;
-								// --red2: #F76B1C;
 								margin-left: 12px;
 								width: 22px;
 								height: 22px;
@@ -913,7 +945,6 @@ watch(() => messages.value.length, () => {
 							text-align: right;
 							.msgContent {
 								color: #fefefe;
-								// background-color: hwb(210 5% 5% / 0.85);
 								box-shadow: 0 0 1px 0.5px hwb(var(--hoverLightBg)),
 										0 1.5px 4px 0 hwb(var(--hoverShadow) / 0.2),
 										0 1px 0.5px 0px hwb(var(--highlight) / 0.5) inset,	// 上高光
@@ -927,7 +958,6 @@ watch(() => messages.value.length, () => {
 							text-align: left;
 							.msgContent {
 								color: var(--33);
-								// background-color: hwb(var(--hoverLightBg) / 0.5);
 								box-shadow: 0 0 1px 0.5px hwb(var(--hoverLightBg)),
 										0 1.5px 4px 0 hwb(var(--hoverShadow) / 0.2),
 										0 1px 0.5px 0px hwb(var(--highlight) / 0.5) inset,	// 上高光

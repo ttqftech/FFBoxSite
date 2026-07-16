@@ -1,0 +1,23 @@
+<!-- Animated gradient stroke rectangle -->
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Animated gradient stroke rectangle">
+	<defs>
+		<linearGradient id="strokeGradient" gradientUnits="objectBoundingBox" x1="0" y1="50%" x2="100%" y2="50%">
+			<stop offset="0%"   stop-color="#3377fe"/>
+			<stop offset="100%" stop-color="#ba59ff"/>
+			<animateTransform
+				attributeName="gradientTransform"
+				type="rotate"
+				from="0 0.5 0.5" to="360 0.5 0.5"
+				dur="4s" repeatCount="indefinite"
+			/>
+		</linearGradient>
+	</defs>
+	<rect
+		x="0.5" y="0.5"
+		width="calc(100% - 1px)" height="calc(100% - 1px)"
+		rx="16" ry="16"
+		fill="none"
+		stroke="url(#strokeGradient)"
+		stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+	/>
+</svg>

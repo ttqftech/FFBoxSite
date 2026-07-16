@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "build": "vue-tsc && vite-ssg build",
+    "build": "npm run build:aisearch && vue-tsc && vite-ssg build",
+    "build:aisearch": "npm --prefix AISearch-iframe run build",
+    "dev:aisearch": "npm --prefix AISearch-iframe run dev",
     "preview": "vite preview"
   },
   "dependencies": {
