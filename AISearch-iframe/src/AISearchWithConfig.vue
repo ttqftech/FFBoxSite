@@ -5,6 +5,7 @@ import AISearch from './AISearch.vue';
 import AISearchConfig, { AIModelOption } from './types';
 import { randomString } from './utils';
 import ImprovedLocalStorage from './storage';
+import { generateConfig } from './configGenerator';
 
 /**
  * AISearchWithConfig —— 从主项目转移而来。
@@ -223,11 +224,8 @@ const init = async () => {
 	if (inited) return;
 
 	try {
-		const configResponse = await axios.post('http://api.ffbox.ttqf.tech/v2/FFBoxAIConfig/default', { platform: 'FFBoxSite' });
-		const configData = typeof configResponse.data === 'string'
-			? JSON.parse(configResponse.data)
-			: configResponse.data;
-		fetchedConfig.value = configData as AISearchConfig;
+		const configData = generateConfig('FFBoxSite');
+		fetchedConfig.value = configData;
 		modelOptions.value = fetchedConfig.value.modelOptions || [];
 
 		checkQuota();
