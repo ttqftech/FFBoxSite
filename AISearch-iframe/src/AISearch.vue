@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, nextTick, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import gsap from 'gsap';
-import AISearchConfig, { AIChatMessage, AIModelOption } from './types';
+import AISearchConfig, { AIChatMessage, AIModelOption, ChatAPIParams, ChatAPIResult, StreamEvent, ChatBlock } from './types';
 import { getTimeString } from './utils';
 import { useTooltip } from './useTooltip';
 import Button, { ButtonType } from './components/Button';
@@ -15,10 +15,9 @@ import IconX from './assets/close.svg';
 
 interface Props {
 	enabled?: boolean;	// 是否启用并显示该组件，未定义则启用
-	chatAPI?: (message: string, modelKey?: string) => Promise<{ content: string, expense?: number }>;	// 聊天 API，未定义则将在对话框中输出当前时间，出错将显示错误信息
+	chatAPI?: (params: ChatAPIParams) => Promise<ChatAPIResult>;	// 聊天 API（流式），未定义则将在对话框中输出当前时间，出错将显示错误信息
 	resetChat?: (modelKey?: string) => any;	// 点击重置对话时需要处理的副作用
 	init?: (modelKey?: string) => any;	// 首次打开窗口时需要处理的副作用
-	statusAPI?: (modelKey?: string) => Promise<string>;
 	titleName?: string;	// 标题名，未定义则使用“FFBox AI 帮助”
 	modelOptions?: AIModelOption[];
 	initialPlaceholders?: string[];	// 未激活窗口时的 placeholder，未定义则使用“智能帮助”
@@ -219,7 +218,7 @@ const inputValue = ref('');
 const messages = ref<AIChatMessage[]>([]);
 const sessionId = ref<string | null>(null);
 const loading = ref(false);
-const statusText = ref('大模型处理中');
+const statusText = ref<string | undefined>('大模型处理中');
 const selectedModelKey = ref<string | undefined>(undefined);
 
 const textRef = ref<HTMLTextAreaElement>(null);
@@ -270,51 +269,59 @@ const modelDropdownList = computed<MenuItem[]>(() => {
 });
 const selectedModelDisplayText = computed(() => selectedModelKey.value ? props.modelOptions.find((model) => model.key === selectedModelKey.value)?.key || '' : '');
 
-const sendMessage = async () => {
-	if (!inputValue.value.trim() || loading.value) return;
+/** 根据工具名返回自动工具结果（MVP 占位） */
+const getAutoToolResult = (toolName: string): string => {
+	if (toolName === 'client_get_task_info') return '无任务信息';
+	return '';
+};
 
-	// 对话轮数检查
-	if (props.maxRounds) {
-		if (messages.value.filter((msg) => msg.role === 'user').length > props.maxRounds) {
+const sendMessage = async (userText?: string | Event, continuation?: { toolCallId: string; toolResult: string }) => {
+	// 模板事件（@click / @keyup.enter）会将 Event 作为第一个参数传入，此处过滤
+	const msgText = typeof userText === 'string' ? userText : undefined;
+	const text = msgText ?? inputValue.value.trim();
+	if (!text && !continuation) return;
+	if (loading.value) return;
+
+	// 对话轮数检查（仅对新消息生效，续接不计数）
+	if (!continuation && props.maxRounds) {
+		if (messages.value.filter((msg) => msg.role === 'user').length >= props.maxRounds) {
 			messages.value.push({ role: "aiErr", text: props.maxRoundsMessage || '本轮对话发言次数已达到上限' });
 			return;
 		}
 	}
 
-	const userText = inputValue.value.trim();
-	messages.value.push({ role: 'user', text: userText, time: new Date() });
-	inputValue.value = '';
+	// 添加用户消息（续接跳过）
+	if (!continuation) {
+		messages.value.push({ role: 'user', text, time: new Date() });
+		inputValue.value = '';
+		textRef.value.value = '';
+		const inputEvent = document.createEvent('HTMLEvents');
+		inputEvent.initEvent('input', false, true);
+		textRef.value.dispatchEvent(inputEvent);
 
-	// 发送匹配关键词打开链接
-	if (props.requestKeywordLink) {
-		let needContinue = true;
-		for (const item of props.requestKeywordLink) {
-			const isContain = item.keywords.some((keyword) => userText.includes(keyword));
-			if (isContain) {
-				for (const url of (item.urls || [])) {
-					window.open(url, item.blank ? '_blank' : undefined);
-				}
-				if (item.needContinue === false) {
-					needContinue = false;
+		// 发送匹配关键词打开链接
+		if (props.requestKeywordLink) {
+			let needContinue = true;
+			for (const item of props.requestKeywordLink) {
+				const isContain = item.keywords.some((keyword) => text.includes(keyword));
+				if (isContain) {
+					for (const url of (item.urls || [])) window.open(url, item.blank ? '_blank' : undefined);
+					if (item.needContinue === false) needContinue = false;
 				}
 			}
+			if (!needContinue) return;
 		}
-		if (!needContinue) {
-			return;
-		}
-	}
-	// 发送警告词检查
-	if (props.requestKeywordSystemMessage) {
-		for (const item of props.requestKeywordSystemMessage) {
-			const keywordIndex = item.keywords.findIndex((keyword) => userText.includes(keyword));
-			if (keywordIndex >= 0) {
-				const dontShowSecondTime = item.once && showedRequestKeywordMessage.includes(item.keywords[keywordIndex]);
-				if (!dontShowSecondTime) {
-					messages.value.push({ role: item.warning ? "aiErr" : 'aiInfo', text: item.message });
-				}
-				showedRequestKeywordMessage.push(item.keywords[keywordIndex]);
-				if (item.forbid) {
-					return;
+		// 发送警告词检查
+		if (props.requestKeywordSystemMessage) {
+			for (const item of props.requestKeywordSystemMessage) {
+				const keywordIndex = item.keywords.findIndex((keyword) => text.includes(keyword));
+				if (keywordIndex >= 0) {
+					const dontShowSecondTime = item.once && showedRequestKeywordMessage.includes(item.keywords[keywordIndex]);
+					if (!dontShowSecondTime) {
+						messages.value.push({ role: item.warning ? "aiErr" : 'aiInfo', text: item.message });
+					}
+					showedRequestKeywordMessage.push(item.keywords[keywordIndex]);
+					if (item.forbid) return;
 				}
 			}
 		}
@@ -322,37 +329,105 @@ const sendMessage = async () => {
 
 	// 开始发送
 	loading.value = true;
-	if (props.chatAPI) {
-		statusText.value = '呼叫大模型工作流';
-		const pollingTimer = setInterval(() => {
-			if (props.statusAPI) {
-				props.statusAPI(selectedModelKey.value).then((result) => {
-					if (result && loading.value) statusText.value = result;
-				});
-			}
-		}, 800);
-		props.chatAPI(userText, selectedModelKey.value).then((chatResult) => {
-			const result = JSON.parse(chatResult.content);
-			const { msg, ref, lnk, ext } = result.obj;
-			const extras = (ext || '').split('&') as string[];
-			const chatItem: AIChatMessage = { role: "ai", text: msg, refers: ref, actions: [], time: new Date(), expense: chatResult.expense };
-			messages.value.push(chatItem);
+	statusText.value = '呼叫大模型工作流';
 
-			// 接收匹配关键词打开链接
+	// 创建 AI 消息（多 block 气泡）
+	const aiMessage: AIChatMessage = { role: 'ai', text: '', blocks: [], time: new Date() };
+	messages.value.push(aiMessage);
+	// 通过响应式代理引用，确保流式追加能触发视图更新
+	const aiMsg = messages.value[messages.value.length - 1];
+	const blocks = aiMsg.blocks!;
+
+	let currentAgentName = '';
+	let expense = 0;
+
+	// 先定义事件处理器，避免在 params 中引用时出现 TDZ
+	const handleStreamEvent = (event: StreamEvent) => {
+		switch (event.type) {
+			case 'agent':
+				currentAgentName = event.displayName;
+				statusText.value = `${event.displayName} 处理中`;
+				break;
+			case 'thinking': {
+				// 追加到思考 block
+				const lastBlock = blocks[blocks.length - 1];
+				if (lastBlock && lastBlock.type === 'thinking') {
+					lastBlock.content = (lastBlock.content || '') + event.content;
+				} else {
+					blocks.push({ type: 'thinking', content: event.content });
+				}
+				break;
+			}
+			case 'text': {
+				const lastBlock = blocks[blocks.length - 1];
+				if (lastBlock && lastBlock.type === 'text') {
+					lastBlock.content = (lastBlock.content || '') + event.content;
+				} else {
+					blocks.push({ type: 'text', content: event.content });
+				}
+				aiMsg.text = blocks.filter(b => b.type === 'text').map(b => b.content || '').join('');
+				break;
+			}
+			case 'tool_call':
+				blocks.push({ type: 'tool_call', toolCall: { id: event.id, name: event.name, args: event.args, display: event.display } });
+				break;
+			case 'tool_result':
+				blocks.push({ type: 'tool_result', toolResult: { id: event.id, name: event.name, content: event.content } });
+				break;
+			case 'usage':
+				expense = event.expense;
+				aiMsg.expense = expense;
+				break;
+			case 'end':
+				statusText.value = undefined;
+				break;
+			case 'error':
+				messages.value.push({ role: 'aiErr', text: event.message });
+				break;
+		}
+	};
+
+	try {
+		const params: ChatAPIParams = continuation
+			? { toolCallId: continuation.toolCallId, toolResult: continuation.toolResult, modelKey: selectedModelKey.value, onEvent: handleStreamEvent }
+			: { message: text, modelKey: selectedModelKey.value, onEvent: handleStreamEvent };
+
+		const result = await props.chatAPI!(params);
+
+		// 处理客户端工具调用
+		if (result.clientToolCall) {
+			const ctc = result.clientToolCall;
+			if (ctc.kind === 'notification') {
+				// 通知型：显示成功提示（作为客户端发起的消息）
+				messages.value.push({ role: 'aiInfo', text: `客户端已执行工具：${ctc.name}`, time: new Date() });
+				// 可以在这里触发 onAction 等回调
+				if (ctc.name === 'client_activate') {
+					props.onAction?.('ffbox:/showActivationCodeGenMsgbox?level=50');
+				}
+			} else if (ctc.kind === 'request-response') {
+				// 请求-响应型：作为客户端消息，自动续接
+				const toolResultText = getAutoToolResult(ctc.name);
+				messages.value.push({ role: 'user', text: `（客户端工具调用：${ctc.name} → ${toolResultText}）`, time: new Date() });
+				// 自动续接
+				loading.value = false;
+				await sendMessage(undefined, { toolCallId: ctc.id, toolResult: toolResultText });
+				return;
+			}
+		}
+
+		// 响应关键词处理
+		if (aiMsg.text) {
 			if (props.responseKeywordLink) {
 				for (const item of props.responseKeywordLink) {
-					const isContain = item.keywords.some((keyword) => msg.includes(keyword));
+					const isContain = item.keywords.some((keyword) => aiMsg.text.includes(keyword));
 					if (isContain) {
-						for (const url of (item.urls || [])) {
-							window.open(url, item.blank === false ? '_blank' : undefined);
-						}
+						for (const url of (item.urls || [])) window.open(url, item.blank === false ? '_blank' : undefined);
 					}
 				}
 			}
-			// 响应警告词检查
 			if (props.responseKeywordSystemMessage) {
 				for (const item of props.responseKeywordSystemMessage) {
-					const keywordIndex = item.keywords.findIndex((keyword) => msg.includes(keyword));
+					const keywordIndex = item.keywords.findIndex((keyword) => aiMsg.text.includes(keyword));
 					if (keywordIndex >= 0) {
 						const dontShowSecondTime = item.once && showedResponseKeywordMessage.includes(item.keywords[keywordIndex]);
 						if (!dontShowSecondTime) {
@@ -362,66 +437,12 @@ const sendMessage = async () => {
 					}
 				}
 			}
-			// 链接
-			if (lnk instanceof Array) {
-				for (const link of lnk) {
-					if ('label' in link && 'url' in link) chatItem.actions.push(link);
-				}
-			}
-			// 激活 1
-			const matchEnd1 = /[A-Z]kn[A-Z]ui[A-Z]ev[A-Z]hr[A-Z]tg/i.exec(msg);
-			const keyEnd =
-				msg.match(/最终.+分/) ||
-				msg.match(/((考核|测试|题目).{0,2}(通过|结束|完成))|((通过|结束|完成).{0,2}(考核|测试|题目))/) ||
-				msg.includes('激活') && (msg.includes('恭喜') || msg.includes('完成了') || msg.includes('通过了') || msg.includes('成功'));
-			let extraScore = undefined;
-			extras.find((extra) => extra.replace(/asv1=(\d+)/, (_, content) => (extraScore = +content, '')));	// activation score v1
-
-			if (extraScore || matchEnd1 || keyEnd) {
-				let total = -1;
-				const regex = /[得总]分[是为:：-\s]{0,3}(\d+(\.\d+)?)/g;
-				let match1;
-				// 找到文本中最高的分数
-				while ((match1 = regex.exec(msg)) !== null && match1[1]) {
-					if (!isNaN(+match1[1])) {
-						total = +match1[1] > total ? +match1[1] : total;
-					}
-				}
-				if (total === -1) {
-					total = 15;
-				} else {
-					total += 1;
-				}
-				// 找到文本中的总分
-				const matchFull = /满分[是为:：-\s]{0,3}(\d+(\.\d+)?)/.exec(msg)?.[1];
-				const full = +matchFull || 40;
-
-				total = extraScore || total;
-				const finalScore = 15 + (total / full) * 50;
-				console.log(`修行：${finalScore}`);
-				chatItem.actions.push({ label: '生成激活码', url: `ffbox:/showActivationCodeGenMsgbox?level=${finalScore}` });
-			}
-
-			// 激活 2
-			const matchEnd2 = /[A-Z]ae[A-Z]fv[A-Z]sw[A-Z]cg[A-Z]lr/i.exec(msg);
-			let extraScoreActivated = extras.some((content) => content === 'assv1=1');	// activation score sponsored v1
-
-			if (matchEnd2 || extraScoreActivated) {
-				console.log(`修行：50`);
-				chatItem.actions.push({ label: '生成激活码', url: `ffbox:/showActivationCodeGenMsgbox?level=50` });
-			}
-		}).catch((error) => {
-			messages.value.push({ role: "aiErr", text: error });
-		}).finally(() => {
-			loading.value = false;
-			clearInterval(pollingTimer);
-			statusText.value = undefined;
-		});
-	} else {
-		setTimeout(() => {
-			messages.value.push({ role: "ai", text: new Date().toISOString() });
-			loading.value = false;
-		}, 1000);
+		}
+	} catch (error) {
+		messages.value.push({ role: 'aiErr', text: String(error) });
+	} finally {
+		loading.value = false;
+		statusText.value = undefined;
 	}
 };
 
@@ -596,8 +617,28 @@ watch(() => props.enabled, () => {
 					<TransitionGroup name="msgAnim">
 						<div v-for="(msg, idx) in messages" :key="idx" :class="['msg', msg.role]">
 							<div class="msgContent">
-								<template v-for="(line, index) in msg.text.split('\n')" :key="index">
-									{{ line }}<br />
+								<template v-if="msg.blocks && msg.blocks.length">
+									<template v-for="(block, bIdx) in msg.blocks" :key="bIdx">
+										<div v-if="block.type === 'thinking'" class="blockThinking">
+											<details><summary>思考过程</summary>{{ block.content }}</details>
+										</div>
+										<template v-else-if="block.type === 'text'">
+											<template v-for="(line, lIdx) in (block.content || '').split('\n')" :key="lIdx">
+												{{ line }}<br />
+											</template>
+										</template>
+										<div v-else-if="block.type === 'tool_call'" class="blockToolCall">
+											🔧 工具调用：{{ block.toolCall?.name }}
+										</div>
+										<div v-else-if="block.type === 'tool_result'" class="blockToolResult">
+											↳ {{ block.toolResult?.content }}
+										</div>
+									</template>
+								</template>
+								<template v-else>
+									<template v-for="(line, index) in msg.text.split('\n')" :key="index">
+										{{ line }}<br />
+									</template>
 								</template>
 							</div>
 							<div class="smallText">
@@ -931,6 +972,27 @@ watch(() => props.enabled, () => {
 								vertical-align: -4px;
 								color: #33aacc77;
 							}
+						}
+						.blockThinking {
+							font-size: 12px;
+							color: var(--66);
+							margin-bottom: 4px;
+							details {
+								summary {
+									cursor: pointer;
+									opacity: 0.7;
+								}
+							}
+						}
+						.blockToolCall {
+							font-size: 12px;
+							color: #5B8DEF;
+							margin: 2px 0;
+						}
+						.blockToolResult {
+							font-size: 12px;
+							color: var(--66);
+							margin: 2px 0 4px 16px;
 						}
 						.smallText {
 							position: absolute;

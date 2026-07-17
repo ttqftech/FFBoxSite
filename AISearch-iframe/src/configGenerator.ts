@@ -75,9 +75,9 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 	const WEBROBOT_OVERRIDES = {
 		titleName: '旅行者的数字代理人（FFBox 特供版） (Beta)',
 		tokenLimit: {
-			day: 10000,
-			week: 20000,
-			total: 100000,
+			day: 100000,
+			week: 200000,
+			total: 1000000,
 		},
 		tokenLimitMessage: {
 			day: '今日 AI 用量已达到上限啦～明天可以再来哦！\n（ℹ️FFBox 客户端的 AI 配额比 FFBox 官网更多哦）',
@@ -180,12 +180,12 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 	}> = {
 		ali: {
 			models: [
-				{ name: 'DeepSeek-V4-flash', id: 'deepseek-v4-flash', weight: 20 },
-				{ name: '通义千问-Plus-Latest', id: 'qwen-plus-latest', weight: 10 },
-				{ name: '通义千问-Plus', id: 'qwen-plus', weight: 10 },
-				{ name: 'qwen3.6-plus', id: 'qwen3.6-plus', weight: 20 },
-				{ name: 'qwen3.6-flash', id: 'qwen3.6-flash', weight: 20 },
-				{ name: 'qwen3.5-plus-2026-04-20', id: 'qwen3.5-plus-2026-04-20', weight: 20 },
+				// { name: 'DeepSeek-V4-flash', id: 'deepseek-v4-flash', weight: 20 },
+				// { name: '通义千问-Plus-Latest', id: 'qwen-plus-latest', weight: 10 },
+				// { name: '通义千问-Plus', id: 'qwen-plus', weight: 10 },
+				// { name: 'qwen3.6-plus', id: 'qwen3.6-plus', weight: 20 },
+				{ name: 'qwen3.7-plus', id: 'qwen3.7-plus', weight: 20 },
+				// { name: 'qwen3.5-plus-2026-04-20', id: 'qwen3.5-plus-2026-04-20', weight: 20 },
 			],
 			modelPrice: [
 				{ modelIdOrIndex: 'qwen-turbo', inputMultiplyer: 0.3, outputMultiplyer: 0.3 },
@@ -305,8 +305,9 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 	const unifiedConfig: AISearchConfig = {
 		...sharedConfig,
 		...platformOverrides,
-		chatUrl: 'https://ffboxailetition-dpdeccglwm.cn-shenzhen.fcapp.run',
-		conversationStatusUrl: 'https://bigmoden-status-opmphgrdmp.cn-shenzhen.fcapp.run',
+		chatUrl: 'https://ffboxaihelptest-bsuyltssti.cn-shenzhen.fcapp.run/api/chat/stream',
+		// chatUrl: 'http://localhost:9001/api/chat/stream',
+		conversationStatusUrl: undefined,
 		modelOptions: buildModelOptions(providersConfig),
 		modelPrice: buildModelPrice(providersConfig),
 	};

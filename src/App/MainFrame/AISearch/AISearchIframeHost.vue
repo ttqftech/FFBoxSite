@@ -34,7 +34,7 @@ let resizeObserver: ResizeObserver | null = null;
 // - 开发环境：指向 iframe 项目独立 dev server（支持 HMR，需另起 `npm run dev:aisearch`）
 // - 生产环境：使用构建产物 public/aisearch/index.html
 const iframeSrc = import.meta.env.DEV
-	? 'http://localhost:5175'
+	? 'http://localhost:5176'
 	: './aiSearch/index.html';
 
 const sendTheme = () => {
