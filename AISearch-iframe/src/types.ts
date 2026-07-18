@@ -38,6 +38,7 @@ export type ClientToolKind = 'notification' | 'request-response';
 
 /** SSE 流式事件（与后端 StreamEvent 对应） */
 export type StreamEvent =
+	| { type: 'connected' }
 	| { type: 'agent'; name: string; displayName: string }
 	| { type: 'thinking'; content: string }
 	| { type: 'text'; content: string }
@@ -48,9 +49,9 @@ export type StreamEvent =
 	| { type: 'end' }
 	| { type: 'error'; message: string };
 
-/** AI 气泡内的一个 block（思考 / 文本 / 工具调用 / 工具结果） */
+// AI 气泡内的一个 block（思考 / 文本 / 工具调用 / 工具结果）
 export interface ChatBlock {
-	type: 'thinking' | 'text' | 'tool_call' | 'tool_result';
+	type: 'thinking' | 'text' | 'tool_call' | 'tool_result' | 'error';
 	content?: string;
 	toolCall?: { id: string; name: string; args: Record<string, any>; display: 'cloud' | 'client' };
 	toolResult?: { id: string; name: string; content: string };
@@ -61,32 +62,27 @@ export interface ChatBlock {
 export interface AIChatMessage {
 	role: 'user' | 'ai' | 'aiErr' | 'aiInfo';
 	text: string;
-	/** AI 气泡内的多 block 内容（流式输出时使用） */
-	blocks?: ChatBlock[];
+	blocks?: ChatBlock[];	// AI 气泡内的多 block 内容
+	status?: string;		// 当前 AI 气泡的状态文字（例如「大模型处理中」「xxx 处理中」），流式过程中在气泡顶部展示
 	time?: Date;
 	refers?: string[];
 	expense?: number;
 	actions?: { label: string; url: string }[];
 }
 
-/** 流式 chatAPI 参数 */
+// chatAPI 参数（大体上与后端同步）
 export interface ChatAPIParams {
-	/** 新的用户消息（新的一轮） */
-	message?: string;
-	/** 客户端工具调用结果续接：工具调用 id */
-	toolCallId?: string;
-	/** 客户端工具调用结果续接：工具结果文本 */
-	toolResult?: string;
-	/** 模型 key */
+	message?: string;	// 新的一轮用户消息
+	extraMessage?: string;	// 额外的非用户输入的消息（待实现）
+	toolCallId?: string;	// 客户端工具调用结果：工具 id
+	toolResult?: string;	// 客户端工具调用结果：结果文本
 	modelKey?: string;
-	/** 流式事件回调 */
-	onEvent: (event: StreamEvent) => void;
+	onEvent: (event: StreamEvent) => void;	// 流式事件回调
 }
 
-/** 流式 chatAPI 返回类型 */
+// chatAPI 返回类型
 export interface ChatAPIResult {
 	expense?: number;
-	/** 客户端工具调用（如果有），前端需据此执行客户端工具 */
 	clientToolCall?: { id: string; name: string; args: Record<string, any>; kind: ClientToolKind };
 }
 

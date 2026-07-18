@@ -305,8 +305,8 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 	const unifiedConfig: AISearchConfig = {
 		...sharedConfig,
 		...platformOverrides,
-		chatUrl: 'https://ffboxaihelptest-bsuyltssti.cn-shenzhen.fcapp.run/api/chat/stream',
-		// chatUrl: 'http://localhost:9001/api/chat/stream',
+		// chatUrl: 'https://ffboxaihelptest-bsuyltssti.cn-shenzhen.fcapp.run/api/chat/stream',
+		chatUrl: 'http://localhost:9000/api/chat/stream',
 		conversationStatusUrl: undefined,
 		modelOptions: buildModelOptions(providersConfig),
 		modelPrice: buildModelPrice(providersConfig),

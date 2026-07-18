@@ -1,3 +1,5 @@
+import { Fragment, h } from "vue";
+
 /**
  * 获取随机字符串
  */
@@ -24,3 +26,12 @@ export function generateConversationId(): string {
 	for (let i = 0; i < 8; i++) uuid += hex[Math.floor(Math.random() * 16)];
 	return `${yyyy}-${mm}-${dd}-${uuid}`;
 }
+
+export function newLinedContent(content: string) {
+	return (typeof content == 'string'
+		? h(
+			Fragment,
+			content.split('\n').reduce((prev, curr) => prev.concat(curr, h('br')), [] as any[])
+		) : content
+	);
+};

@@ -2,7 +2,7 @@
 import { ref, nextTick, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import gsap from 'gsap';
 import AISearchConfig, { AIChatMessage, AIModelOption, ChatAPIParams, ChatAPIResult, StreamEvent, ChatBlock } from './types';
-import { getTimeString } from './utils';
+import { getTimeString, newLinedContent } from './utils';
 import { useTooltip } from './useTooltip';
 import Button, { ButtonType } from './components/Button';
 import DropdownInput from './components/DropdownInput.vue';
@@ -54,7 +54,7 @@ const anchorStyle = ref<Record<string, string> | null>(null);
 
 const openedClass = computed(() => isOpened.value === 'opening' || isOpened.value === 'opened' ? 'opened' : '');
 
-/** 上报内容边界给父页面，用于 pointer-events 切换 */
+// 上报内容边界给父页面，用于 pointer-events 切换
 const reportBounds = () => {
 	if (!props.onBoundsChange) return;
 	// console.log('reportBounds');
@@ -90,7 +90,7 @@ const reportBounds = () => {
 };
 
 let boundsRafId: number;
-/** 使用 requestAnimationFrame 上报边界，避免高频调用 */
+// 使用 requestAnimationFrame 上报边界，避免高频调用
 const reportBoundsRaf = () => {
 	cancelAnimationFrame(boundsRafId);
 	boundsRafId = requestAnimationFrame(reportBounds);
@@ -218,7 +218,6 @@ const inputValue = ref('');
 const messages = ref<AIChatMessage[]>([]);
 const sessionId = ref<string | null>(null);
 const loading = ref(false);
-const statusText = ref<string | undefined>('大模型处理中');
 const selectedModelKey = ref<string | undefined>(undefined);
 
 const textRef = ref<HTMLTextAreaElement>(null);
@@ -275,10 +274,8 @@ const getAutoToolResult = (toolName: string): string => {
 	return '';
 };
 
-const sendMessage = async (userText?: string | Event, continuation?: { toolCallId: string; toolResult: string }) => {
-	// 模板事件（@click / @keyup.enter）会将 Event 作为第一个参数传入，此处过滤
-	const msgText = typeof userText === 'string' ? userText : undefined;
-	const text = msgText ?? inputValue.value.trim();
+const sendMessage = async (userText?: string, continuation?: { toolCallId: string; toolResult: string }) => {
+	const text = userText ?? inputValue.value.trim();
 	if (!text && !continuation) return;
 	if (loading.value) return;
 
@@ -295,9 +292,9 @@ const sendMessage = async (userText?: string | Event, continuation?: { toolCallI
 		messages.value.push({ role: 'user', text, time: new Date() });
 		inputValue.value = '';
 		textRef.value.value = '';
-		const inputEvent = document.createEvent('HTMLEvents');
-		inputEvent.initEvent('input', false, true);
-		textRef.value.dispatchEvent(inputEvent);
+		// const inputEvent = document.createEvent('HTMLEvents');
+		// inputEvent.initEvent('input', false, true);
+		// textRef.value.dispatchEvent(inputEvent);
 
 		// 发送匹配关键词打开链接
 		if (props.requestKeywordLink) {
@@ -329,10 +326,9 @@ const sendMessage = async (userText?: string | Event, continuation?: { toolCallI
 
 	// 开始发送
 	loading.value = true;
-	statusText.value = '呼叫大模型工作流';
 
 	// 创建 AI 消息（多 block 气泡）
-	const aiMessage: AIChatMessage = { role: 'ai', text: '', blocks: [], time: new Date() };
+	const aiMessage: AIChatMessage = { role: 'ai', text: '', blocks: [], status: '呼叫第二代 AI 智能体', time: new Date() };
 	messages.value.push(aiMessage);
 	// 通过响应式代理引用，确保流式追加能触发视图更新
 	const aiMsg = messages.value[messages.value.length - 1];
@@ -341,12 +337,14 @@ const sendMessage = async (userText?: string | Event, continuation?: { toolCallI
 	let currentAgentName = '';
 	let expense = 0;
 
-	// 先定义事件处理器，避免在 params 中引用时出现 TDZ
 	const handleStreamEvent = (event: StreamEvent) => {
 		switch (event.type) {
+			case 'connected':
+				aiMsg.status = '思考中';
+				break;
 			case 'agent':
 				currentAgentName = event.displayName;
-				statusText.value = `${event.displayName} 处理中`;
+				aiMsg.status = `【${event.displayName}】正在为您服务`;
 				break;
 			case 'thinking': {
 				// 追加到思考 block
@@ -365,7 +363,7 @@ const sendMessage = async (userText?: string | Event, continuation?: { toolCallI
 				} else {
 					blocks.push({ type: 'text', content: event.content });
 				}
-				aiMsg.text = blocks.filter(b => b.type === 'text').map(b => b.content || '').join('');
+				aiMsg.text = blocks.filter(b => b.type === 'text').map(b => b.content || '').join('');	// 合并所有 text block
 				break;
 			}
 			case 'tool_call':
@@ -379,7 +377,7 @@ const sendMessage = async (userText?: string | Event, continuation?: { toolCallI
 				aiMsg.expense = expense;
 				break;
 			case 'end':
-				statusText.value = undefined;
+				aiMsg.status = undefined;
 				break;
 			case 'error':
 				messages.value.push({ role: 'aiErr', text: event.message });
@@ -407,7 +405,8 @@ const sendMessage = async (userText?: string | Event, continuation?: { toolCallI
 			} else if (ctc.kind === 'request-response') {
 				// 请求-响应型：作为客户端消息，自动续接
 				const toolResultText = getAutoToolResult(ctc.name);
-				messages.value.push({ role: 'user', text: `（客户端工具调用：${ctc.name} → ${toolResultText}）`, time: new Date() });
+				// messages.value.push({ role: 'user', text: `（客户端工具调用：${ctc.name} → ${toolResultText}）`, time: new Date() });
+				messages.value.push({ role: 'user', blocks: [{ type: 'tool_call', toolCall: { id: ctc.id, name: ctc.name, args: ctc.args, display: 'client' } }], text: '', time: new Date() });
 				// 自动续接
 				loading.value = false;
 				await sendMessage(undefined, { toolCallId: ctc.id, toolResult: toolResultText });
@@ -439,10 +438,10 @@ const sendMessage = async (userText?: string | Event, continuation?: { toolCallI
 			}
 		}
 	} catch (error) {
-		messages.value.push({ role: 'aiErr', text: String(error) });
+		blocks.push({ type: 'error', content: error instanceof Error ? error.message : String(error) });
 	} finally {
 		loading.value = false;
-		statusText.value = undefined;
+		if (aiMsg) aiMsg.status = undefined;
 	}
 };
 
@@ -455,6 +454,11 @@ const resetChat = () => {
 			messages.value.push(props.initSystemMessage);
 		}, 0);
 	}
+};
+
+const handleInputKeyPress = (event: KeyboardEvent) => {
+	if (loading.value) return;
+	if (event.key === 'Enter' && event.shiftKey === false) sendMessage(inputValue.value);
 };
 
 const handleActionButtonClick = (url: string) => {
@@ -474,9 +478,10 @@ const handleModelChange = (value: string) => {
 		return;
 	}
 	selectedModelKey.value = newModel.key;
-	if (newModel.provider !== currentModel.provider) {
-		resetChat();
-	}
+	// 现在不同供应商统一由 API 负责管理聊天记录，不需要重置
+	// if (newModel.provider !== currentModel.provider) {
+	// 	resetChat();
+	// }
 };
 
 watch(() => props.modelOptions, (newOptions) => {
@@ -491,7 +496,7 @@ watch(() => props.modelOptions, (newOptions) => {
 
 let initialPlaceholderTimer: number;
 const initialPlaceholderIndex = ref(0);
-const initialPlaceholderText = computed(() => props.initialPlaceholders?.[initialPlaceholderIndex.value] ?? '智能帮助');
+const initialPlaceholderText = computed(() => props.initialPlaceholders?.[initialPlaceholderIndex.value] ?? '智能帮助加载中');
 watch(() => props.initialPlaceholderInterval, () => {
 	clearInterval(initialPlaceholderTimer);
 	if (props.initialPlaceholderInterval) {
@@ -553,133 +558,132 @@ watch(() => props.enabled, () => {
 									${props.maxRounds !== undefined ? `本次对话：${messages.filter((msg) => msg.role === 'user').length} / ${props.maxRounds}\n` : ''}`
 								.slice(0, -1))"
 							>
-							<svg class="usageRing" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AI 使用量">
-								<defs>
-									<filter id="quotaUsageBgShadow" x="-50%" y="-50%" width="200%" height="200%">
-										<feDropShadow dx="0" dy="0" stdDeviation="2" :flood-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" flood-opacity="0.4"/>
-									</filter>
-									<filter id="quotaUsageRingShadow" x="-50%" y="-50%" width="200%" height="200%">
-										<feDropShadow dx="0" dy="0" stdDeviation="1" flood-color="hwb(var(--bg97))" flood-opacity="1"/>
-									</filter>
+								<svg class="usageRing" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AI 使用量">
+									<defs>
+										<filter id="quotaUsageBgShadow" x="-50%" y="-50%" width="200%" height="200%">
+											<feDropShadow dx="0" dy="0" stdDeviation="2" :flood-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" flood-opacity="0.4"/>
+										</filter>
+										<filter id="quotaUsageRingShadow" x="-50%" y="-50%" width="200%" height="200%">
+											<feDropShadow dx="0" dy="0" stdDeviation="1" flood-color="hwb(var(--bg97))" flood-opacity="1"/>
+										</filter>
 
-									<!-- 渐变（外/中/内） -->
-									<linearGradient id="gOuter" x1="0" y1="0" x2="1" y2="1">
-										<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
-										<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
-									</linearGradient>
-									<linearGradient id="gMiddle" x1="1" y1="0" x2="0" y2="1">
-										<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
-										<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
-									</linearGradient>
-									<linearGradient id="gInner" x1="0" y1="1" x2="1" y2="0">
-										<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
-										<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
-									</linearGradient>
-								</defs>
+										<!-- 渐变（外/中/内） -->
+										<linearGradient id="gOuter" x1="0" y1="0" x2="1" y2="1">
+											<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
+											<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
+										</linearGradient>
+										<linearGradient id="gMiddle" x1="1" y1="0" x2="0" y2="1">
+											<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
+											<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
+										</linearGradient>
+										<linearGradient id="gInner" x1="0" y1="1" x2="1" y2="0">
+											<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
+											<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
+										</linearGradient>
+									</defs>
 
-								<!-- 背景 -->
-								<circle cx="24" cy="24" r="22" fill="hwb(var(--bg97))" filter="url(#quotaUsageBgShadow)" />
+									<!-- 背景 -->
+									<circle cx="24" cy="24" r="22" fill="hwb(var(--bg97))" filter="url(#quotaUsageBgShadow)" />
 
-								<!-- 进度圆 -->
-								<path
-									v-if="props.maxRounds !== undefined"
-									:d="roundsSvgPiePath"
-									:fill="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" opacity="0.1"
-								/>
+									<!-- 进度圆 -->
+									<path
+										v-if="props.maxRounds !== undefined"
+										:d="roundsSvgPiePath"
+										:fill="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" opacity="0.1"
+									/>
 
-								<!-- 外圈 -->
-								<circle v-if="props.quotaUsed.day !== undefined" class="track"
-									cx="24" cy="24" r="18" />
-								<circle v-if="props.quotaUsed.day !== undefined" class="progress" :style="`stroke: url(#gOuter); stroke-dasharray: ${props.quotaUsed.day * 100} 100`"
-									cx="24" cy="24" r="18" pathLength="100" filter="url(#quotaUsageRingShadow)" />
+									<!-- 外圈 -->
+									<circle v-if="props.quotaUsed.day !== undefined" class="track"
+										cx="24" cy="24" r="18" />
+									<circle v-if="props.quotaUsed.day !== undefined" class="progress" :style="`stroke: url(#gOuter); stroke-dasharray: ${props.quotaUsed.day * 100} 100`"
+										cx="24" cy="24" r="18" pathLength="100" filter="url(#quotaUsageRingShadow)" />
 
-								<!-- 中圈 -->
-								<circle v-if="props.quotaUsed.week !== undefined" class="track"
-									cx="24" cy="24" r="13"/>
-								<circle v-if="props.quotaUsed.week !== undefined" class="progress" :style="`stroke: url(#gMiddle); stroke-dasharray: ${props.quotaUsed.week * 100} 100`"
-									cx="24" cy="24" r="13" pathLength="100" filter="url(#quotaUsageRingShadow)" />
+									<!-- 中圈 -->
+									<circle v-if="props.quotaUsed.week !== undefined" class="track"
+										cx="24" cy="24" r="13"/>
+									<circle v-if="props.quotaUsed.week !== undefined" class="progress" :style="`stroke: url(#gMiddle); stroke-dasharray: ${props.quotaUsed.week * 100} 100`"
+										cx="24" cy="24" r="13" pathLength="100" filter="url(#quotaUsageRingShadow)" />
 
-								<!-- 内圈 -->
-								<circle v-if="props.quotaUsed.total !== undefined" class="track"
-									cx="24" cy="24" r="8"/>
-								<circle v-if="props.quotaUsed.total !== undefined" class="progress" :style="`stroke: url(#gInner); stroke-dasharray: ${props.quotaUsed.total * 100} 100`"
-									cx="24" cy="24" r="8" pathLength="100" filter="url(#quotaUsageRingShadow)" />
-							</svg>
-							<span class="text" v-if="usageTouchedWarning">注意用量</span>
+									<!-- 内圈 -->
+									<circle v-if="props.quotaUsed.total !== undefined" class="track"
+										cx="24" cy="24" r="8"/>
+									<circle v-if="props.quotaUsed.total !== undefined" class="progress" :style="`stroke: url(#gInner); stroke-dasharray: ${props.quotaUsed.total * 100} 100`"
+										cx="24" cy="24" r="8" pathLength="100" filter="url(#quotaUsageRingShadow)" />
+								</svg>
+								<span class="text" v-if="usageTouchedWarning">注意用量</span>
+							</div>
+						</div>
+						<div class="right">
+							<Button @click="resetChat" aria-label="重置 AI 聊天消息" :type="ButtonType.NoBg" :disabled="loading"><IconRefresh /></Button>
+							<Button @click="closeWindow" aria-label="关闭 AI 聊天弹窗" :type="ButtonType.NoBg"><IconX style="height: 20px" /></Button>
 						</div>
 					</div>
-					<div class="right">
-						<Button @click="resetChat" aria-label="重置 AI 聊天消息" :type="ButtonType.NoBg" :disabled="loading"><IconRefresh /></Button>
-						<Button @click="closeWindow" aria-label="关闭 AI 聊天弹窗" :type="ButtonType.NoBg"><IconX style="height: 20px" /></Button>
-					</div>
-				</div>
-				<div class="chatMessages" ref="messagesRef">
-					<TransitionGroup name="msgAnim">
-						<div v-for="(msg, idx) in messages" :key="idx" :class="['msg', msg.role]">
-							<div class="msgContent">
-								<template v-if="msg.blocks && msg.blocks.length">
-									<template v-for="(block, bIdx) in msg.blocks" :key="bIdx">
-										<div v-if="block.type === 'thinking'" class="blockThinking">
-											<details><summary>思考过程</summary>{{ block.content }}</details>
-										</div>
-										<template v-else-if="block.type === 'text'">
-											<template v-for="(line, lIdx) in (block.content || '').split('\n')" :key="lIdx">
-												{{ line }}<br />
+					<div class="chatMessages" ref="messagesRef">
+						<TransitionGroup name="msgAnim">
+							<div v-for="(msg, idx) in messages" :key="idx" :class="['msg', msg.role]">
+								<div class="msgContent">
+									<template v-if="msg.role === 'ai' && msg.status">
+										<div class="blockStatus"><IconLoading class="loading" />{{ msg.status }}</div>
+									</template>
+									<template v-if="msg.blocks && msg.blocks.length">
+										<template v-for="(block, bIdx) in msg.blocks" :key="bIdx">
+											<div v-if="block.type === 'thinking'" class="blockThinking">
+												<details><summary>思考过程</summary>{{ block.content }}</details>
+											</div>
+											<template v-else-if="block.type === 'text'">
+												<component :is="newLinedContent(block.content || '')" />
 											</template>
+											<div v-else-if="block.type === 'tool_call'" class="blockToolCall">
+												🔧 工具调用：{{ block.toolCall?.name }}
+											</div>
+											<div v-else-if="block.type === 'tool_result'" class="blockToolResult">
+												↳ {{ block.toolResult?.content }}
+											</div>
+											<div v-else-if="block.type === 'error'" class="blockError">
+												⚠️ {{ block.content }}
+											</div>
 										</template>
-										<div v-else-if="block.type === 'tool_call'" class="blockToolCall">
-											🔧 工具调用：{{ block.toolCall?.name }}
-										</div>
-										<div v-else-if="block.type === 'tool_result'" class="blockToolResult">
-											↳ {{ block.toolResult?.content }}
-										</div>
 									</template>
-								</template>
-								<template v-else>
-									<template v-for="(line, index) in msg.text.split('\n')" :key="index">
-										{{ line }}<br />
+									<template v-else-if="msg.text">
+										<component :is="newLinedContent(msg.text)" />
 									</template>
-								</template>
+								</div>
+								<div class="smallText">
+									{{ [
+										msg.time ? getTimeString(msg.time) : '',
+										msg.refers?.length ? '参考来源：' + msg.refers.join('；') : '',
+										msg.expense ? '算力开销：' + Math.round(msg.expense) : '',
+									].filter((text) => text).join('｜') }}
+									<button v-for="action in msg.actions" @click="handleActionButtonClick(action.url)">{{ action.label }}</button>
+								</div>
 							</div>
-							<div class="smallText">
-								{{ [
-									msg.time ? getTimeString(msg.time) : '',
-									msg.refers?.length ? '参考来源：' + msg.refers.join('；') : '',
-									msg.expense ? '算力开销：' + Math.round(msg.expense) : '',
-								].filter((text) => text).join('｜') }}
-								<button v-for="action in msg.actions" @click="handleActionButtonClick(action.url)">{{ action.label }}</button>
-							</div>
-						</div>
-						<div v-if="statusText && loading" :key="messages.length" class="msg aiInfo">
-							<div class="msgContent"><IconLoading class="loading" />{{ statusText }}</div>
-						</div>
-					</TransitionGroup>
+						</TransitionGroup>
+					</div>
 				</div>
+			</transition>
+			<div class="inputArea" :class="openedClass">
+				<textarea
+					type="text"
+					rows="1"
+					:class="openedClass"
+					ref="textRef"
+					v-model="inputValue"
+					:placeholder="openedClass.length ? '输入问题...' : ''"
+					:disabled="loading"
+					:maxlength="props.maxInputLength ?? 10000"
+					oninpu0t="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+					@focus="() => isOpened === 'closed' ? openWindow() : null"
+					@keypress="handleInputKeyPress"
+					aria-label="AI 聊天输入框"
+				/>
+				<div :class="['iconAI', openedClass]">
+					<IconAI />
+					<span>{{ initialPlaceholderText }}</span>
+				</div>
+				<GradientRect v-if="isOpened === 'closed'" class="gradientRect" />
+				<Button @click="() => sendMessage(inputValue)" :disabled="loading" :class="openedClass">🚀</Button>
 			</div>
-		</transition>
-		<div class="inputArea" :class="openedClass">
-			<textarea
-				type="text"
-				rows="1"
-				:class="openedClass"
-				ref="textRef"
-				v-model="inputValue"
-				:placeholder="openedClass.length ? '输入问题...' : ''"
-				:disabled="loading"
-				:maxlength="props.maxInputLength ?? 10000"
-				oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
-				@focus="() => isOpened === 'closed' ? openWindow() : null"
-				@keyup.enter="sendMessage"
-				aria-label="AI 聊天输入框"
-			/>
-			<div :class="['iconAI', openedClass]">
-				<IconAI />
-				<span>{{ initialPlaceholderText }}</span>
-			</div>
-			<GradientRect v-if="isOpened === 'closed'" class="gradientRect" />
-			<Button @click="sendMessage" :disabled="loading" :class="openedClass">🚀</Button>
 		</div>
-	</div>
 	</div>
 </template>
 
@@ -956,6 +960,10 @@ watch(() => props.enabled, () => {
 							text-align: justify;
 							opacity: 1;
 							user-select: text;
+							&>*:not(&>*:nth-last-child(1)) {
+								margin-bottom: 6px;
+								// color: red !important;
+							}
 							@keyframes rotation {
 								from {
 									transform: rotate(0deg);
@@ -976,7 +984,6 @@ watch(() => props.enabled, () => {
 						.blockThinking {
 							font-size: 12px;
 							color: var(--66);
-							margin-bottom: 4px;
 							details {
 								summary {
 									cursor: pointer;
@@ -986,13 +993,29 @@ watch(() => props.enabled, () => {
 						}
 						.blockToolCall {
 							font-size: 12px;
-							color: #5B8DEF;
-							margin: 2px 0;
+						}
+						.blockStatus {
+							// font-size: 12px;
+							color: #33aacc;
+							font-style: italic;
+							.loading {
+								width: 14px;
+								height: 14px;
+								animation: rotation 1s steps(8) infinite;
+								margin-right: 4px;
+								vertical-align: -3px;
+								color: #33aacc77;
+							}
 						}
 						.blockToolResult {
 							font-size: 12px;
 							color: var(--66);
 							margin: 2px 0 4px 16px;
+						}
+						.blockError {
+							// font-size: 13px;
+							color: #dd8800;
+							font-style: italic;
 						}
 						.smallText {
 							position: absolute;
@@ -1012,6 +1035,9 @@ watch(() => props.enabled, () => {
 										0 1px 0.5px 0px hwb(var(--highlight) / 0.5) inset,	// 上高光
 										0 0 0 9999px hwb(210 5% 5% / 0.85) inset;	// 背景色
 							}
+							.blockToolCall {
+								color: #FFE777;
+							}
 							.smallText {
 								right: 2px;
 							}
@@ -1024,6 +1050,9 @@ watch(() => props.enabled, () => {
 										0 1.5px 4px 0 hwb(var(--hoverShadow) / 0.2),
 										0 1px 0.5px 0px hwb(var(--highlight) / 0.5) inset,	// 上高光
 										0 0 0 9999px hwb(var(--hoverLightBg) / 0.85) inset;	// 背景色
+							}
+							.blockToolCall {
+								color: #5B8DEF;
 							}
 							.smallText {
 								left: 2px;

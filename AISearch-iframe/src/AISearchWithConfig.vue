@@ -98,7 +98,7 @@ const resetChat = async (modelKey?: string) => {
 
 /**
  * 流式 chatAPI：使用 SSE fetch 与后端通信。
- * 接收 message（新消息）或 toolCallId+toolResult（续接），通过 onEvent 回调推送流式事件。
+ * 入参为 message（用户发送新消息）或 toolCallId + toolResult（客户端工具调用结果），通过 onEvent 回调推送流式事件。
  */
 const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 	const { message, toolCallId, toolResult, modelKey, onEvent } = params;
@@ -149,6 +149,7 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 			const errText = await response.text();
 			return Promise.reject(`请求失败 (${response.status}): ${errText}`);
 		}
+		onEvent({ type: 'connected' });
 
 		const reader = response.body?.getReader();
 		if (!reader) return Promise.reject('无法获取响应流');
