@@ -176,11 +176,11 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 					onEvent(event);
 					if (event.type === 'usage') expense = event.expense;
 					if (event.type === 'client_tool_call') {
-						clientToolCall = { id: event.id, name: event.name, args: event.args, kind: event.kind };
+						clientToolCall = { id: event.id, name: event.name, args: event.args, needResponse: event.needResponse };
 					}
-					if (event.type === 'error') {
-						return Promise.reject(event.message);
-					}
+					// if (event.type === 'error') {
+					// 	return Promise.reject(event.message);
+					// }
 				} catch (e) {
 					// JSON 解析失败，跳过
 				}
@@ -196,7 +196,7 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 					onEvent(event);
 					if (event.type === 'usage') expense = event.expense;
 					if (event.type === 'client_tool_call') {
-						clientToolCall = { id: event.id, name: event.name, args: event.args, kind: event.kind };
+						clientToolCall = { id: event.id, name: event.name, args: event.args, needResponse: event.needResponse };
 					}
 				} catch (e) {
 					// ignore

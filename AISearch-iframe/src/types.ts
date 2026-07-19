@@ -44,7 +44,7 @@ export type StreamEvent =
 	| { type: 'text'; content: string }
 	| { type: 'tool_call'; id: string; name: string; args: Record<string, any>; display: 'cloud' | 'client' }
 	| { type: 'tool_result'; id: string; name: string; content: string }
-	| { type: 'client_tool_call'; id: string; name: string; args: Record<string, any>; kind: ClientToolKind }
+	| { type: 'client_tool_call'; id: string; name: string; args: Record<string, any>; needResponse: boolean }
 	| { type: 'usage'; expense: number }
 	| { type: 'end' }
 	| { type: 'error'; message: string };
@@ -83,7 +83,7 @@ export interface ChatAPIParams {
 // chatAPI 返回类型
 export interface ChatAPIResult {
 	expense?: number;
-	clientToolCall?: { id: string; name: string; args: Record<string, any>; kind: ClientToolKind };
+	clientToolCall?: { id: string; name: string; args: Record<string, any>; needResponse: boolean };
 }
 
 /**

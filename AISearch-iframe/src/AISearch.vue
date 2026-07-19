@@ -292,9 +292,6 @@ const sendMessage = async (userText?: string, continuation?: { toolCallId: strin
 		messages.value.push({ role: 'user', text, time: new Date() });
 		inputValue.value = '';
 		textRef.value.value = '';
-		// const inputEvent = document.createEvent('HTMLEvents');
-		// inputEvent.initEvent('input', false, true);
-		// textRef.value.dispatchEvent(inputEvent);
 
 		// 发送匹配关键词打开链接
 		if (props.requestKeywordLink) {
@@ -380,7 +377,7 @@ const sendMessage = async (userText?: string, continuation?: { toolCallId: strin
 				aiMsg.status = undefined;
 				break;
 			case 'error':
-				messages.value.push({ role: 'aiErr', text: event.message });
+				blocks.push({ type: 'error', content: event.message });
 				break;
 		}
 	};
@@ -395,14 +392,17 @@ const sendMessage = async (userText?: string, continuation?: { toolCallId: strin
 		// 处理客户端工具调用
 		if (result.clientToolCall) {
 			const ctc = result.clientToolCall;
-			if (ctc.kind === 'notification') {
+			if (!ctc.needResponse) {
 				// 通知型：显示成功提示（作为客户端发起的消息）
-				messages.value.push({ role: 'aiInfo', text: `客户端已执行工具：${ctc.name}`, time: new Date() });
+				// messages.value.push({ role: 'aiInfo', text: `客户端已执行工具：${ctc.name}`, time: new Date() });
+				messages.value.push({ role: 'user', blocks: [{ type: 'tool_call', toolCall: { id: ctc.id, name: ctc.name, args: ctc.args, display: 'client' } }], text: '', time: new Date() });
 				// 可以在这里触发 onAction 等回调
 				if (ctc.name === 'client_activate') {
-					props.onAction?.('ffbox:/showActivationCodeGenMsgbox?level=50');
+					const functionLevel = ctc.args.functionLevel || 50;
+					props.onAction?.(`ffbox:/showActivationCodeGenMsgbox?level=${functionLevel}`);
 				}
-			} else if (ctc.kind === 'request-response') {
+			} else if (ctc.needResponse) {
+				// TODO 这里并不代表要自动续接
 				// 请求-响应型：作为客户端消息，自动续接
 				const toolResultText = getAutoToolResult(ctc.name);
 				// messages.value.push({ role: 'user', text: `（客户端工具调用：${ctc.name} → ${toolResultText}）`, time: new Date() });
@@ -671,7 +671,6 @@ watch(() => props.enabled, () => {
 					:placeholder="openedClass.length ? '输入问题...' : ''"
 					:disabled="loading"
 					:maxlength="props.maxInputLength ?? 10000"
-					oninpu0t="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
 					@focus="() => isOpened === 'closed' ? openWindow() : null"
 					@keypress="handleInputKeyPress"
 					aria-label="AI 聊天输入框"

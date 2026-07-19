@@ -197,6 +197,13 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 			models: [],
 			modelPrice: [],
 		},
+        ollama: {
+            models: [
+                { name: 'qwen3.5:2b', id: 'qwen3.5:2b', weight: 20 },
+                // { name: 'qwen2.5:0.5b', id: 'qwen2.5:0.5b', weight: 20 },
+            ],
+            modelPrice: [],
+        }
 	};
 
 	const sharedConfig = {
