@@ -176,7 +176,7 @@
         "state": "uploaded",
         "size": 19798100,
         "digest": "sha256:9149759878263403628a218431a960bf0ea2c6688f49c7e5509a94e43c3443a0",
-        "download_count": 12,
+        "download_count": 13,
         "created_at": "2026-06-07T15:29:42Z",
         "updated_at": "2026-06-07T15:29:49Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.4/macOS_ARM64_FFBoxService%2BwebUI_5.4.zip"
@@ -212,7 +212,7 @@
         "state": "uploaded",
         "size": 113996104,
         "digest": "sha256:3a55b679aabf599bd483b30c9ec411f328b69ed8af1b06c8b3c643892aeb73fc",
-        "download_count": 16,
+        "download_count": 17,
         "created_at": "2026-06-07T15:29:49Z",
         "updated_at": "2026-06-07T15:30:29Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.4/macOS_ARM64_FFBox_5.4.dmg"
@@ -248,7 +248,7 @@
         "state": "uploaded",
         "size": 17691413,
         "digest": "sha256:baab31d691d11afd3884a5bd3e56ebe8935f1cd16319b48f5e2c0d8b008f126f",
-        "download_count": 106,
+        "download_count": 110,
         "created_at": "2026-06-07T15:30:54Z",
         "updated_at": "2026-06-07T15:30:58Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.4/Windows_x86-64_FFBoxService%2BwebUI_5.4.zip"
@@ -284,7 +284,7 @@
         "state": "uploaded",
         "size": 92677668,
         "digest": "sha256:96e42a8ef8f23748ef182266bc10c9b911999aad7b4a050915ab8497731e5b85",
-        "download_count": 719,
+        "download_count": 726,
         "created_at": "2026-06-07T15:31:25Z",
         "updated_at": "2026-06-07T15:31:42Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.4/Windows_x86-64_FFBox_5.4.exe"
@@ -1476,7 +1476,7 @@
         "state": "uploaded",
         "size": 88230868,
         "digest": "sha256:9cf08c3fd0a8c9d1c91c5b16f2c7f84cd146de99ffc1ed8f9af55836d7145b3b",
-        "download_count": 2040,
+        "download_count": 2041,
         "created_at": "2025-09-01T12:11:41Z",
         "updated_at": "2025-09-01T12:11:55Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.0/Windows_x86-64_FFBox_5.0.exe"
