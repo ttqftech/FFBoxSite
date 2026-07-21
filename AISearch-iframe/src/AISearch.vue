@@ -55,9 +55,11 @@ const anchorStyle = ref<Record<string, string> | null>(null);
 const openedClass = computed(() => isOpened.value === 'opening' || isOpened.value === 'opened' ? 'opened' : '');
 
 // 上报内容边界给父页面，用于 pointer-events 切换
-const reportBounds = () => {
+const reportBounds = async () => {
 	if (!props.onBoundsChange) return;
-	// console.log('reportBounds');
+	await new Promise((resolve) => setTimeout(resolve, 0));	// Vue 的更新实际上发生在 nextFrame 之后，而这个函数会在它之前触发，因此需要等一下
+
+	boundsRafId = 0;
 	const anchorEl = anchorRef.value;
 	const panelEl = panelRef.value;
 	if (!anchorEl) {
@@ -65,6 +67,7 @@ const reportBounds = () => {
 		return;
 	}
 	const anchorRect = anchorEl.getBoundingClientRect();
+	// console.log('reportBounds', anchorRect);
 	// 关闭状态下只报 anchor（输入框区域）
 	if (isOpened.value === 'closed' || !panelEl) {
 		props.onBoundsChange({
@@ -92,7 +95,7 @@ const reportBounds = () => {
 let boundsRafId: number;
 // 使用 requestAnimationFrame 上报边界，避免高频调用
 const reportBoundsRaf = () => {
-	cancelAnimationFrame(boundsRafId);
+	if (boundsRafId) return;
 	boundsRafId = requestAnimationFrame(reportBounds);
 };
 
