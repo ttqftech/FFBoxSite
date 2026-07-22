@@ -634,7 +634,9 @@ watch(() => props.enabled, () => {
 												<details><summary>思考过程</summary>{{ block.content }}</details>
 											</div>
 											<template v-else-if="block.type === 'text'">
-												<component :is="newLinedContent(block.content || '')" />
+												<div>
+													<component :is="newLinedContent(block.content || '')" />
+												</div>
 											</template>
 											<div v-else-if="block.type === 'tool_call'" class="blockToolCall">
 												🔧 工具调用：{{ block.toolCall?.name }}

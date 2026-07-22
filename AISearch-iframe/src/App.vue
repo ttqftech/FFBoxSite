@@ -34,6 +34,9 @@ const handleMouseLeaveContent = () => postToParent({ type: 'contentMouseLeave' }
 // 由父页面下发的 bounds（宿主容器在父页面 viewport 下的 rect）
 const bounds = reactive({ top: 0, left: 0, width: 400, height: 100 });
 
+// 由父页面下发的 platform，决定 generateConfig 使用哪套配置
+const platform = ref<string>('');
+
 // 接收父页面消息
 const handleMessage = (event: MessageEvent) => {
 	const data = event.data;
@@ -51,6 +54,11 @@ const handleMessage = (event: MessageEvent) => {
 				bounds.left = left;
 				bounds.width = width;
 				bounds.height = height;
+			}
+			break;
+		case 'platform':
+			if (typeof data.platform === 'string') {
+				platform.value = data.platform;
 			}
 			break;
 	}
@@ -80,6 +88,7 @@ onBeforeUnmount(() => {
 	>
 		<div class="aiSearchInner">
 			<AISearchWithConfig
+				:platform="platform"
 				:onInitMsgbox="handleInitMsgbox"
 				:onAction="handleAction"
 				:onBoundsChange="handleBoundsChange"

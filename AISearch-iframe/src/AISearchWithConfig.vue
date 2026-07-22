@@ -16,6 +16,8 @@ import { generateConfig } from './configGenerator';
  */
 
 interface Props {
+	// 平台标识，决定 generateConfig 拉取哪套配置（如 'FFBoxSite' / 'FFBox 5.3'），由父页面下发
+	platform?: string;
 	// iframe 通讯回调
 	onInitMsgbox?: (content: string) => void;	// 配置要求显示初始化弹窗（iframe 无法显示 Msgbox，转发父页面）
 	onAction?: (url: string) => void;	// 需要父页面处理的动作（如 ffbox:/ 协议）
@@ -216,7 +218,7 @@ const init = async () => {
 	if (inited) return;
 
 	try {
-		const configData = generateConfig('FFBoxSite');
+		const configData = generateConfig(props.platform);
 		fetchedConfig.value = configData;
 		modelOptions.value = fetchedConfig.value.modelOptions || [];
 

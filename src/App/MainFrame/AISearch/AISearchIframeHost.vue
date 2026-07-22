@@ -21,6 +21,12 @@ import { showActivateCodeGen } from './activateCodeGen';
 
 const appStore = useAppStore();
 
+interface Props {
+	platform?: string;
+}
+
+const props = defineProps<Props>();
+
 const iframeRef = ref<HTMLIFrameElement>(null);
 const hostRef = ref<HTMLDivElement>(null);
 const iframePointerEvents = ref<'none' | 'auto'>('none');
@@ -40,6 +46,10 @@ const iframeSrc = import.meta.env.DEV
 const sendTheme = () => {
 	if (!iframeReady) return;
 	iframeRef.value?.contentWindow?.postMessage({ type: 'theme', theme: appStore.colorTheme }, '*');
+};
+const sendPlatform = () => {
+	if (!iframeReady) return;
+	iframeRef.value?.contentWindow?.postMessage({ type: 'platform', platform: props.platform }, '*');
 };
 
 // 将宿主容器自身在父页面 viewport 下的 rect 下发到 iframe
@@ -101,6 +111,7 @@ const handleMessage = (event: MessageEvent) => {
 		case 'ready':
 			iframeReady = true;
 			sendTheme();
+			sendPlatform();
 			// iframe 就绪后立即下发一次 bounds，避免首次渲染错位
 			sendHostBounds();
 			break;
