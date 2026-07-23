@@ -21,10 +21,16 @@ import { showActivateCodeGen } from './activateCodeGen';
 
 const appStore = useAppStore();
 
+interface Props {
+	platform?: string;
+}
+
+const props = defineProps<Props>();
+
 const iframeRef = ref<HTMLIFrameElement>(null);
 const hostRef = ref<HTMLDivElement>(null);
 const iframePointerEvents = ref<'none' | 'auto'>('none');
-let lastBounds: { top: number, left: number, width: number, height: number } | null = null;
+const lastBounds = ref<{ top: number, left: number, width: number, height: number } | null>(null);
 let lastMouseX = -1;
 let lastMouseY = -1;
 let iframeReady = false;
@@ -34,12 +40,16 @@ let resizeObserver: ResizeObserver | null = null;
 // - 开发环境：指向 iframe 项目独立 dev server（支持 HMR，需另起 `npm run dev:aisearch`）
 // - 生产环境：使用构建产物 public/aisearch/index.html
 const iframeSrc = import.meta.env.DEV
-	? 'http://localhost:5175'
+	? 'http://localhost:5176'
 	: './aiSearch/index.html';
 
 const sendTheme = () => {
 	if (!iframeReady) return;
 	iframeRef.value?.contentWindow?.postMessage({ type: 'theme', theme: appStore.colorTheme }, '*');
+};
+const sendPlatform = () => {
+	if (!iframeReady) return;
+	iframeRef.value?.contentWindow?.postMessage({ type: 'platform', platform: props.platform }, '*');
 };
 
 // 将宿主容器自身在父页面 viewport 下的 rect 下发到 iframe
@@ -56,13 +66,8 @@ watch(() => appStore.colorTheme, () => {
 
 const isPointInBounds = (x: number, y: number) => {
 	if (!lastBounds) return false;
-	const inBounds = (x: number, y: number) => {
-		if (!lastBounds) return false;
-		return x >= lastBounds.left && x <= lastBounds.left + lastBounds.width
-			&& y >= lastBounds.top && y <= lastBounds.top + lastBounds.height;
-	};
-	// console.log('isPointInBounds', x, y, inBounds(x, y), lastBounds);
-	return inBounds(x, y);
+	return x >= lastBounds.value.left && x <= lastBounds.value.left + lastBounds.value.width
+		&& y >= lastBounds.value.top && y <= lastBounds.value.top + lastBounds.value.height;
 };
 
 const handleMouseMove = (e: MouseEvent) => {
@@ -106,12 +111,13 @@ const handleMessage = (event: MessageEvent) => {
 		case 'ready':
 			iframeReady = true;
 			sendTheme();
+			sendPlatform();
 			// iframe 就绪后立即下发一次 bounds，避免首次渲染错位
 			sendHostBounds();
 			break;
 		case 'bounds':
-			lastBounds = data.rect;
-			// console.log('子→主 bounds', lastBounds);
+			lastBounds.value = data.rect;
+			// console.log('子→主 bounds', lastBounds.value);
 			// bounds 变化时，根据最近鼠标位置重新判定 pointer-events
 			iframePointerEvents.value = isPointInBounds(lastMouseX, lastMouseY) ? 'auto' : 'none';
 			break;
@@ -172,6 +178,16 @@ onBeforeUnmount(() => {
 		scrolling="no"
 		:style="{ pointerEvents: iframePointerEvents }"
 	></iframe>
+	<div
+		v-if="lastBounds"
+		class="noDragOverlay"
+		:style="{
+			top: `${lastBounds.top}px`,
+			left: `${lastBounds.left}px`,
+			width: `${lastBounds.width}px`,
+			height: `${lastBounds.height}px`,
+		}"
+	></div>
 </template>
 
 <style scoped>
@@ -192,6 +208,11 @@ onBeforeUnmount(() => {
 		height: 100vh;
 		border: none;
 		background: transparent;
-		z-index: 10;
+	}
+	.noDragOverlay {
+		position: fixed;
+		-webkit-app-region: no-drag;
+		pointer-events: none;
+		/* outline: red 1px solid; */
 	}
 </style>

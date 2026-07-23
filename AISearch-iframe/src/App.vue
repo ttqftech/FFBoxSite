@@ -24,20 +24,45 @@ const postToParent = (payload: any) => {
 	}
 };
 
+// 请求-响应机制（参照 sponsorPanel/v1.html 的 request 函数）
+let requestIdCounter = 0;
+const pendingRequests = new Map<string, (data: any) => void>();
+
+function requestParent<T = any>(type: string, payload: Record<string, any> = {}): Promise<T> {
+	return new Promise((resolve) => {
+		const requestId = 'req_' + (++requestIdCounter);
+		pendingRequests.set(requestId, resolve);
+		postToParent({ type, requestId, ...payload });
+	});
+}
+
 // AISearchWithConfig 回调 -> 转发给父页面
 const handleInitMsgbox = (content: string) => postToParent({ type: 'initMsgbox', content });
 const handleAction = (url: string) => postToParent({ type: 'action', url });
 const handleBoundsChange = (rect: { top: number, left: number, width: number, height: number } | null) => postToParent({ type: 'bounds', rect });
 // const handleStateChange = (state: 'closed' | 'opening' | 'opened' | 'closing') => postToParent({ type: 'state', state });
 const handleMouseLeaveContent = () => postToParent({ type: 'contentMouseLeave' });
+const handleRequestMachineIds = () => requestParent<{ frontendMachineId?: string; backendMachineId?: string }>('getMachineIds');
 
 // 由父页面下发的 bounds（宿主容器在父页面 viewport 下的 rect）
 const bounds = reactive({ top: 0, left: 0, width: 400, height: 100 });
+
+// 由父页面下发的 platform，决定 generateConfig 使用哪套配置
+const platform = ref<string>('');
 
 // 接收父页面消息
 const handleMessage = (event: MessageEvent) => {
 	const data = event.data;
 	if (!data || typeof data !== 'object') return;
+	// 处理父页面的 response（请求-响应型通讯）
+	if (data.type === 'response' && data.requestId) {
+		const resolve = pendingRequests.get(data.requestId);
+		if (resolve) {
+			pendingRequests.delete(data.requestId);
+			resolve(data.data);
+		}
+		return;
+	}
 	switch (data.type) {
 		case 'theme':
 			if (data.theme === 'themeLight' || data.theme === 'themeDark') {
@@ -51,6 +76,11 @@ const handleMessage = (event: MessageEvent) => {
 				bounds.left = left;
 				bounds.width = width;
 				bounds.height = height;
+			}
+			break;
+		case 'platform':
+			if (typeof data.platform === 'string') {
+				platform.value = data.platform;
 			}
 			break;
 	}
@@ -80,10 +110,12 @@ onBeforeUnmount(() => {
 	>
 		<div class="aiSearchInner">
 			<AISearchWithConfig
+				:platform="platform"
 				:onInitMsgbox="handleInitMsgbox"
 				:onAction="handleAction"
 				:onBoundsChange="handleBoundsChange"
 				:onMouseLeaveContent="handleMouseLeaveContent"
+				:onRequestMachineIds="handleRequestMachineIds"
 			/>
 		</div>
 	</div>

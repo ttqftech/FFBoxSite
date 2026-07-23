@@ -164,7 +164,7 @@ onMounted(async () => {
 						<button @click="handleTopBarButtonClicked(4)" class="startbutton startbutton1 startbutton-green">⬇️下载</button>
 						<div class="AISearch" v-if="windowWidth >= 1000">
 							<div>
-								<AISearch />
+								<AISearch platform="FFBoxSite" />
 							</div>
 						</div>
 						<MenuCenter />
@@ -177,7 +177,7 @@ onMounted(async () => {
 		</div>
 		<div class="AISearchFixed" v-if="windowWidth < 1000">
 			<div>
-				<AISearch />
+				<AISearch platform="FFBoxSite" />
 			</div>
 		</div>
 		<div class="bigDownloadButton" v-if="showBigDownloadButton">

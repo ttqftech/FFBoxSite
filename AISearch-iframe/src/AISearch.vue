@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, nextTick, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import gsap from 'gsap';
-import AISearchConfig, { AIChatMessage, AIModelOption } from './types';
-import { getTimeString } from './utils';
+import AISearchConfig, { AIChatMessage, AIModelOption, ChatAPIParams, ChatAPIResult, StreamEvent, ChatBlock } from './types';
+import { getTimeString, newLinedContent } from './utils';
 import { useTooltip } from './useTooltip';
 import Button, { ButtonType } from './components/Button';
 import DropdownInput from './components/DropdownInput.vue';
@@ -15,10 +15,9 @@ import IconX from './assets/close.svg';
 
 interface Props {
 	enabled?: boolean;	// 是否启用并显示该组件，未定义则启用
-	chatAPI?: (message: string, modelKey?: string) => Promise<{ content: string, expense?: number }>;	// 聊天 API，未定义则将在对话框中输出当前时间，出错将显示错误信息
+	chatAPI?: (params: ChatAPIParams) => Promise<ChatAPIResult>;	// 聊天 API（流式），未定义则将在对话框中输出当前时间，出错将显示错误信息
 	resetChat?: (modelKey?: string) => any;	// 点击重置对话时需要处理的副作用
 	init?: (modelKey?: string) => any;	// 首次打开窗口时需要处理的副作用
-	statusAPI?: (modelKey?: string) => Promise<string>;
 	titleName?: string;	// 标题名，未定义则使用“FFBox AI 帮助”
 	modelOptions?: AIModelOption[];
 	initialPlaceholders?: string[];	// 未激活窗口时的 placeholder，未定义则使用“智能帮助”
@@ -39,6 +38,7 @@ interface Props {
 	onBoundsChange?: (rect: { top: number, left: number, width: number, height: number } | null) => void;	// 内容边界变化
 	// onStateChange?: (state: 'closed' | 'opening' | 'opened' | 'closing') => void;	// 开关状态变化
 	onMouseLeaveContent?: () => void;	// 鼠标离开内容区域，父页面据此关闭 iframe 的 pointer-events
+	onRequestMachineIds?: () => Promise<{ frontendMachineId?: string; backendMachineId?: string }>;	// 向父页面请求机器码（前端和本地服务器）
 }
 
 const props = defineProps<Props>();
@@ -55,10 +55,12 @@ const anchorStyle = ref<Record<string, string> | null>(null);
 
 const openedClass = computed(() => isOpened.value === 'opening' || isOpened.value === 'opened' ? 'opened' : '');
 
-/** 上报内容边界给父页面，用于 pointer-events 切换 */
-const reportBounds = () => {
+// 上报内容边界给父页面，用于 pointer-events 切换
+const reportBounds = async () => {
 	if (!props.onBoundsChange) return;
-	// console.log('reportBounds');
+	await new Promise((resolve) => setTimeout(resolve, 0));	// Vue 的更新实际上发生在 nextFrame 之后，而这个函数会在它之前触发，因此需要等一下
+
+	boundsRafId = 0;
 	const anchorEl = anchorRef.value;
 	const panelEl = panelRef.value;
 	if (!anchorEl) {
@@ -66,6 +68,7 @@ const reportBounds = () => {
 		return;
 	}
 	const anchorRect = anchorEl.getBoundingClientRect();
+	// console.log('reportBounds', anchorRect);
 	// 关闭状态下只报 anchor（输入框区域）
 	if (isOpened.value === 'closed' || !panelEl) {
 		props.onBoundsChange({
@@ -91,9 +94,9 @@ const reportBounds = () => {
 };
 
 let boundsRafId: number;
-/** 使用 requestAnimationFrame 上报边界，避免高频调用 */
+// 使用 requestAnimationFrame 上报边界，避免高频调用
 const reportBoundsRaf = () => {
-	cancelAnimationFrame(boundsRafId);
+	if (boundsRafId) return;
 	boundsRafId = requestAnimationFrame(reportBounds);
 };
 
@@ -219,7 +222,6 @@ const inputValue = ref('');
 const messages = ref<AIChatMessage[]>([]);
 const sessionId = ref<string | null>(null);
 const loading = ref(false);
-const statusText = ref('大模型处理中');
 const selectedModelKey = ref<string | undefined>(undefined);
 
 const textRef = ref<HTMLTextAreaElement>(null);
@@ -270,51 +272,54 @@ const modelDropdownList = computed<MenuItem[]>(() => {
 });
 const selectedModelDisplayText = computed(() => selectedModelKey.value ? props.modelOptions.find((model) => model.key === selectedModelKey.value)?.key || '' : '');
 
-const sendMessage = async () => {
-	if (!inputValue.value.trim() || loading.value) return;
+/** 根据工具名返回自动工具结果（MVP 占位） */
+const getAutoToolResult = (toolName: string): string => {
+	if (toolName === 'client_get_task_info') return '无任务信息';
+	return '';
+};
 
-	// 对话轮数检查
-	if (props.maxRounds) {
-		if (messages.value.filter((msg) => msg.role === 'user').length > props.maxRounds) {
+const sendMessage = async (userText?: string, continuation?: { toolCallId: string; toolResult: string }) => {
+	const text = userText ?? inputValue.value.trim();
+	if (!text && !continuation) return;
+	if (loading.value) return;
+
+	// 对话轮数检查（仅对新消息生效，续接不计数）
+	if (!continuation && props.maxRounds) {
+		if (messages.value.filter((msg) => msg.role === 'user').length >= props.maxRounds) {
 			messages.value.push({ role: "aiErr", text: props.maxRoundsMessage || '本轮对话发言次数已达到上限' });
 			return;
 		}
 	}
 
-	const userText = inputValue.value.trim();
-	messages.value.push({ role: 'user', text: userText, time: new Date() });
-	inputValue.value = '';
+	// 添加用户消息（续接跳过）
+	if (!continuation) {
+		messages.value.push({ role: 'user', text, time: new Date() });
+		inputValue.value = '';
+		textRef.value.value = '';
 
-	// 发送匹配关键词打开链接
-	if (props.requestKeywordLink) {
-		let needContinue = true;
-		for (const item of props.requestKeywordLink) {
-			const isContain = item.keywords.some((keyword) => userText.includes(keyword));
-			if (isContain) {
-				for (const url of (item.urls || [])) {
-					window.open(url, item.blank ? '_blank' : undefined);
-				}
-				if (item.needContinue === false) {
-					needContinue = false;
+		// 发送匹配关键词打开链接
+		if (props.requestKeywordLink) {
+			let needContinue = true;
+			for (const item of props.requestKeywordLink) {
+				const isContain = item.keywords.some((keyword) => text.includes(keyword));
+				if (isContain) {
+					for (const url of (item.urls || [])) window.open(url, item.blank ? '_blank' : undefined);
+					if (item.needContinue === false) needContinue = false;
 				}
 			}
+			if (!needContinue) return;
 		}
-		if (!needContinue) {
-			return;
-		}
-	}
-	// 发送警告词检查
-	if (props.requestKeywordSystemMessage) {
-		for (const item of props.requestKeywordSystemMessage) {
-			const keywordIndex = item.keywords.findIndex((keyword) => userText.includes(keyword));
-			if (keywordIndex >= 0) {
-				const dontShowSecondTime = item.once && showedRequestKeywordMessage.includes(item.keywords[keywordIndex]);
-				if (!dontShowSecondTime) {
-					messages.value.push({ role: item.warning ? "aiErr" : 'aiInfo', text: item.message });
-				}
-				showedRequestKeywordMessage.push(item.keywords[keywordIndex]);
-				if (item.forbid) {
-					return;
+		// 发送警告词检查
+		if (props.requestKeywordSystemMessage) {
+			for (const item of props.requestKeywordSystemMessage) {
+				const keywordIndex = item.keywords.findIndex((keyword) => text.includes(keyword));
+				if (keywordIndex >= 0) {
+					const dontShowSecondTime = item.once && showedRequestKeywordMessage.includes(item.keywords[keywordIndex]);
+					if (!dontShowSecondTime) {
+						messages.value.push({ role: item.warning ? "aiErr" : 'aiInfo', text: item.message });
+					}
+					showedRequestKeywordMessage.push(item.keywords[keywordIndex]);
+					if (item.forbid) return;
 				}
 			}
 		}
@@ -322,37 +327,113 @@ const sendMessage = async () => {
 
 	// 开始发送
 	loading.value = true;
-	if (props.chatAPI) {
-		statusText.value = '呼叫大模型工作流';
-		const pollingTimer = setInterval(() => {
-			if (props.statusAPI) {
-				props.statusAPI(selectedModelKey.value).then((result) => {
-					if (result && loading.value) statusText.value = result;
-				});
-			}
-		}, 800);
-		props.chatAPI(userText, selectedModelKey.value).then((chatResult) => {
-			const result = JSON.parse(chatResult.content);
-			const { msg, ref, lnk, ext } = result.obj;
-			const extras = (ext || '').split('&') as string[];
-			const chatItem: AIChatMessage = { role: "ai", text: msg, refers: ref, actions: [], time: new Date(), expense: chatResult.expense };
-			messages.value.push(chatItem);
 
-			// 接收匹配关键词打开链接
+	// 创建 AI 消息（多 block 气泡）
+	const aiMessage: AIChatMessage = { role: 'ai', text: '', blocks: [], status: '呼叫第二代 AI 智能体', time: new Date() };
+	messages.value.push(aiMessage);
+	// 通过响应式代理引用，确保流式追加能触发视图更新
+	const aiMsg = messages.value[messages.value.length - 1];
+	const blocks = aiMsg.blocks!;
+
+	let currentAgentName = '';
+	let expense = 0;
+
+	const handleStreamEvent = (event: StreamEvent) => {
+		switch (event.type) {
+			case 'connected':
+				aiMsg.status = '思考中';
+				break;
+			case 'agent':
+				currentAgentName = event.displayName;
+				aiMsg.status = `【${event.displayName}】正在为您服务`;
+				break;
+			case 'thinking': {
+				// 追加到思考 block
+				const lastBlock = blocks[blocks.length - 1];
+				if (lastBlock && lastBlock.type === 'thinking') {
+					lastBlock.content = (lastBlock.content || '') + event.content;
+				} else {
+					blocks.push({ type: 'thinking', content: event.content });
+				}
+				break;
+			}
+			case 'text': {
+				const lastBlock = blocks[blocks.length - 1];
+				if (lastBlock && lastBlock.type === 'text') {
+					lastBlock.content = (lastBlock.content || '') + event.content;
+				} else {
+					blocks.push({ type: 'text', content: event.content });
+				}
+				aiMsg.text = blocks.filter(b => b.type === 'text').map(b => b.content || '').join('');	// 合并所有 text block
+				break;
+			}
+			case 'tool_call':
+				blocks.push({ type: 'tool_call', toolCall: { id: event.id, name: event.name, args: event.args, display: event.display } });
+				break;
+			case 'tool_result':
+				blocks.push({ type: 'tool_result', toolResult: { id: event.id, name: event.name, content: event.content } });
+				break;
+			case 'usage':
+				expense = event.expense;
+				aiMsg.expense = expense;
+				break;
+			case 'end':
+				aiMsg.status = undefined;
+				break;
+			case 'error':
+				blocks.push({ type: 'error', content: event.message });
+				break;
+		}
+	};
+
+	try {
+		const params: ChatAPIParams = continuation
+			? { toolCallId: continuation.toolCallId, toolResult: continuation.toolResult, modelKey: selectedModelKey.value, onEvent: handleStreamEvent }
+			: { message: text, modelKey: selectedModelKey.value, onEvent: handleStreamEvent };
+
+		const result = await props.chatAPI!(params);
+
+		// 处理客户端工具调用
+		if (result.clientToolCall) {
+			const ctc = result.clientToolCall;
+			if (!ctc.needResponse) {
+				// 通知型：显示成功提示（作为客户端发起的消息）
+				messages.value.push({ role: 'user', blocks: [{ type: 'tool_call', toolCall: { id: ctc.id, name: ctc.name, args: ctc.args, display: 'client' } }], text: '', time: new Date() });
+				// 可以在这里触发 onAction 等回调
+			} else if (ctc.needResponse) {
+				// 请求-响应型：作为客户端消息，自动续接
+				messages.value.push({ role: 'user', blocks: [{ type: 'tool_call', toolCall: { id: ctc.id, name: ctc.name, args: ctc.args, display: 'client' } }], text: '', time: new Date() });
+				// 对 get_machine_ids，向父页面请求机器码返回给后端
+				let toolResultText = '';
+				if (ctc.name === 'get_machine_ids') {
+					const machineIds = await props.onRequestMachineIds?.() ?? {};
+					toolResultText = JSON.stringify({
+						frontendMachineId: machineIds.frontendMachineId,
+						backendMachineId: machineIds.backendMachineId,
+					});
+				} else {
+					toolResultText = getAutoToolResult(ctc.name);
+				}
+				// 自动续接
+				loading.value = false;
+				await sendMessage(undefined, { toolCallId: ctc.id, toolResult: toolResultText });
+				return;
+			}
+		}
+
+		// 响应关键词处理
+		if (aiMsg.text) {
 			if (props.responseKeywordLink) {
 				for (const item of props.responseKeywordLink) {
-					const isContain = item.keywords.some((keyword) => msg.includes(keyword));
+					const isContain = item.keywords.some((keyword) => aiMsg.text.includes(keyword));
 					if (isContain) {
-						for (const url of (item.urls || [])) {
-							window.open(url, item.blank === false ? '_blank' : undefined);
-						}
+						for (const url of (item.urls || [])) window.open(url, item.blank === false ? '_blank' : undefined);
 					}
 				}
 			}
-			// 响应警告词检查
 			if (props.responseKeywordSystemMessage) {
 				for (const item of props.responseKeywordSystemMessage) {
-					const keywordIndex = item.keywords.findIndex((keyword) => msg.includes(keyword));
+					const keywordIndex = item.keywords.findIndex((keyword) => aiMsg.text.includes(keyword));
 					if (keywordIndex >= 0) {
 						const dontShowSecondTime = item.once && showedResponseKeywordMessage.includes(item.keywords[keywordIndex]);
 						if (!dontShowSecondTime) {
@@ -362,66 +443,12 @@ const sendMessage = async () => {
 					}
 				}
 			}
-			// 链接
-			if (lnk instanceof Array) {
-				for (const link of lnk) {
-					if ('label' in link && 'url' in link) chatItem.actions.push(link);
-				}
-			}
-			// 激活 1
-			const matchEnd1 = /[A-Z]kn[A-Z]ui[A-Z]ev[A-Z]hr[A-Z]tg/i.exec(msg);
-			const keyEnd =
-				msg.match(/最终.+分/) ||
-				msg.match(/((考核|测试|题目).{0,2}(通过|结束|完成))|((通过|结束|完成).{0,2}(考核|测试|题目))/) ||
-				msg.includes('激活') && (msg.includes('恭喜') || msg.includes('完成了') || msg.includes('通过了') || msg.includes('成功'));
-			let extraScore = undefined;
-			extras.find((extra) => extra.replace(/asv1=(\d+)/, (_, content) => (extraScore = +content, '')));	// activation score v1
-
-			if (extraScore || matchEnd1 || keyEnd) {
-				let total = -1;
-				const regex = /[得总]分[是为:：-\s]{0,3}(\d+(\.\d+)?)/g;
-				let match1;
-				// 找到文本中最高的分数
-				while ((match1 = regex.exec(msg)) !== null && match1[1]) {
-					if (!isNaN(+match1[1])) {
-						total = +match1[1] > total ? +match1[1] : total;
-					}
-				}
-				if (total === -1) {
-					total = 15;
-				} else {
-					total += 1;
-				}
-				// 找到文本中的总分
-				const matchFull = /满分[是为:：-\s]{0,3}(\d+(\.\d+)?)/.exec(msg)?.[1];
-				const full = +matchFull || 40;
-
-				total = extraScore || total;
-				const finalScore = 15 + (total / full) * 50;
-				console.log(`修行：${finalScore}`);
-				chatItem.actions.push({ label: '生成激活码', url: `ffbox:/showActivationCodeGenMsgbox?level=${finalScore}` });
-			}
-
-			// 激活 2
-			const matchEnd2 = /[A-Z]ae[A-Z]fv[A-Z]sw[A-Z]cg[A-Z]lr/i.exec(msg);
-			let extraScoreActivated = extras.some((content) => content === 'assv1=1');	// activation score sponsored v1
-
-			if (matchEnd2 || extraScoreActivated) {
-				console.log(`修行：50`);
-				chatItem.actions.push({ label: '生成激活码', url: `ffbox:/showActivationCodeGenMsgbox?level=50` });
-			}
-		}).catch((error) => {
-			messages.value.push({ role: "aiErr", text: error });
-		}).finally(() => {
-			loading.value = false;
-			clearInterval(pollingTimer);
-			statusText.value = undefined;
-		});
-	} else {
-		setTimeout(() => {
-			messages.value.push({ role: "ai", text: new Date().toISOString() });
-			loading.value = false;
-		}, 1000);
+		}
+	} catch (error) {
+		blocks.push({ type: 'error', content: error instanceof Error ? error.message : String(error) });
+	} finally {
+		loading.value = false;
+		if (aiMsg) aiMsg.status = undefined;
 	}
 };
 
@@ -434,6 +461,11 @@ const resetChat = () => {
 			messages.value.push(props.initSystemMessage);
 		}, 0);
 	}
+};
+
+const handleInputKeyPress = (event: KeyboardEvent) => {
+	if (loading.value) return;
+	if (event.key === 'Enter' && event.shiftKey === false) sendMessage(inputValue.value);
 };
 
 const handleActionButtonClick = (url: string) => {
@@ -453,9 +485,10 @@ const handleModelChange = (value: string) => {
 		return;
 	}
 	selectedModelKey.value = newModel.key;
-	if (newModel.provider !== currentModel.provider) {
-		resetChat();
-	}
+	// 现在不同供应商统一由 API 负责管理聊天记录，不需要重置
+	// if (newModel.provider !== currentModel.provider) {
+	// 	resetChat();
+	// }
 };
 
 watch(() => props.modelOptions, (newOptions) => {
@@ -470,7 +503,7 @@ watch(() => props.modelOptions, (newOptions) => {
 
 let initialPlaceholderTimer: number;
 const initialPlaceholderIndex = ref(0);
-const initialPlaceholderText = computed(() => props.initialPlaceholders?.[initialPlaceholderIndex.value] ?? '智能帮助');
+const initialPlaceholderText = computed(() => props.initialPlaceholders?.[initialPlaceholderIndex.value] ?? '智能帮助加载中');
 watch(() => props.initialPlaceholderInterval, () => {
 	clearInterval(initialPlaceholderTimer);
 	if (props.initialPlaceholderInterval) {
@@ -532,113 +565,133 @@ watch(() => props.enabled, () => {
 									${props.maxRounds !== undefined ? `本次对话：${messages.filter((msg) => msg.role === 'user').length} / ${props.maxRounds}\n` : ''}`
 								.slice(0, -1))"
 							>
-							<svg class="usageRing" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AI 使用量">
-								<defs>
-									<filter id="quotaUsageBgShadow" x="-50%" y="-50%" width="200%" height="200%">
-										<feDropShadow dx="0" dy="0" stdDeviation="2" :flood-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" flood-opacity="0.4"/>
-									</filter>
-									<filter id="quotaUsageRingShadow" x="-50%" y="-50%" width="200%" height="200%">
-										<feDropShadow dx="0" dy="0" stdDeviation="1" flood-color="hwb(var(--bg97))" flood-opacity="1"/>
-									</filter>
+								<svg class="usageRing" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AI 使用量">
+									<defs>
+										<filter id="quotaUsageBgShadow" x="-50%" y="-50%" width="200%" height="200%">
+											<feDropShadow dx="0" dy="0" stdDeviation="2" :flood-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" flood-opacity="0.4"/>
+										</filter>
+										<filter id="quotaUsageRingShadow" x="-50%" y="-50%" width="200%" height="200%">
+											<feDropShadow dx="0" dy="0" stdDeviation="1" flood-color="hwb(var(--bg97))" flood-opacity="1"/>
+										</filter>
 
-									<!-- 渐变（外/中/内） -->
-									<linearGradient id="gOuter" x1="0" y1="0" x2="1" y2="1">
-										<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
-										<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
-									</linearGradient>
-									<linearGradient id="gMiddle" x1="1" y1="0" x2="0" y2="1">
-										<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
-										<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
-									</linearGradient>
-									<linearGradient id="gInner" x1="0" y1="1" x2="1" y2="0">
-										<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
-										<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
-									</linearGradient>
-								</defs>
+										<!-- 渐变（外/中/内） -->
+										<linearGradient id="gOuter" x1="0" y1="0" x2="1" y2="1">
+											<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
+											<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
+										</linearGradient>
+										<linearGradient id="gMiddle" x1="1" y1="0" x2="0" y2="1">
+											<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
+											<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
+										</linearGradient>
+										<linearGradient id="gInner" x1="0" y1="1" x2="1" y2="0">
+											<stop offset="0%" :stop-color="usageTouchedWarning ? 'var(--red1)' : 'var(--blue1)'" />
+											<stop offset="100%" :stop-color="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" />
+										</linearGradient>
+									</defs>
 
-								<!-- 背景 -->
-								<circle cx="24" cy="24" r="22" fill="hwb(var(--bg97))" filter="url(#quotaUsageBgShadow)" />
+									<!-- 背景 -->
+									<circle cx="24" cy="24" r="22" fill="hwb(var(--bg97))" filter="url(#quotaUsageBgShadow)" />
 
-								<!-- 进度圆 -->
-								<path
-									v-if="props.maxRounds !== undefined"
-									:d="roundsSvgPiePath"
-									:fill="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" opacity="0.1"
-								/>
+									<!-- 进度圆 -->
+									<path
+										v-if="props.maxRounds !== undefined"
+										:d="roundsSvgPiePath"
+										:fill="usageTouchedWarning ? 'var(--red2)' : 'var(--blue2)'" opacity="0.1"
+									/>
 
-								<!-- 外圈 -->
-								<circle v-if="props.quotaUsed.day !== undefined" class="track"
-									cx="24" cy="24" r="18" />
-								<circle v-if="props.quotaUsed.day !== undefined" class="progress" :style="`stroke: url(#gOuter); stroke-dasharray: ${props.quotaUsed.day * 100} 100`"
-									cx="24" cy="24" r="18" pathLength="100" filter="url(#quotaUsageRingShadow)" />
+									<!-- 外圈 -->
+									<circle v-if="props.quotaUsed.day !== undefined" class="track"
+										cx="24" cy="24" r="18" />
+									<circle v-if="props.quotaUsed.day !== undefined" class="progress" :style="`stroke: url(#gOuter); stroke-dasharray: ${props.quotaUsed.day * 100} 100`"
+										cx="24" cy="24" r="18" pathLength="100" filter="url(#quotaUsageRingShadow)" />
 
-								<!-- 中圈 -->
-								<circle v-if="props.quotaUsed.week !== undefined" class="track"
-									cx="24" cy="24" r="13"/>
-								<circle v-if="props.quotaUsed.week !== undefined" class="progress" :style="`stroke: url(#gMiddle); stroke-dasharray: ${props.quotaUsed.week * 100} 100`"
-									cx="24" cy="24" r="13" pathLength="100" filter="url(#quotaUsageRingShadow)" />
+									<!-- 中圈 -->
+									<circle v-if="props.quotaUsed.week !== undefined" class="track"
+										cx="24" cy="24" r="13"/>
+									<circle v-if="props.quotaUsed.week !== undefined" class="progress" :style="`stroke: url(#gMiddle); stroke-dasharray: ${props.quotaUsed.week * 100} 100`"
+										cx="24" cy="24" r="13" pathLength="100" filter="url(#quotaUsageRingShadow)" />
 
-								<!-- 内圈 -->
-								<circle v-if="props.quotaUsed.total !== undefined" class="track"
-									cx="24" cy="24" r="8"/>
-								<circle v-if="props.quotaUsed.total !== undefined" class="progress" :style="`stroke: url(#gInner); stroke-dasharray: ${props.quotaUsed.total * 100} 100`"
-									cx="24" cy="24" r="8" pathLength="100" filter="url(#quotaUsageRingShadow)" />
-							</svg>
-							<span class="text" v-if="usageTouchedWarning">注意用量</span>
-						</div>
-					</div>
-					<div class="right">
-						<Button @click="resetChat" aria-label="重置 AI 聊天消息" :type="ButtonType.NoBg" :disabled="loading"><IconRefresh /></Button>
-						<Button @click="closeWindow" aria-label="关闭 AI 聊天弹窗" :type="ButtonType.NoBg"><IconX style="height: 20px" /></Button>
-					</div>
-				</div>
-				<div class="chatMessages" ref="messagesRef">
-					<TransitionGroup name="msgAnim">
-						<div v-for="(msg, idx) in messages" :key="idx" :class="['msg', msg.role]">
-							<div class="msgContent">
-								<template v-for="(line, index) in msg.text.split('\n')" :key="index">
-									{{ line }}<br />
-								</template>
-							</div>
-							<div class="smallText">
-								{{ [
-									msg.time ? getTimeString(msg.time) : '',
-									msg.refers?.length ? '参考来源：' + msg.refers.join('；') : '',
-									msg.expense ? '算力开销：' + Math.round(msg.expense) : '',
-								].filter((text) => text).join('｜') }}
-								<button v-for="action in msg.actions" @click="handleActionButtonClick(action.url)">{{ action.label }}</button>
+									<!-- 内圈 -->
+									<circle v-if="props.quotaUsed.total !== undefined" class="track"
+										cx="24" cy="24" r="8"/>
+									<circle v-if="props.quotaUsed.total !== undefined" class="progress" :style="`stroke: url(#gInner); stroke-dasharray: ${props.quotaUsed.total * 100} 100`"
+										cx="24" cy="24" r="8" pathLength="100" filter="url(#quotaUsageRingShadow)" />
+								</svg>
+								<span class="text" v-if="usageTouchedWarning">注意用量</span>
 							</div>
 						</div>
-						<div v-if="statusText && loading" :key="messages.length" class="msg aiInfo">
-							<div class="msgContent"><IconLoading class="loading" />{{ statusText }}</div>
+						<div class="right">
+							<Button @click="resetChat" aria-label="重置 AI 聊天消息" :type="ButtonType.NoBg" :disabled="loading"><IconRefresh /></Button>
+							<Button @click="closeWindow" aria-label="关闭 AI 聊天弹窗" :type="ButtonType.NoBg"><IconX style="height: 20px" /></Button>
 						</div>
-					</TransitionGroup>
+					</div>
+					<div class="chatMessages" ref="messagesRef">
+						<TransitionGroup name="msgAnim">
+							<div v-for="(msg, idx) in messages" :key="idx" :class="['msg', msg.role]">
+								<div class="msgContent">
+									<template v-if="msg.role === 'ai' && msg.status">
+										<div class="blockStatus"><IconLoading class="loading" />{{ msg.status }}</div>
+									</template>
+									<template v-if="msg.blocks && msg.blocks.length">
+										<template v-for="(block, bIdx) in msg.blocks" :key="bIdx">
+											<div v-if="block.type === 'thinking'" class="blockThinking">
+												<details><summary>思考过程</summary>{{ block.content }}</details>
+											</div>
+											<template v-else-if="block.type === 'text'">
+												<div>
+													<component :is="newLinedContent(block.content || '')" />
+												</div>
+											</template>
+											<div v-else-if="block.type === 'tool_call'" class="blockToolCall">
+												🔧 工具调用：{{ block.toolCall?.name }}
+											</div>
+											<div v-else-if="block.type === 'tool_result'" class="blockToolResult">
+												↳ {{ block.toolResult?.content }}
+											</div>
+											<div v-else-if="block.type === 'error'" class="blockError">
+												⚠️ {{ block.content }}
+											</div>
+										</template>
+									</template>
+									<template v-else-if="msg.text">
+										<component :is="newLinedContent(msg.text)" />
+									</template>
+								</div>
+								<div class="smallText">
+									{{ [
+										msg.time ? getTimeString(msg.time) : '',
+										msg.refers?.length ? '参考来源：' + msg.refers.join('；') : '',
+										msg.expense ? '算力开销：' + Math.round(msg.expense) : '',
+									].filter((text) => text).join('｜') }}
+									<button v-for="action in msg.actions" @click="handleActionButtonClick(action.url)">{{ action.label }}</button>
+								</div>
+							</div>
+						</TransitionGroup>
+					</div>
 				</div>
+			</transition>
+			<div class="inputArea" :class="openedClass">
+				<textarea
+					type="text"
+					rows="1"
+					:class="openedClass"
+					ref="textRef"
+					v-model="inputValue"
+					:placeholder="openedClass.length ? '输入问题...' : ''"
+					:disabled="loading"
+					:maxlength="props.maxInputLength ?? 10000"
+					@focus="() => isOpened === 'closed' ? openWindow() : null"
+					@keypress="handleInputKeyPress"
+					aria-label="AI 聊天输入框"
+				/>
+				<div :class="['iconAI', openedClass]">
+					<IconAI />
+					<span>{{ initialPlaceholderText }}</span>
+				</div>
+				<GradientRect v-if="isOpened === 'closed'" class="gradientRect" />
+				<Button @click="() => sendMessage(inputValue)" :disabled="loading" :class="openedClass">🚀</Button>
 			</div>
-		</transition>
-		<div class="inputArea" :class="openedClass">
-			<textarea
-				type="text"
-				rows="1"
-				:class="openedClass"
-				ref="textRef"
-				v-model="inputValue"
-				:placeholder="openedClass.length ? '输入问题...' : ''"
-				:disabled="loading"
-				:maxlength="props.maxInputLength ?? 10000"
-				oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
-				@focus="() => isOpened === 'closed' ? openWindow() : null"
-				@keyup.enter="sendMessage"
-				aria-label="AI 聊天输入框"
-			/>
-			<div :class="['iconAI', openedClass]">
-				<IconAI />
-				<span>{{ initialPlaceholderText }}</span>
-			</div>
-			<GradientRect v-if="isOpened === 'closed'" class="gradientRect" />
-			<Button @click="sendMessage" :disabled="loading" :class="openedClass">🚀</Button>
 		</div>
-	</div>
 	</div>
 </template>
 
@@ -915,6 +968,10 @@ watch(() => props.enabled, () => {
 							text-align: justify;
 							opacity: 1;
 							user-select: text;
+							&>*:not(&>*:nth-last-child(1)) {
+								margin-bottom: 6px;
+								// color: red !important;
+							}
 							@keyframes rotation {
 								from {
 									transform: rotate(0deg);
@@ -931,6 +988,42 @@ watch(() => props.enabled, () => {
 								vertical-align: -4px;
 								color: #33aacc77;
 							}
+						}
+						.blockThinking {
+							font-size: 12px;
+							color: var(--66);
+							details {
+								summary {
+									cursor: pointer;
+									opacity: 0.7;
+								}
+							}
+						}
+						.blockToolCall {
+							font-size: 12px;
+						}
+						.blockStatus {
+							// font-size: 12px;
+							color: #33aacc;
+							font-style: italic;
+							.loading {
+								width: 14px;
+								height: 14px;
+								animation: rotation 1s steps(8) infinite;
+								margin-right: 4px;
+								vertical-align: -3px;
+								color: #33aacc77;
+							}
+						}
+						.blockToolResult {
+							font-size: 12px;
+							color: var(--66);
+							margin: 2px 0 4px 16px;
+						}
+						.blockError {
+							// font-size: 13px;
+							color: #dd8800;
+							font-style: italic;
 						}
 						.smallText {
 							position: absolute;
@@ -950,6 +1043,9 @@ watch(() => props.enabled, () => {
 										0 1px 0.5px 0px hwb(var(--highlight) / 0.5) inset,	// 上高光
 										0 0 0 9999px hwb(210 5% 5% / 0.85) inset;	// 背景色
 							}
+							.blockToolCall {
+								color: #FFE777;
+							}
 							.smallText {
 								right: 2px;
 							}
@@ -962,6 +1058,9 @@ watch(() => props.enabled, () => {
 										0 1.5px 4px 0 hwb(var(--hoverShadow) / 0.2),
 										0 1px 0.5px 0px hwb(var(--highlight) / 0.5) inset,	// 上高光
 										0 0 0 9999px hwb(var(--hoverLightBg) / 0.85) inset;	// 背景色
+							}
+							.blockToolCall {
+								color: #5B8DEF;
 							}
 							.smallText {
 								left: 2px;

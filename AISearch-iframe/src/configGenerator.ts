@@ -72,12 +72,12 @@ const resolvePlatform = (platform?: string): 'FFBoxSite' | 'FFBox 5.3' =>
 	platform === 'FFBoxSite' ? 'FFBoxSite' : 'FFBox 5.3';
 
 export const generateConfig = (platform?: string): AISearchConfig => {
-	const WEBROBOT_OVERRIDES = {
+	const FFBOXSITE_OVERRIDES = {
 		titleName: '旅行者的数字代理人（FFBox 特供版） (Beta)',
 		tokenLimit: {
-			day: 10000,
-			week: 20000,
-			total: 100000,
+			day: 100000,
+			week: 200000,
+			total: 1000000,
 		},
 		tokenLimitMessage: {
 			day: '今日 AI 用量已达到上限啦～明天可以再来哦！\n（ℹ️FFBox 客户端的 AI 配额比 FFBox 官网更多哦）',
@@ -178,25 +178,44 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 		models: { name: string; id: string; weight?: number }[];
 		modelPrice: { modelIdOrIndex: string; inputMultiplyer: number; outputMultiplyer: number }[];
 	}> = {
-		ali: {
+		'ali-O': {
 			models: [
-				{ name: 'DeepSeek-V4-flash', id: 'deepseek-v4-flash', weight: 20 },
-				{ name: '通义千问-Plus-Latest', id: 'qwen-plus-latest', weight: 10 },
-				{ name: '通义千问-Plus', id: 'qwen-plus', weight: 10 },
-				{ name: 'qwen3.6-plus', id: 'qwen3.6-plus', weight: 20 },
-				{ name: 'qwen3.6-flash', id: 'qwen3.6-flash', weight: 20 },
-				{ name: 'qwen3.5-plus-2026-04-20', id: 'qwen3.5-plus-2026-04-20', weight: 20 },
+				{ name: 'qwen3.7-plus', id: 'qwen3.7-plus', weight: 1 },
+				{ name: 'deepseek-v4-flash', id: 'deepseek-v4-flash', weight: 1 },
+				{ name: 'qwen3.5-plus-2026-04-20', id: 'qwen3.5-plus-2026-04-20', weight: 1 },
+				{ name: 'glm-5.2', id: 'glm-5.2', weight: 1 },
+				{ name: 'qwen3.7-plus-2026-05-26', id: 'qwen3.7-plus-2026-05-26', weight: 1 },
+				{ name: 'deepseek-v4-pro', id: 'deepseek-v4-pro', weight: 1 },
+				{ name: 'qwen3.6-27b', id: 'qwen3.6-27b', weight: 1 },
+
 			],
 			modelPrice: [
-				{ modelIdOrIndex: 'qwen-turbo', inputMultiplyer: 0.3, outputMultiplyer: 0.3 },
-				{ modelIdOrIndex: 'qwen-turbo-2025-07-15', inputMultiplyer: 0.3, outputMultiplyer: 0.3 },
-				{ modelIdOrIndex: 'qwen-turbo-latest', inputMultiplyer: 0.3, outputMultiplyer: 0.3 },
+				{ modelIdOrIndex: 'qwen3.7-plus', inputMultiplyer: 2, outputMultiplyer: 8 },	// 2026-09-01 过期
+				{ modelIdOrIndex: 'qwen3.7-plus-2026-05-26', inputMultiplyer: 2, outputMultiplyer: 8 },		// 2026-09-01 过期
+				{ modelIdOrIndex: 'qwen3.5-plus-2026-04-20', inputMultiplyer: 0.8, outputMultiplyer: 4.8 },	// 2026-07-23 过期
+				{ modelIdOrIndex: 'deepseek-v4-flash', inputMultiplyer: 1, outputMultiplyer: 2 },	// 2026-07-24 过期
+				{ modelIdOrIndex: 'deepseek-v4-pro', inputMultiplyer: 12, outputMultiplyer: 24 },	// 2026-07-24 过期
+				{ modelIdOrIndex: 'glm-5.2', inputMultiplyer: 8, outputMultiplyer: 28 },	// 2026-09-15 过期
+				{ modelIdOrIndex: 'qwen3.6-27b', inputMultiplyer: 3, outputMultiplyer: 18 },	// 2026-07-23 过期
 			],
 		},
-		baidu: {
-			models: [],
-			modelPrice: [],
-		},
+        ollama: {
+            models: [
+                { name: 'qwen3.5:2b', id: 'qwen3.5:2b', weight: 20 },
+                // { name: 'qwen2.5:0.5b', id: 'qwen2.5:0.5b', weight: 20 },
+            ],
+            modelPrice: [],
+        },
+		'xiaomi-O': {
+			models: [
+				{ name: 'mimo-v2.5-pro', id: 'mimo-v2.5-pro', weight: 1 },
+				{ name: 'mimo-v2.5', id: 'mimo-v2.5', weight: 1 },
+			],
+			modelPrice: [
+				{ modelIdOrIndex: 'mimo-v2.5-pro', inputMultiplyer: 3, outputMultiplyer: 6 },
+				{ modelIdOrIndex: 'mimo-v2.5', inputMultiplyer: 1, outputMultiplyer: 2 },
+			],
+		}
 	};
 
 	const sharedConfig = {
@@ -245,9 +264,9 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 			},
 		],
 		tokenLimit: {
-			day: 10000,
-			week: 25000,
-			total: 125000,
+			day: 100000,	// 0.1 元
+			week: 250000,
+			total: 1000000,	// 1 元
 		},
 		tokenLimitMessage: {
 			day: '今日 AI 用量已达到上限啦～明天可以再来哦！\n（ℹ️您还可在 FFBox 官网使用 AI 助手）',
@@ -280,7 +299,7 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 		initialPlaceholderInterval: 4000,
 		maxRounds: 10,
 		maxRoundsMessage: '本轮对话发言次数已达到上限啦，请点击重置按钮开始新对话吧～',
-		titleName: 'FFBox AI 帮助 (Beta)',
+		titleName: `FFBox AI 帮助 (${platform})`,
 		initMsgbox: '',
 		initSystemMessage: {
 			role: 'aiInfo' as const,
@@ -300,13 +319,14 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 	};
 
 	const platformName = resolvePlatform(platform);
-	const platformOverrides = platformName === 'FFBoxSite' ? WEBROBOT_OVERRIDES : {};
+	const platformOverrides = platformName === 'FFBoxSite' ? FFBOXSITE_OVERRIDES : {};
 
 	const unifiedConfig: AISearchConfig = {
 		...sharedConfig,
 		...platformOverrides,
-		chatUrl: 'https://ffboxailetition-dpdeccglwm.cn-shenzhen.fcapp.run',
-		conversationStatusUrl: 'https://bigmoden-status-opmphgrdmp.cn-shenzhen.fcapp.run',
+		// chatUrl: 'https://ffboxaihelptest-bsuyltssti.cn-shenzhen.fcapp.run/api/chat/stream',
+		chatUrl: 'http://localhost:9000/api/chat/stream',
+		conversationStatusUrl: undefined,
 		modelOptions: buildModelOptions(providersConfig),
 		modelPrice: buildModelPrice(providersConfig),
 	};

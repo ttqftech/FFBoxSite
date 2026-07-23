@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import axios, { AxiosError } from 'axios';
 import AISearch from './AISearch.vue';
-import AISearchConfig, { AIModelOption } from './types';
-import { randomString } from './utils';
+import AISearchConfig, { AIModelOption, ChatAPIParams, ChatAPIResult, StreamEvent } from './types';
+import { randomString, generateConversationId } from './utils';
 import ImprovedLocalStorage from './storage';
 import { generateConfig } from './configGenerator';
 
@@ -17,19 +16,22 @@ import { generateConfig } from './configGenerator';
  */
 
 interface Props {
+	// 平台标识，决定 generateConfig 拉取哪套配置（如 'FFBoxSite' / 'FFBox 5.3'），由父页面下发
+	platform?: string;
 	// iframe 通讯回调
 	onInitMsgbox?: (content: string) => void;	// 配置要求显示初始化弹窗（iframe 无法显示 Msgbox，转发父页面）
 	onAction?: (url: string) => void;	// 需要父页面处理的动作（如 ffbox:/ 协议）
 	onBoundsChange?: (rect: { top: number, left: number, width: number, height: number } | null) => void;	// 内容边界变化
 	// onStateChange?: (state: 'closed' | 'opening' | 'opened' | 'closing') => void;	// 开关状态变化
 	onMouseLeaveContent?: () => void;	// 鼠标离开内容区域，父页面据此关闭 iframe 的 pointer-events
+	onRequestMachineIds?: () => Promise<{ frontendMachineId?: string; backendMachineId?: string }>;	// 向父页面请求机器码（前端和本地服务器）
 }
 
 const props = defineProps<Props>();
 
 const fetchedConfig = ref<AISearchConfig>();
 const modelOptions = ref<AIModelOption[]>([]);
-const conversationIdByProvider: Partial<Record<AIModelOption['provider'], string>> = {};
+let conversationId: string | null = null;  // 当前会话 ID，由前端生成
 let lastUsedTime = 0;	// 若使用的日期发生变化，重置用量
 let userIdv1 = '';
 const tokenUsed = ref({ day: 0, week: 0, total: 0 });
@@ -88,42 +90,22 @@ const initWindow = async (modelKey?: string) => {
 		props.onInitMsgbox?.(fetchedConfig.value.initMsgbox);
 	}
 
-	const selected = getModelOption(modelKey);
-	if (!selected) return;
-
-	if (!fetchedConfig.value.chatUrl) return;
-
-	const currentConversationId = conversationIdByProvider[selected.provider];
-	const res = await axios({
-		method: 'POST',
-		url: fetchedConfig.value.chatUrl,
-		headers: {
-			'Content-Type': 'application/json'
-		},
-		data: JSON.stringify({
-			input: {
-				prompt: '[init]',
-				biz_params: {
-					customModelId: selected.modelId,
-					conversationId: currentConversationId,
-					userIdv1,
-				},
-			},
-			parameters: {},
-			debug: {},
-		}),
-	});
-	conversationIdByProvider[selected.provider] = res.data.output.session_id;
+	// 生成新的 conversationId（不再向后端发 [init] 请求）
+	conversationId = generateConversationId();
 };
 
 const resetChat = async (modelKey?: string) => {
-	const selected = getModelOption(modelKey);
-	if (!selected) return;
-	delete conversationIdByProvider[selected.provider];
-	await initWindow(selected.key);
+	conversationId = null;
+	await initWindow(modelKey);
 };
 
-const chatAPI = async (message: string, modelKey?: string) => {
+/**
+ * 流式 chatAPI：使用 SSE fetch 与后端通信。
+ * 入参为 message（用户发送新消息）或 toolCallId + toolResult（客户端工具调用结果），通过 onEvent 回调推送流式事件。
+ */
+const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
+	const { message, toolCallId, toolResult, modelKey, onEvent } = params;
+
 	checkQuota();
 	if (fetchedConfig.value?.tokenLimit?.day && tokenUsed.value.day >= fetchedConfig.value.tokenLimit.day) {
 		return Promise.reject(fetchedConfig.value?.tokenLimitMessage?.day ?? '今日 AI 用量已达到上限');
@@ -137,85 +119,98 @@ const chatAPI = async (message: string, modelKey?: string) => {
 
 	const selected = getModelOption(modelKey);
 	if (!selected) return Promise.reject('暂无可用模型');
-	const conversationId = conversationIdByProvider[selected.provider];
-
 	if (!fetchedConfig.value?.chatUrl) return Promise.reject('AI configuration missing');
+
+	// 如果还没有 conversationId，生成一个
+	if (!conversationId) {
+		conversationId = generateConversationId();
+	}
+
+	const requestBody: Record<string, any> = {
+		conversationId,
+		provider: selected.provider,
+		modelId: selected.modelId,
+	};
+	if (message !== undefined) {
+		requestBody.message = message;
+	} else if (toolCallId !== undefined) {
+		requestBody.toolCallId = toolCallId;
+		requestBody.toolResult = toolResult ?? '';
+	}
+
+	let expense = 0;
+	let clientToolCall: ChatAPIResult['clientToolCall'];
+
 	try {
-		const res = await axios.post(
-			fetchedConfig.value.chatUrl,
-			{
-				input: {
-					prompt: message,
-					...(conversationId ? { session_id: conversationId } : {}),
-					biz_params: {
-						customModelId: selected.modelId,
-						conversationId,
-						userIdv1,
-					},
-				},
-				parameters: {},
-				debug: {},
-			},
-			{ headers: { 'Content-Type': 'application/json' } }
-		);
+		const response = await fetch(fetchedConfig.value.chatUrl, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(requestBody),
+		});
 
-		const resData = res.data;
-		if (!conversationId) {
-			conversationIdByProvider[selected.provider] = resData.output.session_id;
+		if (!response.ok) {
+			const errText = await response.text();
+			return Promise.reject(`请求失败 (${response.status}): ${errText}`);
 		}
-		let usageSum = 0;
-		const modelsPrice = fetchedConfig.value.modelPrice || [];
-		for (const [usedModelIndex, usedModelRaw] of Object.entries(resData.usage?.models || {})) {
-			const usedModel = usedModelRaw as any;
-			const usedProvider = usedModel.provider || selected.provider;
-			const usedModelId = usedModel.model_id || usedModelIndex;
-			const usageModelKey = `${usedProvider}:${usedModelId}`;
-			const multiplierConfig = modelsPrice.find((modelPrice) => modelPrice.modelKey === usageModelKey);
-			if (multiplierConfig) {
-				usageSum += usedModel.input_tokens * multiplierConfig.inputMultiplyer + usedModel.output_tokens * multiplierConfig.outputMultiplyer;
-			} else {
-				usageSum += usedModel.input_tokens + usedModel.output_tokens;
-			}
-		}
-		useQuota(usageSum);
+		onEvent({ type: 'connected' });
 
-		return Promise.resolve({ content: resData.output.text, expense: usageSum });
-	} catch (err) {
-		console.log(err);
-		if (err instanceof AxiosError) {
-			if (err.response?.data) {
-				const data = err.response.data;
-				if (data.code === 'App.AccessDenied') {
-					return Promise.reject('模型提供商拒绝了请求，请联系 FFBox 作者或更新 FFBox 解决');	// appId 错误
-				} else if (data.code === 'InvalidApiKey') {
-					return Promise.reject('模型提供商拒绝了请求，请联系 FFBox 作者解决');	// apiKey 错误
-				} else if (data.code === 'DataInspectionFailed') {
-					useQuota(500);	// 惩罚
-					return Promise.reject(fetchedConfig.value.invalidReply);
-				} else {
-					return Promise.reject(data.message);
+		const reader = response.body?.getReader();
+		if (!reader) return Promise.reject('无法获取响应流');
+
+		const decoder = new TextDecoder();
+		let buffer = '';
+
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			buffer += decoder.decode(value, { stream: true });
+
+			// 解析 SSE：每条事件以 \n\n 分隔
+			const lines = buffer.split('\n\n');
+			buffer = lines.pop() || '';  // 最后一段可能不完整，保留
+
+			for (const block of lines) {
+				const line = block.trim();
+				if (!line.startsWith('data: ')) continue;
+				const data = line.slice(6).trim();
+				if (data === '[DONE]') continue;
+				try {
+					const event = JSON.parse(data) as StreamEvent;
+					onEvent(event);
+					if (event.type === 'usage') expense = event.expense;
+					if (event.type === 'client_tool_call') {
+						clientToolCall = { id: event.id, name: event.name, args: event.args, needResponse: event.needResponse };
+					}
+					// if (event.type === 'error') {
+					// 	return Promise.reject(event.message);
+					// }
+				} catch (e) {
+					// JSON 解析失败，跳过
 				}
 			}
-			return Promise.reject(`请求失败：${err.message}`);
 		}
-		return Promise.reject('请求失败：未知原因');
-	}
-};
 
-const statusAPI = async (modelKey?: string) => {
-	const selected = getModelOption(modelKey);
-	if (!selected || !fetchedConfig.value?.conversationStatusUrl) return undefined;
+		// 处理 buffer 中剩余的数据
+		if (buffer.trim().startsWith('data: ')) {
+			const data = buffer.trim().slice(6).trim();
+			if (data && data !== '[DONE]') {
+				try {
+					const event = JSON.parse(data) as StreamEvent;
+					onEvent(event);
+					if (event.type === 'usage') expense = event.expense;
+					if (event.type === 'client_tool_call') {
+						clientToolCall = { id: event.id, name: event.name, args: event.args, needResponse: event.needResponse };
+					}
+				} catch (e) {
+					// ignore
+				}
+			}
+		}
 
-	try {
-		const conversationId = conversationIdByProvider[selected.provider];
-		const result = await axios({
-			url: fetchedConfig.value.conversationStatusUrl,
-			method: 'POST',
-			data: JSON.stringify({ type: 'get', conversationId }),
-		});
-		return result.data;
-	} catch {
-		return undefined;
+		if (expense > 0) await useQuota(expense);
+		return { expense, clientToolCall };
+	} catch (err: any) {
+		return Promise.reject(`请求失败：${err?.message || '未知原因'}`);
 	}
 };
 
@@ -224,7 +219,7 @@ const init = async () => {
 	if (inited) return;
 
 	try {
-		const configData = generateConfig('FFBoxSite');
+		const configData = generateConfig(props.platform);
 		fetchedConfig.value = configData;
 		modelOptions.value = fetchedConfig.value.modelOptions || [];
 
@@ -254,7 +249,7 @@ onMounted(() => {
 <template>
 	<AISearch
 		:enabled="fetchedConfig ? true : false"
-		:chatAPI="chatAPI" :init="initWindow" :resetChat="resetChat" :statusAPI="statusAPI"
+		:chatAPI="chatAPI" :init="initWindow" :resetChat="resetChat"
 		:titleName="fetchedConfig?.titleName"
 		:modelOptions="modelOptions"
 		:initialPlaceholders="fetchedConfig?.initialPlaceholders" :initialPlaceholderInterval="fetchedConfig?.initialPlaceholderInterval"
@@ -267,5 +262,6 @@ onMounted(() => {
 		:onAction="props.onAction"
 		:onBoundsChange="props.onBoundsChange"
 		:onMouseLeaveContent="props.onMouseLeaveContent"
+		:onRequestMachineIds="props.onRequestMachineIds"
 	/>
 </template>
