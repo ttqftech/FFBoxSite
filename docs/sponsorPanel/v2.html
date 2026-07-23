@@ -5,7 +5,11 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>FFBox - 支持作者</title>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+	<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 	<style>
+		/* ==================== Alpine Cloak ==================== */
+		[x-cloak] { display: none !important; }
+
 		/* ==================== Base Reset ==================== */
 		* { box-sizing: border-box; }
 		body {
@@ -260,22 +264,29 @@
 		th { font-weight: 600; }
 	</style>
 </head>
-<body class="themeLight">
+<body class="themeLight" x-data="sponsorPanel()" x-effect="$el.className = state.colorTheme || 'themeLight'">
 
-	<div id="legacy-upgrade-hint" style="display: none; margin: 8px 0; padding: 10px 14px; border-radius: 8px; background: hwb(30 85% 2% / 0.6); border: 1px solid hwb(30 70% 10%); align-items: center; gap: 10px; justify-content: center;">
+	<div x-show="legacyUpgradeHintVisible" x-cloak
+		style="margin: 8px 0; padding: 10px 14px; border-radius: 8px; background: hwb(30 85% 2% / 0.6); border: 1px solid hwb(30 70% 10%); align-items: center; gap: 10px; justify-content: center; display: flex;">
 		<span>💡 检测到旧版激活码，可一键升级为新版人品值</span>
-		<button class="ffbox-button" id="btn-legacy-upgrade-hint">一键升级</button>
+		<button class="ffbox-button" @click="legacyUpgradeClick()">一键升级</button>
 	</div>
 
 	<p>开发者想要你来 GitHub / Gitee 点个星～</p>
 	<p>（或者提点建议也行，比如如何让下面这些花花绿绿的二维码没那么丑🤪</p>
 
 	<div class="paragram">
-		<button class="ffbox-button" id="btn-github" tooltip="如果你打不开，那就努力再尝试！反复尝试！尝试到国家都为你而感动！">
+		<button class="ffbox-button"
+			tooltip="如果你打不开，那就努力再尝试！反复尝试！尝试到国家都为你而感动！"
+			@mouseenter="showTooltip($event)" @mouseleave="hideTooltip()"
+			@click="jumpToGithub()">
 			<svg viewBox="0 0 1024 1024" width="20" height="20" fill="#24292e" xmlns="http://www.w3.org/2000/svg"><path d="M960 512c0 97.76-28.704 185.216-85.664 263.264-56.96 78.016-130.496 131.84-220.64 161.856-10.304 1.824-18.368 0.448-22.848-4.032a22.4 22.4 0 0 1-7.2-17.504v-122.88c0-37.632-10.304-65.44-30.464-82.912a409.856 409.856 0 0 0 59.616-10.368 222.752 222.752 0 0 0 54.72-22.816c18.848-10.784 34.528-23.36 47.104-38.592 12.544-15.232 22.848-35.904 30.912-61.44 8.096-25.568 12.128-54.688 12.128-87.904 0-47.072-15.232-86.976-46.208-120.16 14.368-35.456 13.024-74.912-4.48-118.848-10.752-3.616-26.432-1.344-47.072 6.272s-38.56 16.16-53.824 25.568l-21.984 13.888c-36.32-10.304-73.536-15.232-112.096-15.232s-75.776 4.928-112.096 15.232a444.48 444.48 0 0 0-24.672-15.68c-10.336-6.272-26.464-13.888-48.896-22.432-21.952-8.96-39.008-11.232-50.24-8.064-17.024 43.936-18.368 83.424-4.032 118.848-30.496 33.632-46.176 73.536-46.176 120.608 0 33.216 4.032 62.336 12.128 87.456 8.032 25.12 18.368 45.76 30.496 61.44 12.544 15.68 28.224 28.704 47.072 39.04 18.848 10.304 37.216 17.92 54.72 22.816a409.6 409.6 0 0 0 59.648 10.368c-15.712 13.856-25.12 34.048-28.704 60.064a99.744 99.744 0 0 1-26.464 8.512 178.208 178.208 0 0 1-33.184 2.688c-13.024 0-25.568-4.032-38.144-12.544-12.544-8.512-23.296-20.64-32.256-36.32a97.472 97.472 0 0 0-28.256-30.496c-11.232-8.064-21.088-12.576-28.704-13.92l-11.648-1.792c-8.096 0-13.92 0.928-17.056 2.688-3.136 1.792-4.032 4.032-2.688 6.72s3.136 5.408 5.376 8.096 4.928 4.928 7.616 7.168l4.032 2.688c8.544 4.032 17.056 11.232 25.568 21.984 8.544 10.752 14.368 20.64 18.4 29.6l5.824 13.44c4.928 14.816 13.44 26.912 25.568 35.872 12.096 8.992 25.088 14.816 39.008 17.504 13.888 2.688 27.36 4.032 40.352 4.032s23.776-0.448 32.288-2.24l13.472-2.24c0 14.784 0 32.288 0.416 52.032 0 19.744 0.48 30.496 0.48 31.392a22.624 22.624 0 0 1-7.648 17.472c-4.928 4.48-12.992 5.824-23.296 4.032-90.144-30.048-163.68-83.84-220.64-161.888C92.256 697.216 64 609.312 64 512c0-81.152 20.192-156.064 60.096-224.672s94.176-122.88 163.232-163.232C355.936 84.192 430.816 64 512 64s156.064 20.192 224.672 60.096 122.88 94.176 163.232 163.232C939.808 355.488 960 430.848 960 512"/></svg>
 			GitHub
 		</button>
-		<button class="ffbox-button" id="btn-gitee" tooltip="这个是备用哒～">
+		<button class="ffbox-button"
+			tooltip="这个是备用哒～"
+			@mouseenter="showTooltip($event)" @mouseleave="hideTooltip()"
+			@click="jumpToGitee()">
 			<svg viewBox="0 0 1024 1024" width="20" height="20" fill="#d90013" xmlns="http://www.w3.org/2000/svg"><path d="M512 1024C229.248 1024 0 794.752 0 512S229.248 0 512 0s512 229.248 512 512-229.248 512-512 512z m259.168-568.896h-290.752a25.28 25.28 0 0 0-25.28 25.28l-0.032 63.232c0 13.952 11.296 25.28 25.28 25.28h177.024a25.28 25.28 0 0 1 25.28 25.28v12.64a75.84 75.84 0 0 1-75.84 75.84h-240.224a25.28 25.28 0 0 1-25.28-25.28v-240.192a75.84 75.84 0 0 1 75.84-75.84h353.92a25.28 25.28 0 0 0 25.28-25.28l0.064-63.2a25.312 25.312 0 0 0-25.28-25.312H417.184a189.632 189.632 0 0 0-189.632 189.6v353.952c0 13.952 11.328 25.28 25.28 25.28h372.928a170.656 170.656 0 0 0 170.656-170.656v-145.376a25.28 25.28 0 0 0-25.28-25.28z"/></svg>
 			Gitee
 		</button>
@@ -284,14 +295,23 @@
 	<p>如果你不只是想给我送⭐，还想送我奶茶🧋，那么可以点下面两个按钮～</p>
 
 	<div class="paragram">
-		<button class="ffbox-button" id="btn-kofi" tooltip="一直都没人点这个，我是不是该考虑把它撤了🤔">
+		<button class="ffbox-button"
+			tooltip="一直都没人点这个，我是不是该考虑把它撤了🤔"
+			@mouseenter="showTooltip($event)" @mouseleave="hideTooltip()"
+			@click="jumpToKofi()">
 			<svg viewBox="0 0 800 800" width="20" height="20" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(1.3333333,0,0,-1.3333333,0,800)"><g transform="scale(0.1)"><path d="M 6000,3000 C 6000,4656.86 4656.86,6000 3000,6000 1343.14,6000 0,4656.86 0,3000 0,1343.14 1343.14,0 3000,0 4656.86,0 6000,1343.14 6000,3000" fill="#50aee4"/><path d="m 5484.27,3458.67 c -63.19,333.74 -242.84,541.64 -426.97,670.19 -190.41,132.95 -418.48,201.26 -650.72,201.26 H 1110.73 c -114.656,0 -158.574,-111.94 -159.007,-168.01 -0.059,-7.31 0.207,-36.57 0.207,-36.57 0,0 -5.407,-1458.13 4.832,-2236.93 31.105,-459.78 491.768,-459.63 491.768,-459.63 0,0 1504.04,4.41 2225.35,8.89 33.83,0.22 67.61,3.86 100.44,12.07 410.68,102.75 453.17,484.28 448.78,696.96 825.48,-45.86 1407.92,536.64 1261.17,1311.77 m -927.31,-756.75 c -176.05,-22 -319.08,-5.48 -319.08,-5.48 v 1077.95 h 216.62 c 143.17,0 281.27,-59.61 374.69,-168.1 65.76,-76.38 118.37,-183.88 118.37,-332.37 0,-362.99 -187.04,-506 -390.6,-572" fill="#fff"/><path d="m 2566.14,2033.67 c 35.85,-18.05 58.75,4.38 58.75,4.38 0,0 524.57,478.78 760.89,754.51 210.2,246.66 223.9,662.34 -137.07,817.66 -360.97,155.31 -657.95,-182.72 -657.95,-182.72 -257.55,283.26 -647.34,268.92 -827.63,77.22 -180.28,-191.7 -117.32,-520.73 17.17,-703.84 126.25,-171.9 681.18,-666.5 765.29,-750.15 0,0 6.13,-6.4 20.55,-17.06" fill="#f14255"/></g></g></svg>
 			Ko-Fi
 		</button>
-		<button class="ffbox-button" id="btn-afdian" tooltip="这个似乎更适合中国宝宝的体质❤️～">
+		<button class="ffbox-button"
+			tooltip="这个似乎更适合中国宝宝的体质❤️～"
+			@mouseenter="showTooltip($event)" @mouseleave="hideTooltip()"
+			@click="jumpToAfdian()">
 			<img src="./afdian.png" alt="" style="width:20px;height:20px;vertical-align:-4px;margin-right:4px;">爱发电
 		</button>
-		<button class="ffbox-button" id="btn-auto-proxy" tooltip="如果有哪天左边的某个按钮失效了就点这个吧🌚（当然也不排除这个按钮会失效">
+		<button class="ffbox-button"
+			tooltip="如果有哪天左边的某个按钮失效了就点这个吧🌚（当然也不排除这个按钮会失效"
+			@mouseenter="showTooltip($event)" @mouseleave="hideTooltip()"
+			@click="jumpToAutoProxy()">
 			帮我挑个合适的
 		</button>
 	</div>
@@ -299,111 +319,140 @@
 	<p>🍲赛博红包来咯~</p>
 
 	<div class="paragram">
-		<div id="envelop-screen" class="QRscreen QRscreen-alipayredenvelop" tooltip="支付宝每隔一段时间就会搞活动把这个红包变大，只要它不改链接，红包二维码就一直能用～">
+		<div class="QRscreen QRscreen-alipayredenvelop"
+			:class="{ 'pressed': envelopPressed }"
+			tooltip="支付宝每隔一段时间就会搞活动把这个红包变大，只要它不改链接，红包二维码就一直能用～"
+			@mouseenter="showTooltip($event)" @mouseleave="hideTooltip()"
+			@mousedown="handleEnvelopMouseDown($event)"
+			@mouseup="handleEnvelopMouseUp()"
+			@contextmenu.prevent>
 			<div class="QRuppertext"><strong>扫码领红包</strong></div>
 			<div class="QRbox"><canvas id="qr_alipayredenvelop"></canvas></div>
 			<div class="QRlowertext">打开支付宝[<strong>扫一扫</strong>]</div>
-			<div class="QRtitle"><img src="../assets/alipay-SASEP7DL.png" alt="支付宝"></div>
+			<div class="QRtitle"><img src="./alipay.png" alt="支付宝"></div>
 		</div>
 	</div>
 
 	<p>如果您不愿奶茶被平台抽掉一口，那就用下面 3 个🙃</p>
 
 	<div class="paragram">
-		<div class="QRscreen QRscreen-alipay" tooltip="（你有没有发现，我把支付宝跟微信支付的标语互换了👀">
+		<div class="QRscreen QRscreen-alipay"
+			tooltip="（你有没有发现，我把支付宝跟微信支付的标语互换了👀"
+			@mouseenter="showTooltip($event)" @mouseleave="hideTooltip()">
 			<div class="QRuppertext">推荐使用<strong>支付宝</strong></div>
 			<div class="QRbox"><canvas id="qr_alipay"></canvas></div>
 			<div class="QRlowertext">滔滔清风</div>
-			<div class="QRtitle"><img src="../assets/alipay-SASEP7DL.png" alt="支付宝"></div>
+			<div class="QRtitle"><img src="./alipay.png" alt="支付宝"></div>
 		</div>
-		<div class="QRscreen QRscreen-wechatpay" tooltip="（你有没有发现，我把支付宝跟微信支付的标语互换了👀">
+		<div class="QRscreen QRscreen-wechatpay"
+			tooltip="（你有没有发现，我把支付宝跟微信支付的标语互换了👀"
+			@mouseenter="showTooltip($event)" @mouseleave="hideTooltip()">
 			<div class="QRuppertext">支付就用微信支付</div>
 			<div class="QRbox"><canvas id="qr_wechatpay"></canvas></div>
 			<div class="QRlowertext">滔滔清风</div>
-			<div class="QRtitle"><img src="../assets/wechatpay-B4iiNRIT.svg" alt="微信支付"></div>
+			<div class="QRtitle"><img src="./wechatpay.svg" alt="微信支付"></div>
 		</div>
-		<div class="QRscreen QRscreen-qqpay" tooltip="听说好多人不用 QQ 支付的原因是要实名？🤔">
+		<div class="QRscreen QRscreen-qqpay"
+			tooltip="听说好多人不用 QQ 支付的原因是要实名？🤔"
+			@mouseenter="showTooltip($event)" @mouseleave="hideTooltip()">
 			<div class="QRuppertext">QQ 支付</div>
 			<div class="QRbox"><canvas id="qr_qqpay"></canvas></div>
 			<div class="QRlowertext">滔滔清风</div>
-			<div class="QRtitle"><img src="../assets/qqpay-HJbZiF2o.png" alt="QQ支付"></div>
+			<div class="QRtitle"><img src="./qqpay.png" alt="QQ支付"></div>
 		</div>
 	</div>
 
 	<h2>功能解限</h2>
 
 	<p>您的人品值</p>
-	<div id="frontend-level-item" class="yourLevel-item">
+	<div class="yourLevel-item">
 		<div class="yourLevel-middleNoOverflow">
-			<div id="frontend-bar-bg" class="yourLevel-bar"></div>
+			<div class="yourLevel-bar" :style="`width: ${state.functionLevel}%`"></div>
 		</div>
 		<div class="yourLevel-middle">
-			<div id="frontend-bar" class="yourLevel-bar">
+			<div class="yourLevel-bar" :style="`width: ${state.functionLevel}%`">
 				<div class="yourLevel-bar-highlight"></div>
 			</div>
-			<span id="frontend-bar-text">前端：--</span>
+			<span x-text="`前端：${state.functionLevel}`">前端：--</span>
 		</div>
-		<div id="frontend-highlight" class="yourLevel-middle-highlight"></div>
+		<div class="yourLevel-middle-highlight" :style="`width: ${state.functionLevel}%`"></div>
 	</div>
-	<div id="backend-level-item" class="yourLevel-item" style="display:none;">
+	<div class="yourLevel-item" x-show="backendVisible" x-cloak style="display: none;">
 		<div class="yourLevel-middleNoOverflow">
-			<div id="backend-bar-bg" class="yourLevel-bar"></div>
+			<div class="yourLevel-bar" :style="`width: ${state.localServerFunctionLevel}%`"></div>
 		</div>
 		<div class="yourLevel-middle">
-			<div id="backend-bar" class="yourLevel-bar">
+			<div class="yourLevel-bar" :style="`width: ${state.localServerFunctionLevel}%`">
 				<div class="yourLevel-bar-highlight"></div>
 			</div>
-			<span id="backend-bar-text">本地服务器：--</span>
+			<span x-text="`本地服务器：${state.localServerFunctionLevel}`">本地服务器：--</span>
 		</div>
-		<div id="backend-highlight" class="yourLevel-middle-highlight"></div>
+		<div class="yourLevel-middle-highlight" :style="`width: ${state.localServerFunctionLevel}%`"></div>
 	</div>
-	<p><i style="font-size: 0.7em;">该功能为公测阶段，会随时间每 30 天流失【<span id="frontend-velocity-display">?</span>】点，请定期维护人品值</i></p>
+	<p><i style="font-size: 0.7em;">该功能为公测阶段，会随时间每 30 天流失【<span x-text="velocityStr">?</span>】点，请定期维护人品值</i></p>
 
 	<table id="limit-table">
-		<tbody id="limit-table-body"></tbody>
+		<tbody id="limit-table-body">
+			<template x-for="(row, idx) in (state.limitationTable || [])" :key="idx">
+				<tr>
+					<td x-text="row.label || ''"></td>
+					<td x-text="(row.value !== undefined && row.value !== null) ? row.value : '--'"></td>
+				</tr>
+			</template>
+			<tr x-show="!(state.limitationTable && state.limitationTable.length)" x-cloak>
+				<td colspan="2" style="text-align:center">等待加载限制信息…</td>
+			</tr>
+		</tbody>
 	</table>
 
 	<p>FFBox 是一款广义免费软件。为防止伸手党泛滥，需要破除一定的难关才会开放更高的使用量～</p>
 	<p>您可以通过人品考核或其他方式获取解锢密令，换取人品值</p>
 	<p><i style="font-size: 0.7em;">【人品考核功能尚在公测阶段，可能会随时关闭。解锢密令获取方式可能会变化。若功能无法使用请查阅官网/官方知识库/发布平台/GitHub/QQ 群了解详情】<br />【已获得的解锢密令便不会再受到该因素影响】</i></p>
-	<button class="ffbox-button" id="btn-morality-exam">人品考核</button>
+	<button class="ffbox-button" @click="moralityExam()">人品考核</button>
 
-	<div class="ffbox-input" id="activate-input">
+	<div class="ffbox-input">
 		<div class="input-title">解锢密令</div>
 		<div class="inputbox-selector">
-			<input type="text" id="activate-code-input" placeholder="一份激活码对应唯一的机器码，请您输入与本机机器码对应的激活码进行激活🫡">
+			<input type="text" x-model="activateCode" placeholder="一份激活码对应唯一的机器码，请您输入与本机机器码对应的激活码进行激活🫡">
 		</div>
 	</div>
 
 	<div class="paragram" style="margin-top: 8px;">
-		<button class="ffbox-button" id="btn-activate-frontend">解锢【前端】人品值</button>
-		<button class="ffbox-button" id="btn-activate-backend">解锢【本地服务器】人品值</button>
+		<button class="ffbox-button" :disabled="state.env === 'browser'" @click="handleActivate('frontend')">解锢【前端】人品值</button>
+		<button class="ffbox-button" :disabled="!state.localServerConnected" @click="handleActivate('backend')">解锢【本地服务器】人品值</button>
 	</div>
 
 	<h2>旧码升级</h2>
 	<p>如果您持有旧版激活码（U2FsdGVkX1 开头），可通过激活码和机器码在此升级为新版“解锢密令”</p>
 	<p>由于给您造成了不便，升级后将额外获得【12】点人品值🙇</p>
-	<div class="ffbox-input" id="upgrade-input">
+	<div class="ffbox-input">
 		<div class="input-title">旧激活码</div>
 		<div class="inputbox-selector">
-			<input type="text" id="legacy-code-input" placeholder="输入旧版激活码（U2FsdGVkX1 开头），升级后自动填入上方激活码输入框">
+			<input type="text" x-model="legacyCode" placeholder="输入旧版激活码（U2FsdGVkX1 开头），升级后自动填入上方激活码输入框">
 		</div>
 	</div>
-	<div class="ffbox-input" id="upgrade-input">
+	<div class="ffbox-input">
 		<div class="input-title">机器码</div>
 		<div class="inputbox-selector">
-			<input type="text" id="legacy-machine-id-input" placeholder="请输入与旧激活码对应的机器码。大多数情况下，就是下面显示的两个机器码">
+			<input type="text" x-model="legacyMachineId" placeholder="请输入与旧激活码对应的机器码。大多数情况下，就是下面显示的两个机器码">
 		</div>
 	</div>
 
 	<div class="paragram" style="margin-top: 8px;">
-		<button class="ffbox-button" id="btn-upgrade">生成解锢密令</button>
+		<button class="ffbox-button" @click="handleUpgrade()">生成解锢密令</button>
 	</div>
 
-	<p>机器码（前端）：<span id="frontend-machine-id" style="user-select:all;cursor:pointer;">--</span></p>
-	<p>机器码（本地服务器）：<span id="backend-machine-id" style="user-select:all;cursor:pointer;">--</span></p>
+	<p>机器码（前端）：<span x-text="frontendMachineIdDisplay"
+			style="user-select:all;cursor:pointer;"
+			@click="copyFrontendMachineId()">--</span></p>
+	<p>机器码（本地服务器）：<span x-text="backendMachineIdDisplay"
+			style="user-select:all;cursor:pointer;"
+			@click="copyBackendMachineId()">--</span></p>
 
-	<div id="tooltip" class="tooltip"></div>
+	<div class="tooltip"
+		:class="{ visible: tooltipVisible }"
+		:style="`left: ${tooltipX}px; top: ${tooltipY}px`"
+		x-text="tooltipText"></div>
 
 	<script>
 		// ==================== Activation API ====================
@@ -411,6 +460,8 @@
 		const LEGACY_FIXED_CODE = 'd324c697ebfc42b7';
 
 		// ==================== Communication Bridge ====================
+		// NOTE: 限制值统一由父页面（SponsorPanel）从 @common/limitaions.ts 计算后通过 stateUpdate 下发，
+		// 此处不再维护任何硬编码的限制逻辑。如需修改，请编辑 src/common/limitaions.ts
 		let requestIdCounter = 0;
 		const pendingRequests = new Map();
 
@@ -421,44 +472,6 @@
 				window.parent.postMessage({ type, requestId, ...payload }, '*');
 			});
 		}
-
-		// Handle responses from parent
-		window.addEventListener('message', (event) => {
-			const data = event.data;
-			if (!data) return;
-
-			if (data.type === 'response' && data.requestId) {
-				const resolve = pendingRequests.get(data.requestId);
-				if (resolve) {
-					pendingRequests.delete(data.requestId);
-					resolve(data.data);
-				}
-			} else if (data.type === 'stateUpdate') {
-				applyState(data.state);
-			} else if (data.type === 'popup') {
-				showLocalPopup(data.message, data.level);
-			}
-		});
-
-		// ==================== Local State ====================
-		let state = {
-			functionLevel: NaN,
-			localServerConnected: false,
-			localServerFunctionLevel: NaN,
-			localServerMachineId: '',
-			frontendMachineId: '',
-			env: 'browser',
-			colorTheme: 'themeLight',
-		};
-
-		function applyState(s) {
-			Object.assign(state, s);
-			updateUI();
-		}
-
-		// ==================== getLimitaion ====================
-	// NOTE: 限制值统一由父页面（SponsorPanel）从 @common/limitaions.ts 计算后通过 stateUpdate 下发，
-	// 此处不再维护任何硬编码的限制逻辑。如需修改，请编辑 src/common/limitaions.ts
 
 		// ==================== QR Code Rendering ====================
 		function getQR(hexString, size, linesize) {
@@ -509,103 +522,7 @@
 		function wechatpayQR() { return getQR(qrData.wechatpay, 37, 37 + 3); }
 		function qqpayQR() { return getQR(qrData.qqpay, 45, 45 + 3); }
 
-		// ==================== Tooltip ====================
-		const tooltipEl = document.getElementById('tooltip');
-
-		function initTooltips() {
-			document.querySelectorAll('[tooltip]').forEach((el) => {
-				el.addEventListener('mouseenter', (e) => {
-					const content = el.getAttribute('tooltip');
-					if (!content) return;
-					const rect = el.getBoundingClientRect();
-					tooltipEl.textContent = content;
-					tooltipEl.style.left = (rect.left + rect.width + 4) + 'px';
-					tooltipEl.style.top = (rect.top + 4) + 'px';
-					tooltipEl.classList.add('visible');
-				});
-				el.addEventListener('mouseleave', () => {
-					tooltipEl.classList.remove('visible');
-				});
-			});
-		}
-
-		// ==================== UI Update ====================
-		function updateUI() {
-			// Theme
-			document.body.className = state.colorTheme || 'themeLight';
-
-			// Frontend level bar
-			const fl = state.functionLevel;
-			document.getElementById('frontend-bar-bg').style.width = fl + '%';
-			document.getElementById('frontend-bar').style.width = fl + '%';
-			document.getElementById('frontend-highlight').style.width = fl + '%';
-			document.getElementById('frontend-bar-text').textContent = '前端：' + fl;
-
-			// Backend level bar
-			const backendItem = document.getElementById('backend-level-item');
-			if (state.localServerConnected && state.localServerFunctionLevel) {
-				backendItem.style.display = '';
-				const bl = state.localServerFunctionLevel;
-				document.getElementById('backend-bar-bg').style.width = bl + '%';
-				document.getElementById('backend-bar').style.width = bl + '%';
-				document.getElementById('backend-highlight').style.width = bl + '%';
-				document.getElementById('backend-bar-text').textContent = '本地服务器：' + bl;
-			} else {
-				backendItem.style.display = 'none';
-			}
-
-			// Limitations table (data from parent page via stateUpdate)
-			const tbody = document.getElementById('limit-table-body');
-			tbody.innerHTML = '';
-			const rows = state.limitationTable;
-			if (rows && rows.length) {
-				rows.forEach((row) => {
-					const tr = document.createElement('tr');
-					const tdLabel = document.createElement('td');
-					tdLabel.textContent = row.label || '';
-					const tdValue = document.createElement('td');
-					tdValue.textContent = row.value !== undefined && row.value !== null ? row.value : '--';
-					tr.appendChild(tdLabel);
-					tr.appendChild(tdValue);
-					tbody.appendChild(tr);
-				});
-			} else {
-				const tr = document.createElement('tr');
-				const td = document.createElement('td');
-				td.textContent = '等待加载限制信息…';
-				td.colSpan = 2;
-				td.style.textAlign = 'center';
-				tr.appendChild(td);
-				tbody.appendChild(tr);
-			}
-
-			// Button states
-			document.getElementById('btn-activate-frontend').toggleAttribute('disabled', state.env === 'browser');
-			document.getElementById('btn-activate-backend').toggleAttribute('disabled', !state.localServerConnected);
-
-			// Velocity display：从激活码 payload 解析（v1.html 自行解析，无需 FFBox 本体传递）
-			let velocityStr = '?';
-			if (typeof activateCode === 'string' && activateCode.startsWith('facv2.')) {
-				try {
-					const parts = activateCode.split('.');
-					const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-					if (typeof payload.v === 'number') velocityStr = String(payload.v);
-				} catch {}
-			}
-			document.getElementById('frontend-velocity-display').textContent = velocityStr;
-
-			// Machine IDs
-			document.getElementById('frontend-machine-id').textContent = state.frontendMachineId || '--';
-			document.getElementById('backend-machine-id').textContent =
-				state.localServerConnected
-					? (state.localServerMachineId || '（服务器版本不匹配，无法读取）')
-					: '（未连接，请连接本地服务器后获取）';
-
-			// 一键升级提示
-			updateLegacyUpgradeHint();
-		}
-
-		// ==================== Notification (local popup) ====================
+		// ==================== Local Popup (called from message handler) ====================
 		function showLocalPopup(message, level) {
 			const popup = document.createElement('div');
 			const colors = { 0: '#666', 1: '#4CAF50', 2: '#FF9800', 3: '#F44336' };
@@ -627,213 +544,259 @@
 			}, 3000);
 		}
 
-		// ==================== Envelope Easter Egg ====================
-		let envelopPressed = false;
-		let envelopNum = -2;
-		let activateCode = '';
+		// ==================== Alpine Component ====================
+		document.addEventListener('alpine:init', () => {
+			Alpine.data('sponsorPanel', () => ({
+				state: {
+					functionLevel: NaN,
+					localServerConnected: false,
+					localServerFunctionLevel: NaN,
+					localServerMachineId: '',
+					frontendMachineId: '',
+					env: 'browser',
+					colorTheme: 'themeLight',
+					limitationTable: [],
+				},
+				activateCode: '',
+				envelopPressed: false,
+				envelopNum: -2,
+				tooltipVisible: false,
+				tooltipText: '',
+				tooltipX: 0,
+				tooltipY: 0,
+				legacyCode: '',
+				legacyMachineId: '',
 
-		// ==================== Event Handlers ====================
-		function setupEventHandlers() {
-			// Navigation buttons
-			document.getElementById('btn-github').addEventListener('click', () => request('jumpToUrl', { url: 'https://github.com/ttqftech/FFBox' }));
-			document.getElementById('btn-gitee').addEventListener('click', () => request('jumpToUrl', { url: 'https://gitee.com/ttqf/FFBox' }));
-			document.getElementById('btn-kofi').addEventListener('click', () => request('jumpToUrl', { url: 'https://ko-fi.com/N4N26F2WR' }));
-			document.getElementById('btn-afdian').addEventListener('click', () => request('jumpToUrl', { url: 'https://afdian.com/a/ttqftech' }));
-			document.getElementById('btn-auto-proxy').addEventListener('click', () => request('jumpToUrl', { url: 'http://ffbox.ttqf.tech/AutoSponsorProxy.html' }));
+				init() {
+					window.parent.postMessage({ type: 'childReady' }, '*');
+					window.addEventListener('message', (event) => this.handleMessage(event));
 
-			// Activation code input
-			document.getElementById('activate-code-input').addEventListener('input', (e) => {
-				activateCode = e.target.value;
-			});
-
-			// Morality exam button
-			document.getElementById('btn-morality-exam').addEventListener('click', () => request('popup', { message: '请回到主面板，向 AI 咨询相关事项～', level: 0 }));
-
-			// Upgrade legacy code
-			document.getElementById('btn-upgrade').addEventListener('click', handleUpgrade);
-
-			// 一键升级提示按钮
-			document.getElementById('btn-legacy-upgrade-hint').addEventListener('click', async () => {
-				document.getElementById('legacy-code-input').value = activateCode;
-				document.getElementById('legacy-machine-id-input').value = state.frontendMachineId;
-				await handleUpgrade();
-				handleActivate('frontend');
-				handleActivate('backend');
-			});
-
-			// Activation buttons
-			document.getElementById('btn-activate-frontend').addEventListener('click', () => handleActivate('frontend'));
-			document.getElementById('btn-activate-backend').addEventListener('click', () => handleActivate('backend'));
-
-			// Machine ID copy
-			document.getElementById('frontend-machine-id').addEventListener('click', () => {
-				if (state.frontendMachineId) {
-					navigator.clipboard.writeText(state.frontendMachineId);
-					request('popup', { message: '已复制机器码到剪贴板🫡', level: 0 });
-				}
-			});
-			document.getElementById('backend-machine-id').addEventListener('click', () => {
-				const text = document.getElementById('backend-machine-id').textContent;
-				if (text && !text.startsWith('（')) {
-					navigator.clipboard.writeText(text);
-					request('popup', { message: '已复制机器码到剪贴板🫡', level: 0 });
-				}
-			});
-
-			// Envelope easter egg
-			const envelopScreen = document.getElementById('envelop-screen');
-			envelopScreen.addEventListener('mousedown', handleEnvelopMouseDown);
-			envelopScreen.addEventListener('mouseup', () => {
-				envelopPressed = false;
-				envelopScreen.classList.remove('pressed');
-			});
-			envelopScreen.addEventListener('contextmenu', (e) => e.preventDefault());
-		}
-
-		// 一键升级提示：当 frontendMachineId 与 localServerMachineId 一致且激活码为旧版时显示
-		function updateLegacyUpgradeHint() {
-			const hint = document.getElementById('legacy-upgrade-hint');
-			if (!hint) return;
-			const show =
-				state.frontendMachineId &&
-				state.localServerMachineId &&
-				state.frontendMachineId === state.localServerMachineId &&
-				typeof activateCode === 'string' &&
-				activateCode.startsWith('U2FsdGVkX1');
-			hint.style.display = show ? 'flex' : 'none';
-		}
-
-		// 旧码升级：用 CryptoJS 解密旧码 → 调用 API 生成新码 → 填入激活码输入框
-		async function handleUpgrade() {
-			const legacyCode = document.getElementById('legacy-code-input').value.trim();
-			if (!legacyCode.startsWith('U2FsdGVkX1')) {
-				request('popup', { message: '请输入旧版激活码（U2FsdGVkX1 开头）~', level: 0 });
-				return;
-			}
-			const machineId = document.getElementById('legacy-machine-id-input').value.trim();
-			if (!machineId) {
-				request('popup', { message: '请输入机器码', level: 0 });
-				return;
-			}
-			// 解密旧码
-			const key = machineId + LEGACY_FIXED_CODE;
-			const decrypted = CryptoJS.AES.decrypt(legacyCode, key);
-			const flStr = CryptoJS.enc.Utf8.stringify(decrypted);
-			if (!flStr || parseInt(flStr).toString() !== flStr) {
-				request('popup', { message: '旧码解密失败，请确认机器码与激活码匹配', level: 2 });
-				return;
-			}
-			const fl = parseInt(flStr);
-			// 调用 API 生成新码
-			try {
-				const resp = await fetch(ACTIVATE_API_URL, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ machineId, functionLevel: fl, velocity: 1.5 }),
-				});
-				if (!resp.ok) throw new Error('Server ' + resp.status);
-				const data = await resp.json();
-				if (!data.code || !data.code.startsWith('facv2.')) throw new Error('Invalid response');
-				// 填入激活码输入框
-				document.getElementById('activate-code-input').value = data.code;
-				activateCode = data.code;
-				request('popup', { message: '生成成功！新版“解锢密令”已填入上方输入框，请点击激活按钮', level: 1 });
-			} catch (e) {
-				request('popup', { message: '生成失败：' + (e && e.message || e), level: 2 });
-			}
-		}
-
-		async function handleActivate(end) {
-			if (!activateCode.length) {
-				request('popup', { message: '这不还没写激活码嘛~🤷', level: 0 });
-				return;
-			}
-			let frontendResult, backendResult;
-			if (end === 'frontend') {
-				frontendResult = await request('activateFrontend', { code: activateCode });
-				backendResult = '-';
-			} else if (end === 'backend') {
-				frontendResult = '-';
-				backendResult = await request('activateBackend', { code: activateCode });
-			}
-			console.log('激活结果', frontendResult, backendResult);
-			if (frontendResult && backendResult) {
-				request('popup', { message: '🎉Have a nice day!👍', level: 1 });
-			} else {
-				request('popup', { message: '🤔不对劲！', level: 2 });
-			}
-		}
-
-		async function handleEnvelopMouseDown(event) {
-			envelopPressed = true;
-			document.getElementById('envelop-screen').classList.add('pressed');
-
-			if (event.button === 2 && envelopNum < 0) {
-				envelopNum += 1;
-			} else if (event.button === 1 && envelopNum > -1) {
-				envelopNum = (envelopNum + 10) % 110;
-				event.preventDefault();
-			} else if (event.button === 0 && envelopNum > -1) {
-				// 直接调用服务器 API 签发新版激活码（v1.html 是唯一可调用 API 的地方）
-				const machineId = document.getElementById('legacy-machine-id-input').value.trim() || state.frontendMachineId || '';
-				try {
-					const resp = await fetch(ACTIVATE_API_URL, {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ machineId, functionLevel: envelopNum, velocity: 1.2 }),
+					// Paint QR codes after DOM is ready
+					this.$nextTick(() => {
+						paintQRcode2canvas(document.getElementById('qr_alipayredenvelop'), alipayRedEnvelopQR());
+						paintQRcode2canvas(document.getElementById('qr_alipay'), alipayQR());
+						paintQRcode2canvas(document.getElementById('qr_wechatpay'), wechatpayQR());
+						paintQRcode2canvas(document.getElementById('qr_qqpay'), qqpayQR());
 					});
-					if (!resp.ok) throw new Error('Server ' + resp.status);
-					const respData = await resp.json();
-					if (!respData.code || !respData.code.startsWith('facv2.')) throw new Error('Invalid response');
-					const userInput = respData.code;
-					const frontendResult = await request('activateFrontend', { code: userInput });
-					const backendResult = await request('activateBackend', { code: userInput });
-					console.log('激活结果', frontendResult, backendResult, envelopNum, userInput);
-					request('popup', { message: '激活结果请到开发人员控制台查看', level: 1 });
-				} catch (e) {
-					request('popup', { message: '激活码生成失败：' + (e && e.message || e), level: 2 });
-				}
-				envelopNum = -2;
-			} else {
-				envelopNum = -2;
-			}
-		}
 
-		// ==================== Initialization ====================
-		function init() {
-			window.parent.postMessage({ type: 'childReady' }, '*');
+					// Get saved activation code
+					this.request('localStorageGet', { key: 'frontendSettings.activationCode' }).then((value) => {
+						if (value) this.activateCode = value;
+					});
 
-			// Paint QR codes
-			paintQRcode2canvas(document.getElementById('qr_alipayredenvelop'), alipayRedEnvelopQR());
-			paintQRcode2canvas(document.getElementById('qr_alipay'), alipayQR());
-			paintQRcode2canvas(document.getElementById('qr_wechatpay'), wechatpayQR());
-			paintQRcode2canvas(document.getElementById('qr_qqpay'), qqpayQR());
+					// Request initial state
+					this.request('getState').then((s) => {
+						if (s) this.applyState(s);
+					});
+				},
 
-			// Get saved activation code
-			request('localStorageGet', { key: 'frontendSettings.activationCode' }).then((value) => {
-				if (value) {
-					activateCode = value;
-					document.getElementById('activate-code-input').value = value;
-				}
-				updateLegacyUpgradeHint();
-			});
+				request(type, payload = {}) {
+					return request(type, payload);
+				},
 
-			// Setup tooltips and events
-			initTooltips();
-			setupEventHandlers();
+				handleMessage(event) {
+					const data = event.data;
+					if (!data) return;
+					if (data.type === 'response' && data.requestId) {
+						const resolve = pendingRequests.get(data.requestId);
+						if (resolve) {
+							pendingRequests.delete(data.requestId);
+							resolve(data.data);
+						}
+					} else if (data.type === 'stateUpdate') {
+						this.applyState(data.state);
+					} else if (data.type === 'popup') {
+						showLocalPopup(data.message, data.level);
+					}
+				},
 
-			// Request initial state
-			request('getState').then((s) => {
-				if (s) applyState(s);
-			});
-		}
+				applyState(s) {
+					Object.assign(this.state, s);
+				},
 
-		// Wait for DOM ready
-		if (document.readyState === 'loading') {
-			document.addEventListener('DOMContentLoaded', init);
-		} else {
-			init();
-		}
+				// ==================== Computed Getters ====================
+				get legacyUpgradeHintVisible() {
+					return !!(
+						this.state.frontendMachineId &&
+						this.state.localServerMachineId &&
+						this.state.frontendMachineId === this.state.localServerMachineId &&
+						typeof this.activateCode === 'string' &&
+						this.activateCode.startsWith('U2FsdGVkX1')
+					);
+				},
+
+				get velocityStr() {
+					if (typeof this.activateCode === 'string' && this.activateCode.startsWith('facv2.')) {
+						try {
+							const parts = this.activateCode.split('.');
+							const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+							if (typeof payload.v === 'number') return String(payload.v);
+						} catch {}
+					}
+					return '?';
+				},
+
+				get backendVisible() {
+					return !!(this.state.localServerConnected && this.state.localServerFunctionLevel);
+				},
+
+				get frontendMachineIdDisplay() {
+					return this.state.frontendMachineId || '（网页版暂不支持）';
+				},
+
+				get backendMachineIdDisplay() {
+					if (!this.state.localServerConnected) return '（未连接，请连接本地服务器后获取）';
+					return this.state.localServerMachineId || '（服务器版本不匹配，无法读取）';
+				},
+
+				// ==================== Tooltip ====================
+				showTooltip(event) {
+					const el = event.currentTarget;
+					const content = el.getAttribute('tooltip');
+					if (!content) return;
+					const rect = el.getBoundingClientRect();
+					this.tooltipText = content;
+					this.tooltipX = rect.left + rect.width + 4;
+					this.tooltipY = rect.top + 4;
+					this.tooltipVisible = true;
+				},
+
+				hideTooltip() {
+					this.tooltipVisible = false;
+				},
+
+				// ==================== Navigation Buttons ====================
+				jumpToGithub() { this.request('jumpToUrl', { url: 'https://github.com/ttqftech/FFBox' }); },
+				jumpToGitee() { this.request('jumpToUrl', { url: 'https://gitee.com/ttqf/FFBox' }); },
+				jumpToKofi() { this.request('jumpToUrl', { url: 'https://ko-fi.com/N4N26F2WR' }); },
+				jumpToAfdian() { this.request('jumpToUrl', { url: 'https://afdian.com/a/ttqftech' }); },
+				jumpToAutoProxy() { this.request('jumpToUrl', { url: 'http://ffbox.ttqf.tech/AutoSponsorProxy.html' }); },
+				moralityExam() { this.request('popup', { message: '请回到主面板，向 AI 咨询相关事项～', level: 0 }); },
+
+				// ==================== Machine ID Copy ====================
+				copyFrontendMachineId() {
+					if (this.state.frontendMachineId) {
+						navigator.clipboard.writeText(this.state.frontendMachineId);
+						this.request('popup', { message: '已复制机器码到剪贴板🫡', level: 0 });
+					}
+				},
+
+				copyBackendMachineId() {
+					const text = this.backendMachineIdDisplay;
+					if (text && !text.startsWith('（')) {
+						navigator.clipboard.writeText(text);
+						this.request('popup', { message: '已复制机器码到剪贴板🫡', level: 0 });
+					}
+				},
+
+				// ==================== Legacy Upgrade ====================
+				async legacyUpgradeClick() {
+					this.legacyCode = this.activateCode;
+					this.legacyMachineId = this.state.frontendMachineId;
+					await this.handleUpgrade();
+					await this.handleActivate('frontend');
+					await this.handleActivate('backend');
+				},
+
+				async handleUpgrade() {
+					const legacyCode = (this.legacyCode || '').trim();
+					if (!legacyCode.startsWith('U2FsdGVkX1')) {
+						this.request('popup', { message: '请输入旧版激活码（U2FsdGVkX1 开头）~', level: 0 });
+						return;
+					}
+					const machineId = (this.legacyMachineId || '').trim();
+					if (!machineId) {
+						this.request('popup', { message: '请输入机器码', level: 0 });
+						return;
+					}
+					// 解密旧码
+					const key = machineId + LEGACY_FIXED_CODE;
+					const decrypted = CryptoJS.AES.decrypt(legacyCode, key);
+					const flStr = CryptoJS.enc.Utf8.stringify(decrypted);
+					if (!flStr || parseInt(flStr).toString() !== flStr) {
+						this.request('popup', { message: '旧码解密失败，请确认机器码与激活码匹配', level: 2 });
+						return;
+					}
+					const fl = parseInt(flStr);
+					// 调用 API 生成新码
+					try {
+						const resp = await fetch(ACTIVATE_API_URL, {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ machineId, functionLevel: fl, velocity: 1.5 }),
+						});
+						if (!resp.ok) throw new Error('Server ' + resp.status);
+						const data = await resp.json();
+						if (!data.code || !data.code.startsWith('facv2.')) throw new Error('Invalid response');
+						// 填入激活码输入框（x-model 自动同步）
+						this.activateCode = data.code;
+						this.request('popup', { message: '生成成功！新版“解锢密令”已填入上方输入框，请点击激活按钮', level: 1 });
+					} catch (e) {
+						this.request('popup', { message: '生成失败：' + (e && e.message || e), level: 2 });
+					}
+				},
+
+				async handleActivate(end) {
+					if (!this.activateCode.length) {
+						this.request('popup', { message: '这不还没写激活码嘛~🤷', level: 0 });
+						return;
+					}
+					let frontendResult, backendResult;
+					if (end === 'frontend') {
+						frontendResult = await this.request('activateFrontend', { code: this.activateCode });
+						backendResult = '-';
+					} else if (end === 'backend') {
+						frontendResult = '-';
+						backendResult = await this.request('activateBackend', { code: this.activateCode });
+					}
+					console.log('激活结果', frontendResult, backendResult);
+					if (frontendResult && backendResult) {
+						this.request('popup', { message: '🎉Have a nice day!👍', level: 1 });
+					} else {
+						this.request('popup', { message: '🤔不对劲！', level: 2 });
+					}
+				},
+
+				// ==================== Envelope Easter Egg ====================
+				async handleEnvelopMouseDown(event) {
+					this.envelopPressed = true;
+
+					if (event.button === 2 && this.envelopNum < 0) {
+						this.envelopNum += 1;
+					} else if (event.button === 1 && this.envelopNum > -1) {
+						this.envelopNum = (this.envelopNum + 10) % 110;
+						event.preventDefault();
+					} else if (event.button === 0 && this.envelopNum > -1) {
+						// 直接调用服务器 API 签发新版激活码（v2.html 是唯一可调用 API 的地方）
+						const machineId = (this.legacyMachineId || '').trim() || this.state.frontendMachineId || '';
+						try {
+							const resp = await fetch(ACTIVATE_API_URL, {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({ machineId, functionLevel: this.envelopNum, velocity: 1.2 }),
+							});
+							if (!resp.ok) throw new Error('Server ' + resp.status);
+							const respData = await resp.json();
+							if (!respData.code || !respData.code.startsWith('facv2.')) throw new Error('Invalid response');
+							const userInput = respData.code;
+							const frontendResult = await this.request('activateFrontend', { code: userInput });
+							const backendResult = await this.request('activateBackend', { code: userInput });
+							console.log('激活结果', frontendResult, backendResult, this.envelopNum, userInput);
+							this.request('popup', { message: '激活结果请到开发人员控制台查看', level: 1 });
+						} catch (e) {
+							this.request('popup', { message: '激活码生成失败：' + (e && e.message || e), level: 2 });
+						}
+						this.envelopNum = -2;
+					} else {
+						this.envelopNum = -2;
+					}
+				},
+
+				handleEnvelopMouseUp() {
+					this.envelopPressed = false;
+				},
+			}));
+		});
 	</script>
 </body>
 </html>
