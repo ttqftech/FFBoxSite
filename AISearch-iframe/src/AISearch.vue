@@ -38,6 +38,7 @@ interface Props {
 	onBoundsChange?: (rect: { top: number, left: number, width: number, height: number } | null) => void;	// 内容边界变化
 	// onStateChange?: (state: 'closed' | 'opening' | 'opened' | 'closing') => void;	// 开关状态变化
 	onMouseLeaveContent?: () => void;	// 鼠标离开内容区域，父页面据此关闭 iframe 的 pointer-events
+	onRequestMachineIds?: () => Promise<{ frontendMachineId?: string; backendMachineId?: string }>;	// 向父页面请求机器码（前端和本地服务器）
 }
 
 const props = defineProps<Props>();
@@ -397,19 +398,22 @@ const sendMessage = async (userText?: string, continuation?: { toolCallId: strin
 			const ctc = result.clientToolCall;
 			if (!ctc.needResponse) {
 				// 通知型：显示成功提示（作为客户端发起的消息）
-				// messages.value.push({ role: 'aiInfo', text: `客户端已执行工具：${ctc.name}`, time: new Date() });
 				messages.value.push({ role: 'user', blocks: [{ type: 'tool_call', toolCall: { id: ctc.id, name: ctc.name, args: ctc.args, display: 'client' } }], text: '', time: new Date() });
 				// 可以在这里触发 onAction 等回调
-				if (ctc.name === 'client_activate') {
-					const functionLevel = ctc.args.functionLevel || 50;
-					props.onAction?.(`ffbox:/showActivationCodeGenMsgbox?level=${functionLevel}`);
-				}
 			} else if (ctc.needResponse) {
-				// TODO 这里并不代表要自动续接
 				// 请求-响应型：作为客户端消息，自动续接
-				const toolResultText = getAutoToolResult(ctc.name);
-				// messages.value.push({ role: 'user', text: `（客户端工具调用：${ctc.name} → ${toolResultText}）`, time: new Date() });
 				messages.value.push({ role: 'user', blocks: [{ type: 'tool_call', toolCall: { id: ctc.id, name: ctc.name, args: ctc.args, display: 'client' } }], text: '', time: new Date() });
+				// 对 get_machine_ids，向父页面请求机器码返回给后端
+				let toolResultText = '';
+				if (ctc.name === 'get_machine_ids') {
+					const machineIds = await props.onRequestMachineIds?.() ?? {};
+					toolResultText = JSON.stringify({
+						frontendMachineId: machineIds.frontendMachineId,
+						backendMachineId: machineIds.backendMachineId,
+					});
+				} else {
+					toolResultText = getAutoToolResult(ctc.name);
+				}
 				// 自动续接
 				loading.value = false;
 				await sendMessage(undefined, { toolCallId: ctc.id, toolResult: toolResultText });

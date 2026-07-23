@@ -24,6 +24,7 @@ interface Props {
 	onBoundsChange?: (rect: { top: number, left: number, width: number, height: number } | null) => void;	// 内容边界变化
 	// onStateChange?: (state: 'closed' | 'opening' | 'opened' | 'closing') => void;	// 开关状态变化
 	onMouseLeaveContent?: () => void;	// 鼠标离开内容区域，父页面据此关闭 iframe 的 pointer-events
+	onRequestMachineIds?: () => Promise<{ frontendMachineId?: string; backendMachineId?: string }>;	// 向父页面请求机器码（前端和本地服务器）
 }
 
 const props = defineProps<Props>();
@@ -261,5 +262,6 @@ onMounted(() => {
 		:onAction="props.onAction"
 		:onBoundsChange="props.onBoundsChange"
 		:onMouseLeaveContent="props.onMouseLeaveContent"
+		:onRequestMachineIds="props.onRequestMachineIds"
 	/>
 </template>
