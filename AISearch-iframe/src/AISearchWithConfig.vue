@@ -138,7 +138,7 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 		requestBody.toolResult = toolResult ?? '';
 	}
 
-	let expense = 0;
+	let inputUsage = 0; let outputUsage = 0;
 	let clientToolCall: ChatAPIResult['clientToolCall'];
 
 	try {
@@ -177,7 +177,7 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 				try {
 					const event = JSON.parse(data) as StreamEvent;
 					onEvent(event);
-					if (event.type === 'usage') expense = event.expense;
+					if (event.type === 'usage') { inputUsage = event.inputUsage; outputUsage = event.outputUsage; }
 					if (event.type === 'client_tool_call') {
 						clientToolCall = { id: event.id, name: event.name, args: event.args, needResponse: event.needResponse };
 					}
@@ -197,7 +197,7 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 				try {
 					const event = JSON.parse(data) as StreamEvent;
 					onEvent(event);
-					if (event.type === 'usage') expense = event.expense;
+					if (event.type === 'usage') { inputUsage = event.inputUsage; outputUsage = event.outputUsage; }
 					if (event.type === 'client_tool_call') {
 						clientToolCall = { id: event.id, name: event.name, args: event.args, needResponse: event.needResponse };
 					}
@@ -207,8 +207,13 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 			}
 		}
 
+		// 根据所选模型的输入/输出乘数计算算力开销
+		const priceItem = fetchedConfig.value?.modelPrice?.find((p) => p.modelKey === selected.key);
+		const inputMul = priceItem?.inputMultiplyer ?? 1;
+		const outputMul = priceItem?.outputMultiplyer ?? 1;
+		const expense = Math.round(inputUsage * inputMul + outputUsage * outputMul);
 		if (expense > 0) await useQuota(expense);
-		return { expense, clientToolCall };
+		return { inputUsage, outputUsage, clientToolCall };
 	} catch (err: any) {
 		return Promise.reject(`请求失败：${err?.message || '未知原因'}`);
 	}
@@ -252,6 +257,7 @@ onMounted(() => {
 		:chatAPI="chatAPI" :init="initWindow" :resetChat="resetChat"
 		:titleName="fetchedConfig?.titleName"
 		:modelOptions="modelOptions"
+		:modelPrice="fetchedConfig?.modelPrice"
 		:initialPlaceholders="fetchedConfig?.initialPlaceholders" :initialPlaceholderInterval="fetchedConfig?.initialPlaceholderInterval"
 		:initSystemMessage="fetchedConfig?.initSystemMessage"
 		:requestKeywordSystemMessage="fetchedConfig?.requestKeywordSystemMessage" :responseKeywordSystemMessage="fetchedConfig?.responseKeywordSystemMessage"

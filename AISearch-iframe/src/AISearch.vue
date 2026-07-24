@@ -32,6 +32,7 @@ interface Props {
 	maxRounds?: number;	// 用户允许在单个对话中发送的消息回合数，未定义则无限
 	maxRoundsMessage?: string;	// 用户允许在单个对话中发送的消息回合数达到上限时显示一条系统信息
 	quotaUsed?: AISearchConfig['tokenLimit'];	// 用户已使用的额度，0~1，达到 1 后不允许再使用
+	modelPrice?: AISearchConfig['modelPrice'];	// 各模型的输入/输出乘数，用于计算算力开销
 
 	// iframe 相关回调
 	onAction?: (url: string) => void;	// 需要父页面处理的动作（如 ffbox:/ 协议）
@@ -336,7 +337,6 @@ const sendMessage = async (userText?: string, continuation?: { toolCallId: strin
 	const blocks = aiMsg.blocks!;
 
 	let currentAgentName = '';
-	let expense = 0;
 
 	const handleStreamEvent = (event: StreamEvent) => {
 		switch (event.type) {
@@ -373,10 +373,16 @@ const sendMessage = async (userText?: string, continuation?: { toolCallId: strin
 			case 'tool_result':
 				blocks.push({ type: 'tool_result', toolResult: { id: event.id, name: event.name, content: event.content } });
 				break;
-			case 'usage':
-				expense = event.expense;
-				aiMsg.expense = expense;
+			case 'usage': {
+				// 按当前所选模型的输入/输出乘数计算算力开销
+				const priceItem = props.modelPrice?.find((p) => p.modelKey === selectedModelKey.value);
+				const inputMul = priceItem?.inputMultiplyer ?? 1;
+				const outputMul = priceItem?.outputMultiplyer ?? 1;
+				aiMsg.inputUsage = Math.round(event.inputUsage * inputMul);
+				aiMsg.outputUsage = Math.round(event.outputUsage * outputMul);
+				// aiMsg.expense = event.inputUsage * inputMul + event.outputUsage * outputMul;
 				break;
+			}
 			case 'end':
 				aiMsg.status = undefined;
 				break;
@@ -661,7 +667,8 @@ watch(() => props.enabled, () => {
 									{{ [
 										msg.time ? getTimeString(msg.time) : '',
 										msg.refers?.length ? '参考来源：' + msg.refers.join('；') : '',
-										msg.expense ? '算力开销：' + Math.round(msg.expense) : '',
+										msg.inputUsage !== undefined && msg.outputUsage !== undefined ? `算力开销：${msg.inputUsage} / ${msg.outputUsage}` : '',
+										// msg.expense ? '算力开销：' + Math.round(msg.expense) : '',
 									].filter((text) => text).join('｜') }}
 									<button v-for="action in msg.actions" @click="handleActionButtonClick(action.url)">{{ action.label }}</button>
 								</div>

@@ -45,7 +45,7 @@ export type StreamEvent =
 	| { type: 'tool_call'; id: string; name: string; args: Record<string, any>; display: 'cloud' | 'client' }
 	| { type: 'tool_result'; id: string; name: string; content: string }
 	| { type: 'client_tool_call'; id: string; name: string; args: Record<string, any>; needResponse: boolean }
-	| { type: 'usage'; expense: number }
+	| { type: 'usage'; inputUsage: number; outputUsage: number }
 	| { type: 'end' }
 	| { type: 'error'; message: string };
 
@@ -66,7 +66,9 @@ export interface AIChatMessage {
 	status?: string;		// 当前 AI 气泡的状态文字（例如「大模型处理中」「xxx 处理中」），流式过程中在气泡顶部展示
 	time?: Date;
 	refers?: string[];
-	expense?: number;
+	inputUsage?: number;	// 本次 AI 回复的输入 token 用量 * 加权
+	outputUsage?: number;	// 本次 AI 回复的输出 token 用量 * 加权
+	// expense?: number;	// 算力开销（按模型输入/输出乘数加权后的用量）
 	actions?: { label: string; url: string }[];
 }
 
@@ -82,7 +84,8 @@ export interface ChatAPIParams {
 
 // chatAPI 返回类型
 export interface ChatAPIResult {
-	expense?: number;
+	inputUsage?: number;	// 本次 AI 回复的输入 token 用量
+	outputUsage?: number;	// 本次 AI 回复的输出 token 用量
 	clientToolCall?: { id: string; name: string; args: Record<string, any>; needResponse: boolean };
 }
 
