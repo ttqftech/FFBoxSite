@@ -273,27 +273,47 @@ const modelDropdownList = computed<MenuItem[]>(() => {
 });
 const selectedModelDisplayText = computed(() => selectedModelKey.value ? props.modelOptions.find((model) => model.key === selectedModelKey.value)?.key || '' : '');
 
-/** 根据工具名返回自动工具结果（MVP 占位） */
-const getAutoToolResult = (toolName: string): string => {
-	if (toolName === 'client_get_task_info') return '无任务信息';
-	return '';
+// #region 客户端工具确认按钮（需用户点击确认后才返回结果）
+
+/** 用户点击确认按钮时调用：标记已确认，并通过 sendMessage 续接回传结果 */
+const confirmToolCall = (block: ChatBlock) => {
+	if (block.confirmStatus !== 'pending' || loading.value) return;
+	block.confirmStatus = 'confirmed';
+	// task-info-consultation 占位结果
+	sendMessage(undefined, { toolCallId: block.toolCall!.id, toolResult: '无任务信息' });
 };
 
-const sendMessage = async (userText?: string, continuation?: { toolCallId: string; toolResult: string }) => {
-	const text = userText ?? inputValue.value.trim();
-	if (!text && !continuation) return;
+// #endregion
+
+// 向 AI 服务器发送消息。注意：userText 和 toolResult 互斥，只能传其中的一个
+const sendMessage = async (userText?: string, toolResult?: { toolCallId: string; toolResult: string }) => {
+	if (userText && toolResult) return;
+	if (!userText && !toolResult) return;
+
+	const text = userText;
 	if (loading.value) return;
 
 	// 对话轮数检查（仅对新消息生效，续接不计数）
-	if (!continuation && props.maxRounds) {
+	if (!toolResult && props.maxRounds) {
 		if (messages.value.filter((msg) => msg.role === 'user').length >= props.maxRounds) {
 			messages.value.push({ role: "aiErr", text: props.maxRoundsMessage || '本轮对话发言次数已达到上限' });
 			return;
 		}
 	}
 
-	// 添加用户消息（续接跳过）
-	if (!continuation) {
+	// 添加用户消息
+	if (!!userText) {
+		// 用户发送新消息时，将所有未确认的工具标记为已跳过
+		// （与后端逻辑一致：后端会把 pending 工具标记为"用户已跳过此工具调用"）
+		for (const msg of messages.value) {
+			if (msg.blocks) {
+				for (const block of msg.blocks) {
+					if (block.confirmStatus === 'pending') {
+						block.confirmStatus = 'skipped';
+					}
+				}
+			}
+		}
 		messages.value.push({ role: 'user', text, time: new Date() });
 		inputValue.value = '';
 		textRef.value.value = '';
@@ -336,15 +356,12 @@ const sendMessage = async (userText?: string, continuation?: { toolCallId: strin
 	const aiMsg = messages.value[messages.value.length - 1];
 	const blocks = aiMsg.blocks!;
 
-	let currentAgentName = '';
-
 	const handleStreamEvent = (event: StreamEvent) => {
 		switch (event.type) {
 			case 'connected':
 				aiMsg.status = '思考中';
 				break;
 			case 'agent':
-				currentAgentName = event.displayName;
 				aiMsg.status = `【${event.displayName}】正在为您服务`;
 				break;
 			case 'thinking': {
@@ -393,37 +410,90 @@ const sendMessage = async (userText?: string, continuation?: { toolCallId: strin
 	};
 
 	try {
-		const params: ChatAPIParams = continuation
-			? { toolCallId: continuation.toolCallId, toolResult: continuation.toolResult, modelKey: selectedModelKey.value, onEvent: handleStreamEvent }
+		const params: ChatAPIParams = toolResult
+			? { toolCallId: toolResult.toolCallId, toolResult: toolResult.toolResult, modelKey: selectedModelKey.value, onEvent: handleStreamEvent }
 			: { message: text, modelKey: selectedModelKey.value, onEvent: handleStreamEvent };
 
 		const result = await props.chatAPI!(params);
 
-		// 处理客户端工具调用
-		if (result.clientToolCall) {
-			const ctc = result.clientToolCall;
-			if (!ctc.needResponse) {
-				// 通知型：显示成功提示（作为客户端发起的消息）
-				messages.value.push({ role: 'user', blocks: [{ type: 'tool_call', toolCall: { id: ctc.id, name: ctc.name, args: ctc.args, display: 'client' } }], text: '', time: new Date() });
-				// 可以在这里触发 onAction 等回调
-			} else if (ctc.needResponse) {
-				// 请求-响应型：作为客户端消息，自动续接
-				messages.value.push({ role: 'user', blocks: [{ type: 'tool_call', toolCall: { id: ctc.id, name: ctc.name, args: ctc.args, display: 'client' } }], text: '', time: new Date() });
-				// 对 get_machine_ids，向父页面请求机器码返回给后端
-				let toolResultText = '';
-				if (ctc.name === 'get_machine_ids') {
-					const machineIds = await props.onRequestMachineIds?.() ?? {};
-					toolResultText = JSON.stringify({
-						frontendMachineId: machineIds.frontendMachineId,
-						backendMachineId: machineIds.backendMachineId,
-					});
-				} else {
-					toolResultText = getAutoToolResult(ctc.name);
+		// 如果后端的消息列表内仍有 pending 工具未完成，后端会直接返回 [DONE] 并且不触发事件，此时气泡内的内容为空
+		// 移除空 AI 气泡并直接结束。用户点击其它确认按钮时会再次触发续接。
+		if (toolResult && blocks.length === 0 && !aiMsg.text && !(result.clientToolCalls?.length)) {
+			messages.value.pop();
+			return;
+		}
+
+		// 处理客户端工具调用（支持多个）
+		const clientToolCalls = result.clientToolCalls;
+		if (clientToolCalls && clientToolCalls.length > 0) {
+			const notifications = clientToolCalls.filter(c => !c.needResponse);
+			const responseCalls = clientToolCalls.filter(c => c.needResponse);
+
+			// 通知型：作为客户端发起的消息显示（无需响应）
+			for (const n of notifications) {
+				messages.value.push({ role: 'user', blocks: [{ type: 'tool_call', toolCall: { id: n.id, name: n.name, args: n.args, display: 'client' } }], text: '', time: new Date() });
+			}
+
+			// 请求-响应型
+			if (responseCalls.length > 0) {
+				const autoResults: { id: string; result: string }[] = [];
+				let hasConfirmTools = false;
+
+				for (const c of responseCalls) {
+					if (c.name === 'client_get_task_info') {
+						// 需确认工具：显示按钮，等待用户点击后通过 sendMessage 续接
+						messages.value.push({
+							role: 'user',
+							blocks: [{
+								type: 'tool_call',
+								toolCall: { id: c.id, name: c.name, args: c.args, display: 'client' },
+								confirmStatus: 'pending',
+							}],
+							text: '',
+							time: new Date(),
+						});
+						hasConfirmTools = true;
+					} else {
+						// 自动工具：立即获取结果
+						let toolResultText = '';
+						if (c.name === 'get_machine_ids') {
+							const machineIds = await props.onRequestMachineIds?.() ?? {};
+							toolResultText = JSON.stringify({
+								frontendMachineId: machineIds.frontendMachineId,
+								backendMachineId: machineIds.backendMachineId,
+							});
+						} else {
+							toolResultText = '工具调用出错：客户端无此工具';
+						}
+						autoResults.push({ id: c.id, result: toolResultText });
+						messages.value.push({
+							role: 'user',
+							blocks: [{ type: 'tool_call', toolCall: { id: c.id, name: c.name, args: c.args, display: 'client' } }],
+							text: '',
+							time: new Date(),
+						});
+					}
 				}
-				// 自动续接
-				loading.value = false;
-				await sendMessage(undefined, { toolCallId: ctc.id, toolResult: toolResultText });
-				return;
+
+				// 回传自动工具结果
+				for (let i = 0; i < autoResults.length; i++) {
+					const isLastAuto = i === autoResults.length - 1;
+					if (isLastAuto && !hasConfirmTools) {
+						// 最后一个自动工具，且无确认工具：通过 sendMessage 续接触发 Agent 主循环
+						loading.value = false;
+						await sendMessage(undefined, { toolCallId: autoResults[i].id, toolResult: autoResults[i].result });
+						return;
+					} else {
+						// 中间结果或还有确认工具：后端暂存（仍有 pending），无需处理流式事件
+						await props.chatAPI!({ toolCallId: autoResults[i].id, toolResult: autoResults[i].result, modelKey: selectedModelKey.value, onEvent: () => {} });
+					}
+				}
+
+				// 如果有需确认工具，等待用户点击，sendMessage 结束
+				if (hasConfirmTools) {
+					loading.value = false;
+					return;
+				}
 			}
 		}
 
@@ -641,22 +711,26 @@ watch(() => props.enabled, () => {
 									<template v-if="msg.blocks && msg.blocks.length">
 										<template v-for="(block, bIdx) in msg.blocks" :key="bIdx">
 											<div v-if="block.type === 'thinking'" class="blockThinking">
-												<details><summary>思考过程</summary>{{ block.content }}</details>
+											<details><summary>思考过程</summary>{{ block.content }}</details>
+										</div>
+										<template v-else-if="block.type === 'text'">
+											<div>
+												<component :is="newLinedContent(block.content || '')" />
 											</div>
-											<template v-else-if="block.type === 'text'">
-												<div>
-													<component :is="newLinedContent(block.content || '')" />
-												</div>
+										</template>
+										<div v-else-if="block.type === 'tool_call'" class="blockToolCall">
+											{{ msg.role === 'ai' && block.toolCall?.display === 'client' ? '⌛ 等待用户响应' : '🔧 工具调用' }}：{{ block.toolCall?.name }}
+											<template v-if="block.confirmStatus">
+												<span v-if="block.confirmStatus !== 'pending'" class="toolButtonDisabled">{{ block.confirmStatus === 'confirmed' ? '✅已授权' : '🚫已跳过' }}</span>
+												<Button v-else size="small" style="margin-left: 4px" @click="confirmToolCall(block)">点击授权</Button>
 											</template>
-											<div v-else-if="block.type === 'tool_call'" class="blockToolCall">
-												🔧 工具调用：{{ block.toolCall?.name }}
-											</div>
-											<div v-else-if="block.type === 'tool_result'" class="blockToolResult">
-												↳ {{ block.toolResult?.content }}
-											</div>
-											<div v-else-if="block.type === 'error'" class="blockError">
-												⚠️ {{ block.content }}
-											</div>
+										</div>
+										<div v-else-if="block.type === 'tool_result'" class="blockToolResult">
+											↳ {{ block.toolResult?.content }}
+										</div>
+										<div v-else-if="block.type === 'error'" class="blockError">
+											⚠️ {{ block.content }}
+										</div>
 										</template>
 									</template>
 									<template v-else-if="msg.text">
@@ -1008,6 +1082,11 @@ watch(() => props.enabled, () => {
 						}
 						.blockToolCall {
 							font-size: 12px;
+							.toolButtonDisabled {
+								margin-left: 4px;
+								opacity: 0.6;
+								font-style: italic;
+							}
 						}
 						.blockStatus {
 							// font-size: 12px;

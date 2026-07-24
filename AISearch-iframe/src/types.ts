@@ -55,6 +55,7 @@ export interface ChatBlock {
 	content?: string;
 	toolCall?: { id: string; name: string; args: Record<string, any>; display: 'cloud' | 'client' };
 	toolResult?: { id: string; name: string; content: string };
+	confirmStatus?: 'pending' | 'confirmed' | 'skipped';	// 客户端工具调用的确认状态
 }
 
 // #endregion
@@ -86,7 +87,7 @@ export interface ChatAPIParams {
 export interface ChatAPIResult {
 	inputUsage?: number;	// 本次 AI 回复的输入 token 用量
 	outputUsage?: number;	// 本次 AI 回复的输出 token 用量
-	clientToolCall?: { id: string; name: string; args: Record<string, any>; needResponse: boolean };
+	clientToolCalls?: { id: string; name: string; args: Record<string, any>; needResponse: boolean }[];	// 本次返回的客户端工具调用列表（可能多个）
 }
 
 /**

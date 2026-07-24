@@ -139,7 +139,7 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 	}
 
 	let inputUsage = 0; let outputUsage = 0;
-	let clientToolCall: ChatAPIResult['clientToolCall'];
+	let clientToolCalls: ChatAPIResult['clientToolCalls'] = [];
 
 	try {
 		const response = await fetch(fetchedConfig.value.chatUrl, {
@@ -152,7 +152,6 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 			const errText = await response.text();
 			return Promise.reject(`请求失败 (${response.status}): ${errText}`);
 		}
-		onEvent({ type: 'connected' });
 
 		const reader = response.body?.getReader();
 		if (!reader) return Promise.reject('无法获取响应流');
@@ -179,11 +178,8 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 					onEvent(event);
 					if (event.type === 'usage') { inputUsage = event.inputUsage; outputUsage = event.outputUsage; }
 					if (event.type === 'client_tool_call') {
-						clientToolCall = { id: event.id, name: event.name, args: event.args, needResponse: event.needResponse };
+						clientToolCalls.push({ id: event.id, name: event.name, args: event.args, needResponse: event.needResponse });
 					}
-					// if (event.type === 'error') {
-					// 	return Promise.reject(event.message);
-					// }
 				} catch (e) {
 					// JSON 解析失败，跳过
 				}
@@ -199,7 +195,7 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 					onEvent(event);
 					if (event.type === 'usage') { inputUsage = event.inputUsage; outputUsage = event.outputUsage; }
 					if (event.type === 'client_tool_call') {
-						clientToolCall = { id: event.id, name: event.name, args: event.args, needResponse: event.needResponse };
+						clientToolCalls.push({ id: event.id, name: event.name, args: event.args, needResponse: event.needResponse });
 					}
 				} catch (e) {
 					// ignore
@@ -213,7 +209,7 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 		const outputMul = priceItem?.outputMultiplyer ?? 1;
 		const expense = Math.round(inputUsage * inputMul + outputUsage * outputMul);
 		if (expense > 0) await useQuota(expense);
-		return { inputUsage, outputUsage, clientToolCall };
+		return { inputUsage, outputUsage, clientToolCalls };
 	} catch (err: any) {
 		return Promise.reject(`请求失败：${err?.message || '未知原因'}`);
 	}
