@@ -6,15 +6,14 @@ import { setColorTheme } from './theme';
 /**
  * iframe 入口组件。
  * 职责：
- * 1. 包装定位容器（位置与尺寸由父页面 AISearchIframeHost 下发 bounds 决定）
+ * 1. 包装定位容器（位置与尺寸由父页面 AISearchIframeHost 下发 containerBounds 决定）
  * 2. 渲染 AISearchWithConfig（配置拉取 + AISearch 组件，已整体转移至 iframe）
- * 3. 通过 postMessage 与父页面通讯：转发回调、接收主题 / bounds
+ * 3. 通过 postMessage 与父页面通讯：转发回调、接收主题 / opAreaBounds
  *
  * 设计说明：
- * - 子项目不再依赖 innerWidth / fixed 阈值进行桌面 / 移动判断。
  * - 父页面 AISearchIframeHost 通过 ResizeObserver 监听自身尺寸位置变化，
  *   将宿主容器的 getBoundingClientRect 下发到 iframe；
- *   iframe 按此 bounds 将 aiSearchWrapper 绝对定位到与宿主容器重合的位置。
+ *   iframe 按此 containerBounds 将 aiSearchWrapper 绝对定位到与宿主容器重合的位置。
  */
 
 // 与父页面的 postMessage 通讯
@@ -39,13 +38,13 @@ function requestParent<T = any>(type: string, payload: Record<string, any> = {})
 // AISearchWithConfig 回调 -> 转发给父页面
 const handleInitMsgbox = (content: string) => postToParent({ type: 'initMsgbox', content });
 const handleAction = (url: string) => postToParent({ type: 'action', url });
-const handleBoundsChange = (rect: { top: number, left: number, width: number, height: number } | null) => postToParent({ type: 'bounds', rect });
+const handleBoundsChange = (rect: { top: number, left: number, width: number, height: number } | null) => postToParent({ type: 'opAreaBounds', rect });
 // const handleStateChange = (state: 'closed' | 'opening' | 'opened' | 'closing') => postToParent({ type: 'state', state });
 const handleMouseLeaveContent = () => postToParent({ type: 'contentMouseLeave' });
 const handleRequestMachineIds = () => requestParent<{ frontendMachineId?: string; backendMachineId?: string }>('getMachineIds');
 
 // 由父页面下发的 bounds（宿主容器在父页面 viewport 下的 rect）
-const bounds = reactive({ top: 0, left: 0, width: 400, height: 100 });
+const hostBounds = reactive({ top: 0, left: 0, width: 400, height: 100 });
 
 // 由父页面下发的 platform，决定 generateConfig 使用哪套配置
 const platform = ref<string>('');
@@ -69,13 +68,13 @@ const handleMessage = (event: MessageEvent) => {
 				setColorTheme(data.theme);
 			}
 			break;
-		case 'bounds':
+		case 'hostBounds':
 			if (data.rect && typeof data.rect === 'object') {
 				const { top, left, width, height } = data.rect;
-				bounds.top = top;
-				bounds.left = left;
-				bounds.width = width;
-				bounds.height = height;
+				hostBounds.top = top;
+				hostBounds.left = left;	
+				hostBounds.width = width;
+				hostBounds.height = height;
 			}
 			break;
 		case 'platform':
@@ -102,10 +101,10 @@ onBeforeUnmount(() => {
 	<div
 		class="aiSearchWrapper"
 		:style="{
-			top: bounds.top + 'px',
-			left: bounds.left + 'px',
-			width: bounds.width + 'px',
-			height: bounds.height + 'px',
+			top: hostBounds.top + 'px',
+			left: hostBounds.left + 'px',
+			width: hostBounds.width + 'px',
+			height: hostBounds.height + 'px',
 		}"
 	>
 		<div class="aiSearchInner">

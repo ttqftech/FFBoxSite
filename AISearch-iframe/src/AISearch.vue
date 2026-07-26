@@ -197,19 +197,21 @@ const closeWindow = async () => {
 	});
 };
 
-// 窗口大小变化时重新上报边界
-const handleResize = () => {
-	reportBoundsRaf();
-};
-
+// defaultAnchor 大小位置变化时重新上报边界
+let resizeObserver: ResizeObserver;
 onMounted(() => {
-	window.addEventListener('resize', handleResize);
+	if (defaultAnchorRef.value) {
+		resizeObserver = new ResizeObserver(() => {
+			reportBoundsRaf();
+		});
+		resizeObserver.observe(defaultAnchorRef.value);
+	}
 	// 初始上报一次边界
 	nextTick(() => reportBounds());
 });
 
 onBeforeUnmount(() => {
-	window.removeEventListener('resize', handleResize);
+	resizeObserver?.disconnect();
 	cancelAnimationFrame(boundsRafId);
 });
 
@@ -431,7 +433,11 @@ const sendMessage = async (userText?: string, toolResult?: { toolCallId: string;
 
 			// 通知型：作为客户端发起的消息显示（无需响应）
 			for (const n of notifications) {
-				messages.value.push({ role: 'user', blocks: [{ type: 'tool_call', toolCall: { id: n.id, name: n.name, args: n.args, display: 'client' } }], text: '', time: new Date() });
+				if (n.name === 'send_text_to_client') {
+					messages.value.push({ role: n.args.isError ? 'aiErr' : 'ai', text: n.args.content, time: new Date() });
+				} else {
+					messages.value.push({ role: 'user', blocks: [{ type: 'tool_call', toolCall: { id: n.id, name: n.name, args: n.args, display: 'client' } }], text: '', time: new Date() });
+				}
 			}
 
 			// 请求-响应型
@@ -634,11 +640,11 @@ watch(() => props.enabled, () => {
 							<div
 								v-if="props.quotaUsed"
 								class="usage"
-								v-bind="useTooltip(`\
-									${props.quotaUsed.day !== undefined ? `今日用量：${(props.quotaUsed.day * 100).toFixed(1)}%\n` : ''}\
-									${props.quotaUsed.week !== undefined ? `本周用量：${(props.quotaUsed.week * 100).toFixed(1)}%\n` : ''}\
-									${props.quotaUsed.total !== undefined ? `累计用量：${(props.quotaUsed.total * 100).toFixed(1)}%\n` : ''}\
-									${props.maxRounds !== undefined ? `本次对话：${messages.filter((msg) => msg.role === 'user').length} / ${props.maxRounds}\n` : ''}`
+								v-bind="useTooltip(
+									(props.quotaUsed.day !== undefined ? `今日用量：${(props.quotaUsed.day * 100).toFixed(1)}%\n` : '') +
+									(props.quotaUsed.week !== undefined ? `本周用量：${(props.quotaUsed.week * 100).toFixed(1)}%\n` : '') +
+									(props.quotaUsed.total !== undefined ? `累计用量：${(props.quotaUsed.total * 100).toFixed(1)}%\n` : '') +
+									(props.maxRounds !== undefined ? `本次对话：${messages.filter((msg) => msg.role === 'user').length} / ${props.maxRounds}\n` : '')
 								.slice(0, -1))"
 							>
 								<svg class="usageRing" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AI 使用量">
@@ -944,7 +950,7 @@ watch(() => props.enabled, () => {
 							border: hwb(255 50% 0% / 0.5) 1px solid;
 							border-radius: 8px;
 							background-color: hwb(255 50% 0% / 0.2);
-							width: 180px;
+							width: 220px;
 							:deep(input) {
 								font-size: 11px;
 							}

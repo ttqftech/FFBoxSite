@@ -178,42 +178,69 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 		models: { name: string; id: string; weight?: number }[];
 		modelPrice: { modelIdOrIndex: string; inputMultiplyer: number; outputMultiplyer: number }[];
 	}> = {
-		'ali-O': {
+		'阿里-O': {
 			models: [
 				{ name: 'qwen3.7-plus', id: 'qwen3.7-plus', weight: 1 },
-				{ name: 'deepseek-v4-flash', id: 'deepseek-v4-flash', weight: 1 },
-				{ name: 'qwen3.5-plus-2026-04-20', id: 'qwen3.5-plus-2026-04-20', weight: 1 },
-				{ name: 'glm-5.2', id: 'glm-5.2', weight: 1 },
+				// { name: 'deepseek-v4-flash', id: 'deepseek-v4-flash', weight: 1 },
+				// { name: 'qwen3.5-plus-2026-04-20', id: 'qwen3.5-plus-2026-04-20', weight: 1 },
+				{ name: 'glm-5.2', id: 'glm-5.2', weight: 0.1 },
 				{ name: 'qwen3.7-plus-2026-05-26', id: 'qwen3.7-plus-2026-05-26', weight: 1 },
-				{ name: 'deepseek-v4-pro', id: 'deepseek-v4-pro', weight: 1 },
-				{ name: 'qwen3.6-27b', id: 'qwen3.6-27b', weight: 1 },
+				// { name: 'deepseek-v4-pro', id: 'deepseek-v4-pro', weight: 1 },
+				// { name: 'qwen3.6-27b', id: 'qwen3.6-27b', weight: 1 },
 
 			],
 			modelPrice: [
 				{ modelIdOrIndex: 'qwen3.7-plus', inputMultiplyer: 2, outputMultiplyer: 8 },	// 2026-09-01 过期
 				{ modelIdOrIndex: 'qwen3.7-plus-2026-05-26', inputMultiplyer: 2, outputMultiplyer: 8 },		// 2026-09-01 过期
-				{ modelIdOrIndex: 'qwen3.5-plus-2026-04-20', inputMultiplyer: 0.8, outputMultiplyer: 4.8 },	// 2026-07-23 过期
-				{ modelIdOrIndex: 'deepseek-v4-flash', inputMultiplyer: 1, outputMultiplyer: 2 },	// 2026-07-24 过期
-				{ modelIdOrIndex: 'deepseek-v4-pro', inputMultiplyer: 12, outputMultiplyer: 24 },	// 2026-07-24 过期
+				// { modelIdOrIndex: 'qwen3.5-plus-2026-04-20', inputMultiplyer: 0.8, outputMultiplyer: 4.8 },	// 2026-07-23 过期
+				// { modelIdOrIndex: 'deepseek-v4-flash', inputMultiplyer: 1, outputMultiplyer: 2 },	// 2026-07-24 过期
+				// { modelIdOrIndex: 'deepseek-v4-pro', inputMultiplyer: 12, outputMultiplyer: 24 },	// 2026-07-24 过期
 				{ modelIdOrIndex: 'glm-5.2', inputMultiplyer: 8, outputMultiplyer: 28 },	// 2026-09-15 过期
-				{ modelIdOrIndex: 'qwen3.6-27b', inputMultiplyer: 3, outputMultiplyer: 18 },	// 2026-07-23 过期
+				// { modelIdOrIndex: 'qwen3.6-27b', inputMultiplyer: 3, outputMultiplyer: 18 },	// 2026-07-23 过期
 			],
 		},
         ollama: {
             models: [
-                { name: 'qwen3.5:2b', id: 'qwen3.5:2b', weight: 20 },
+                { name: 'qwen3.5:2b', id: 'qwen3.5:2b', weight: 0 },
                 // { name: 'qwen2.5:0.5b', id: 'qwen2.5:0.5b', weight: 20 },
             ],
             modelPrice: [],
         },
-		'xiaomi-O': {
+		'小米-O': {
 			models: [
-				{ name: 'mimo-v2.5-pro', id: 'mimo-v2.5-pro', weight: 1 },
+				{ name: 'mimo-v2.5-pro', id: 'mimo-v2.5-pro', weight: 0 },
 				{ name: 'mimo-v2.5', id: 'mimo-v2.5', weight: 1 },
 			],
 			modelPrice: [
 				{ modelIdOrIndex: 'mimo-v2.5-pro', inputMultiplyer: 3, outputMultiplyer: 6 },
 				{ modelIdOrIndex: 'mimo-v2.5', inputMultiplyer: 1, outputMultiplyer: 2 },
+			],
+		},
+		// 'しろそら-Oif': {
+		// 	models: [
+		// 		{ name: 'DeepSeek-V3.2', id: 'deepseek-ai/DeepSeek-V3.2', weight: 1 },
+		// 		// { name: 'DeepSeek-V3', id: 'deepseek-ai/DeepSeek-V3', weight: 1 },
+		// 		// { name: 'DeepSeek-R1', id: 'deepseek-ai/DeepSeek-R1', weight: 1 },
+		// 		{ name: 'GLM-4.6', id: 'zai-org/GLM-4.6', weight: 1 },
+		// 	],
+		// 	modelPrice: [
+		// 		// 使用的是 io 福利 0.001 倍率，但按 0.1 倍率计算
+		// 		{ modelIdOrIndex: 'deepseek-ai/DeepSeek-V3.2', inputMultiplyer: 0.026, outputMultiplyer: 0.038 },
+		// 		// { modelIdOrIndex: 'deepseek-ai/DeepSeek-V3', inputMultiplyer: 0.125, outputMultiplyer: 0.125 },
+		// 		// { modelIdOrIndex: 'deepseek-ai/DeepSeek-R1', inputMultiplyer: 0.3, outputMultiplyer: 0.7 },
+		// 	],
+		// },
+		'しろそら-Oic': {
+			models: [
+				{ name: 'GPT-5.6-luna', id: 'gpt-5.6-luna', weight: 1 },
+				{ name: 'grok-4.5', id: 'grok-4.5', weight: 1 },
+				{ name: 'GPT-5.4', id: 'gpt-5.4', weight: 1 },
+			],
+			modelPrice: [
+				// 使用的是 ioclub 0.05 倍率，但按 0.5 倍率计算
+				{ modelIdOrIndex: 'gpt-5.6-luna', inputMultiplyer: 0.5, outputMultiplyer: 3 },
+				{ modelIdOrIndex: 'grok-4.5', inputMultiplyer: 1, outputMultiplyer: 3 },
+				{ modelIdOrIndex: 'gpt-5.4', inputMultiplyer: 1.25, outputMultiplyer: 7.5 },
 			],
 		}
 	};
@@ -303,7 +330,7 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 		initMsgbox: '',
 		initSystemMessage: {
 			role: 'aiInfo' as const,
-			text: '欢迎使用 FFBox AI 帮助～☺️\n- AI 助手依靠云算力运转，算力费用由 FFBox 作者承担。建议您在切换话题时重置一下对话，以减少用量消耗🍵\n- 如果提示欠费，此乃作者的阿里云账户被玩空了所致，可以去 FFBox 催更吐槽群里戳一下作者😁\n- AI 助手目前并不完善，如果遇到报错，可以重新说一次、重置对话，或者重新打开以切换模型（有时候就是一直报错，没辙🤷🏻）。\n- AI 助手的回答未必是真相（它会迷之自信），不作事实依据哦😊',
+			text: '欢迎使用第二代 FFBox AI 帮助～☺️\n- AI 助手依靠云算力运转，算力费用由 FFBox 作者承担。建议您在切换话题时重置一下对话，以减少用量消耗🍵\n- 如果提示欠费，此乃作者的阿里云账户被玩空了所致，可以去 FFBox 催更吐槽群里戳一下作者😁\n- AI 助手的回答未必是真相（它会迷之自信），不作事实依据哦😊',
 			actions: [
 				{
 					label: '5.3 版本更新调研问卷',
