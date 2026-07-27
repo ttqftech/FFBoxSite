@@ -35,11 +35,12 @@ interface Props {
 	modelPrice?: AISearchConfig['modelPrice'];	// 各模型的输入/输出乘数，用于计算算力开销
 
 	// iframe 相关回调
-	onAction?: (url: string) => void;	// 需要父页面处理的动作（如 ffbox:/ 协议）
-	onBoundsChange?: (rect: { top: number, left: number, width: number, height: number } | null) => void;	// 内容边界变化
+	onAction: (url: string) => void;	// 需要父页面处理的动作（如 ffbox:/ 协议）
+	onBoundsChange: (rect: { top: number, left: number, width: number, height: number } | null) => void;	// 内容边界变化
 	// onStateChange?: (state: 'closed' | 'opening' | 'opened' | 'closing') => void;	// 开关状态变化
-	onMouseLeaveContent?: () => void;	// 鼠标离开内容区域，父页面据此关闭 iframe 的 pointer-events
-	onRequestMachineIds?: () => Promise<{ frontendMachineId?: string; backendMachineId?: string }>;	// 向父页面请求机器码（前端和本地服务器）
+	onMouseLeaveContent: () => void;	// 鼠标离开内容区域，父页面据此关闭 iframe 的 pointer-events
+	onRequestMachineIds: () => Promise<{ frontendMachineId?: string; backendMachineId?: string }>;	// 向父页面请求机器码（前端和本地服务器）
+	onHttpRequest: (payload: { serverId?: string; method: string; path: string; query?: Record<string, any>; body?: any }) => Promise<any>;	// 向父页面发起 HTTP 代调用（iframe 指定服务器/方法/路径/参数，宿主代为调用后端 API）
 }
 
 const props = defineProps<Props>();
@@ -122,7 +123,6 @@ const openWindow = () => {
 
 	isOpened.value = 'opening';
 	// props.onStateChange?.('opening');
-	reportBoundsRaf();
 	const targetLeftRight = window.innerWidth * 0.30 - 100;
 	const targetBottom = -40 + window.innerHeight * 0.15;
 	const targetStyle: Record<string, string> = {
@@ -137,9 +137,6 @@ const openWindow = () => {
 		...targetStyle,
 		duration: 0.7,
 		ease: 'power3.inOut',
-		onUpdate() {
-			reportBoundsRaf();
-		},
 		onComplete() {
 			targetStyle.bottom = 'calc(-40px + 15vh)';	// 改为 CSS 能动态计算的格式
 			targetStyle.left = 'calc(30vw - 100px)';
@@ -147,7 +144,6 @@ const openWindow = () => {
 			anchorStyle.value = targetStyle;
 			isOpened.value = 'opened';
 			// props.onStateChange?.('opened');
-			reportBoundsRaf();
 		}
 	});
 };
@@ -172,7 +168,6 @@ const closeWindow = async () => {
 
 	isOpened.value = 'closing';
 	// props.onStateChange?.('closing');
-	reportBoundsRaf();
 	const targetStyle = {
 		position: 'fixed',
 		bottom: window.innerHeight - defaultRect.top - defaultRect.height + 'px',
@@ -185,19 +180,15 @@ const closeWindow = async () => {
 		...targetStyle,
 		duration: 0.7,
 		ease: 'power3.inOut',
-		onUpdate() {
-			reportBoundsRaf();
-		},
 		onComplete() {
 			anchorStyle.value = {};
 			isOpened.value = 'closed';
 			// props.onStateChange?.('closed');
-			reportBoundsRaf();
 		}
 	});
 };
 
-// defaultAnchor 大小位置变化时重新上报边界
+// defaultAnchor 或 anchor 和 panel 的并集 大小位置变化时重新上报边界
 let resizeObserver: ResizeObserver;
 onMounted(() => {
 	if (defaultAnchorRef.value) {
@@ -205,6 +196,7 @@ onMounted(() => {
 			reportBoundsRaf();
 		});
 		resizeObserver.observe(defaultAnchorRef.value);
+		resizeObserver.observe(panelRef.value);
 	}
 	// 初始上报一次边界
 	nextTick(() => reportBounds());
@@ -275,17 +267,64 @@ const modelDropdownList = computed<MenuItem[]>(() => {
 });
 const selectedModelDisplayText = computed(() => selectedModelKey.value ? props.modelOptions.find((model) => model.key === selectedModelKey.value)?.key || '' : '');
 
-// #region 客户端工具确认按钮（需用户点击确认后才返回结果）
+// 组装按 indexes 或 taskIds 获取的任务简介数组（若成功，包含 taskIndex、taskId、taskName、status、lastRunIndex；否则包含 error）
+// const assembleTasksBrief = (raw: any): string => {
+// 	if (!raw || raw.error) return JSON.stringify(raw || { error: '接口返回了未知错误' });	// FFBox 那边并没有那么写
+// 	const tasks = (Array.isArray(raw) ? raw : []).map((t: any) => {
+// 		const item: Record<string, any> = {};
+// 		if (t.index !== undefined) item.index = t.index;
+// 		if (t.taskId !== undefined) item.taskId = t.taskId;
+// 		if (t.taskName !== undefined) item.taskName = t.taskName;
+// 		if (t.status !== undefined) item.status = t.status;
+// 		if (t.error) item.error = t.error;
+// 		return item;
+// 	});
+// 	return JSON.stringify({ tasks });
+// };
 
-/** 用户点击确认按钮时调用：标记已确认，并通过 sendMessage 续接回传结果 */
+/** 组装任务简介：任务名、状态、首次扫描命令、最新运行的输出参数 / ffmpeg 参数 / 输出文件 / 命令行末尾
+ *  raw 为完整 Task 对象（含 runs），由 iframe 端提取关键字段以节省 token */
+const assembleTaskDetail = (raw: any): string => {
+	if (!raw || raw.error) return JSON.stringify(raw || { error: '获取失败' });
+	const task = raw;
+	const firstRun = task.runs?.[0];
+	const latestRun = task.runs?.[task.runs.length - 1];
+
+	// 从完整 outputParams 中提取 AI 关心的关键字段
+	const simplifyOutputParams = (after: any): Record<string, any> => {
+		if (!after) return {};
+		const input = after.input?.files?.[0];
+		const output = after.outputs?.[0];
+		return {
+			inputFile: input?.filePath,
+			format: output?.mux?.format,
+			vcodec: output?.video?.vcodec,
+			acodec: output?.audio?.acodec,
+			resolution: output?.video?.resolution,
+			framerate: output?.video?.framerate,
+		};
+	};
+
+	return JSON.stringify({
+		taskId: task.id,
+		taskName: task.taskName,
+		status: task.status,
+		lastRunIndex: task.runs.length - 1,
+		// firstRunCmd: firstRun?.paraArray?.join(' ') || '',
+		// latestRunOutputParams: latestRun ? simplifyOutputParams(latestRun.after) : {},
+		latestRunOutputParams: latestRun?.after,
+		latestRunParaArray: latestRun?.paraArray,
+		latestRunOutputFiles: latestRun?.outputFiles,
+		latestRunCmdTail: (latestRun?.cmdData || '').slice(-1024),
+	});
+};
+
+// 用户点击确认按钮时调用：标记已确认，并通过 sendMessage 续接回传结果
 const confirmToolCall = (block: ChatBlock) => {
 	if (block.confirmStatus !== 'pending' || loading.value) return;
 	block.confirmStatus = 'confirmed';
-	// task-info-consultation 占位结果
-	sendMessage(undefined, { toolCallId: block.toolCall!.id, toolResult: '无任务信息' });
+	sendMessage(undefined, { toolCallId: block.toolCall!.id, toolResult: '已确认' });
 };
-
-// #endregion
 
 // 向 AI 服务器发送消息。注意：userText 和 toolResult 互斥，只能传其中的一个
 const sendMessage = async (userText?: string, toolResult?: { toolCallId: string; toolResult: string }) => {
@@ -432,27 +471,64 @@ const sendMessage = async (userText?: string, toolResult?: { toolCallId: string;
 			const responseCalls = clientToolCalls.filter(c => c.needResponse);
 
 			// 通知型：作为客户端发起的消息显示（无需响应）
-			for (const n of notifications) {
-				if (n.name === 'send_text_to_client') {
-					messages.value.push({ role: n.args.isError ? 'aiErr' : 'ai', text: n.args.content, time: new Date() });
+			for (const call of notifications) {
+				if (call.name === 'send_text_to_client') {
+					messages.value.push({ role: call.args.isError ? 'aiErr' : 'ai', text: call.args.content, time: new Date() });
 				} else {
-					messages.value.push({ role: 'user', blocks: [{ type: 'tool_call', toolCall: { id: n.id, name: n.name, args: n.args, display: 'client' } }], text: '', time: new Date() });
+					messages.value.push({ role: 'user', blocks: [{ type: 'tool_call', toolCall: { id: call.id, name: call.name, args: call.args, display: 'client' } }], text: '', time: new Date() });
 				}
 			}
 
 			// 请求-响应型
 			if (responseCalls.length > 0) {
-				const autoResults: { id: string; result: string }[] = [];
+				const toolResults: { id: string; result: string }[] = [];
 				let hasConfirmTools = false;
 
-				for (const c of responseCalls) {
-					if (c.name === 'client_get_task_info') {
-						// 需确认工具：显示按钮，等待用户点击后通过 sendMessage 续接
+				for (const call of responseCalls) {
+					if (call.name === 'get_task_list_summary' || call.name === 'get_tasks_brief' || call.name === 'get_task_detail') {
+						// 任务信息工具：通过 onHttpRequest 代调用后端 API，获取结果后组装精简回传给 AI
+						let toolResultText = '';
+						try {
+							if (call.name === 'get_task_list_summary') {
+								// 后端直接返回纯文本简介，无需组装
+								const raw = await props.onHttpRequest({ method: 'GET', path: '/api/v1/tasks/summary', query: { sampleSize: 50 } }) ?? '';
+								toolResultText = typeof raw === 'string' ? raw : JSON.stringify(raw);
+							} else if (call.name === 'get_tasks_brief') {
+								// 合成工具：按 indexes 或 taskIds 批量获取任务简介（对于每个 index 和 id：若成功，包含 taskIndex、taskId、taskName、status、lastRunIndex；否则包含 error）
+								const body: Record<string, any> = {};
+								if (call.args?.taskIndexes?.length) body.taskIndexes = call.args.taskIndexes;
+								else if (call.args?.taskIds?.length) body.taskIds = call.args.taskIds;
+								let raw;
+								try {
+									raw = await props.onHttpRequest({ method: 'POST', path: '/api/v1/tasks/briefs', body });
+									if (typeof raw === 'object') raw = JSON.stringify(raw);
+								} catch (error) {}
+								// toolResultText = assembleTasksBrief(raw);
+								toolResultText = raw;	
+							} else if (call.name === 'get_task_detail') {
+								// 按 taskId 获取完整 Task，由 iframe 端提取关键字段以节省 token
+								const taskId: number = call.args?.taskId;
+								const raw = await props.onHttpRequest({ method: 'GET', path: `/api/v1/tasks/${taskId}` });
+								toolResultText = assembleTaskDetail(raw);
+							}
+						} catch (e) {
+							toolResultText = JSON.stringify({ error: '任务信息获取异常' });
+						}
+
+						toolResults.push({ id: call.id, result: toolResultText });
+						messages.value.push({
+							role: 'user',
+							blocks: [{ type: 'tool_call', toolCall: { id: call.id, name: call.name, args: call.args, display: 'client' } }],
+							text: '',
+							time: new Date(),
+						});
+					} else if (call.name === 'client_get_task_info') {
+						// 兼容旧版占位工具：显示确认按钮，等待用户点击后通过 sendMessage 续接
 						messages.value.push({
 							role: 'user',
 							blocks: [{
 								type: 'tool_call',
-								toolCall: { id: c.id, name: c.name, args: c.args, display: 'client' },
+								toolCall: { id: call.id, name: call.name, args: call.args, display: 'client' },
 								confirmStatus: 'pending',
 							}],
 							text: '',
@@ -462,8 +538,8 @@ const sendMessage = async (userText?: string, toolResult?: { toolCallId: string;
 					} else {
 						// 自动工具：立即获取结果
 						let toolResultText = '';
-						if (c.name === 'get_machine_ids') {
-							const machineIds = await props.onRequestMachineIds?.() ?? {};
+						if (call.name === 'get_machine_ids') {
+							const machineIds = await props.onRequestMachineIds();
 							toolResultText = JSON.stringify({
 								frontendMachineId: machineIds.frontendMachineId,
 								backendMachineId: machineIds.backendMachineId,
@@ -471,27 +547,28 @@ const sendMessage = async (userText?: string, toolResult?: { toolCallId: string;
 						} else {
 							toolResultText = '工具调用出错：客户端无此工具';
 						}
-						autoResults.push({ id: c.id, result: toolResultText });
+						toolResults.push({ id: call.id, result: toolResultText });
 						messages.value.push({
 							role: 'user',
-							blocks: [{ type: 'tool_call', toolCall: { id: c.id, name: c.name, args: c.args, display: 'client' } }],
+							blocks: [{ type: 'tool_call', toolCall: { id: call.id, name: call.name, args: call.args, display: 'client' } }],
 							text: '',
 							time: new Date(),
 						});
 					}
 				}
+				console.log('大模型工具调用结果即将回传', toolResults);
 
 				// 回传自动工具结果
-				for (let i = 0; i < autoResults.length; i++) {
-					const isLastAuto = i === autoResults.length - 1;
+				for (let i = 0; i < toolResults.length; i++) {
+					const isLastAuto = i === toolResults.length - 1;
 					if (isLastAuto && !hasConfirmTools) {
 						// 最后一个自动工具，且无确认工具：通过 sendMessage 续接触发 Agent 主循环
 						loading.value = false;
-						await sendMessage(undefined, { toolCallId: autoResults[i].id, toolResult: autoResults[i].result });
+						await sendMessage(undefined, { toolCallId: toolResults[i].id, toolResult: toolResults[i].result });
 						return;
 					} else {
 						// 中间结果或还有确认工具：后端暂存（仍有 pending），无需处理流式事件
-						await props.chatAPI!({ toolCallId: autoResults[i].id, toolResult: autoResults[i].result, modelKey: selectedModelKey.value, onEvent: () => {} });
+						await props.chatAPI!({ toolCallId: toolResults[i].id, toolResult: toolResults[i].result, modelKey: selectedModelKey.value, onEvent: () => {} });
 					}
 				}
 
@@ -537,7 +614,7 @@ const sendMessage = async (userText?: string, toolResult?: { toolCallId: string;
 const resetChat = () => {
 	messages.value = [];
 	sessionId.value = null;
-	(props.resetChat || (() => {}))(selectedModelKey.value);
+	props.resetChat(selectedModelKey.value);
 	if (props.initSystemMessage) {
 		setTimeout(() => {
 			messages.value.push(props.initSystemMessage);
@@ -554,7 +631,7 @@ const handleActionButtonClick = (url: string) => {
 	const urlObject = new URL(url);
 	if (urlObject.protocol === 'ffbox:') {
 		// ffbox:/ 协议交给父页面处理
-		props.onAction?.(url);
+		props.onAction(url);
 	} else {
 		window.open(url);
 	}
@@ -610,9 +687,6 @@ watch(() => props.enabled, () => {
 		if (props.initSystemMessage) {
 			messages.value.push(props.initSystemMessage);
 		}
-		setTimeout(() => {
-			reportBounds();
-		}, 500);
 	}
 }, { immediate: true });
 
@@ -832,8 +906,9 @@ watch(() => props.enabled, () => {
 					&.opened {
 						width: calc(100% - 48px);
 						margin-right: 48px;
-						max-height: 82px;
+						max-height: 102px;
 						height: unset;	// 自由拓展高度，直到 max-height
+						field-sizing: content;
 					}
 				}
 				.iconAI {

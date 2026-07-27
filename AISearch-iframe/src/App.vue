@@ -42,6 +42,8 @@ const handleBoundsChange = (rect: { top: number, left: number, width: number, he
 // const handleStateChange = (state: 'closed' | 'opening' | 'opened' | 'closing') => postToParent({ type: 'state', state });
 const handleMouseLeaveContent = () => postToParent({ type: 'contentMouseLeave' });
 const handleRequestMachineIds = () => requestParent<{ frontendMachineId?: string; backendMachineId?: string }>('getMachineIds');
+// 向父页面发起 HTTP 代调用（iframe 指定服务器/方法/路径/参数，宿主代为调用后端 API 后回传结果）
+const handleHttpRequest = (payload: { serverId?: string; method: string; path: string; query?: Record<string, any>; body?: any }) => requestParent<any>('httpRequest', payload);
 
 // 由父页面下发的 bounds（宿主容器在父页面 viewport 下的 rect）
 const hostBounds = reactive({ top: 0, left: 0, width: 400, height: 100 });
@@ -115,7 +117,8 @@ onBeforeUnmount(() => {
 				:onBoundsChange="handleBoundsChange"
 				:onMouseLeaveContent="handleMouseLeaveContent"
 				:onRequestMachineIds="handleRequestMachineIds"
-			/>
+				:onHttpRequest="handleHttpRequest"
+		/>
 		</div>
 	</div>
 </template>

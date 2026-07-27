@@ -17,14 +17,15 @@ import { generateConfig } from './configGenerator';
 
 interface Props {
 	// 平台标识，决定 generateConfig 拉取哪套配置（如 'FFBoxSite' / 'FFBox 5.3'），由父页面下发
-	platform?: string;
+	platform: string;
 	// iframe 通讯回调
-	onInitMsgbox?: (content: string) => void;	// 配置要求显示初始化弹窗（iframe 无法显示 Msgbox，转发父页面）
-	onAction?: (url: string) => void;	// 需要父页面处理的动作（如 ffbox:/ 协议）
-	onBoundsChange?: (rect: { top: number, left: number, width: number, height: number } | null) => void;	// 内容边界变化
+	onInitMsgbox: (content: string) => void;	// 配置要求显示初始化弹窗（iframe 无法显示 Msgbox，转发父页面）
+	onAction: (url: string) => void;	// 需要父页面处理的动作（如 ffbox:/ 协议）
+	onBoundsChange: (rect: { top: number, left: number, width: number, height: number } | null) => void;	// 内容边界变化
 	// onStateChange?: (state: 'closed' | 'opening' | 'opened' | 'closing') => void;	// 开关状态变化
-	onMouseLeaveContent?: () => void;	// 鼠标离开内容区域，父页面据此关闭 iframe 的 pointer-events
-	onRequestMachineIds?: () => Promise<{ frontendMachineId?: string; backendMachineId?: string }>;	// 向父页面请求机器码（前端和本地服务器）
+	onMouseLeaveContent: () => void;	// 鼠标离开内容区域，父页面据此关闭 iframe 的 pointer-events
+	onRequestMachineIds: () => Promise<{ frontendMachineId?: string; backendMachineId?: string }>;	// 向父页面请求机器码（前端和本地服务器）
+	onHttpRequest: (payload: { serverId?: string; method: string; path: string; query?: Record<string, any>; body?: any }) => Promise<any>;	// 向父页面发起 HTTP 代调用（iframe 指定服务器/方法/路径/参数，宿主代为调用后端 API）
 }
 
 const props = defineProps<Props>();
@@ -87,7 +88,7 @@ const initWindow = async (modelKey?: string) => {
 
 	if (fetchedConfig.value.initMsgbox) {
 		// iframe 中无法显示 Msgbox，转发给父页面
-		props.onInitMsgbox?.(fetchedConfig.value.initMsgbox);
+		props.onInitMsgbox(fetchedConfig.value.initMsgbox);
 	}
 
 	// 生成新的 conversationId（不再向后端发 [init] 请求）
@@ -265,5 +266,6 @@ onMounted(() => {
 		:onBoundsChange="props.onBoundsChange"
 		:onMouseLeaveContent="props.onMouseLeaveContent"
 		:onRequestMachineIds="props.onRequestMachineIds"
+		:onHttpRequest="props.onHttpRequest"
 	/>
 </template>
