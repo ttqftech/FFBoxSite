@@ -17,14 +17,15 @@ import { generateConfig } from './configGenerator';
 
 interface Props {
 	// 平台标识，决定 generateConfig 拉取哪套配置（如 'FFBoxSite' / 'FFBox 5.3'），由父页面下发
-	platform?: string;
+	platform: string;
 	// iframe 通讯回调
-	onInitMsgbox?: (content: string) => void;	// 配置要求显示初始化弹窗（iframe 无法显示 Msgbox，转发父页面）
-	onAction?: (url: string) => void;	// 需要父页面处理的动作（如 ffbox:/ 协议）
-	onBoundsChange?: (rect: { top: number, left: number, width: number, height: number } | null) => void;	// 内容边界变化
+	onInitMsgbox: (content: string) => void;	// 配置要求显示初始化弹窗（iframe 无法显示 Msgbox，转发父页面）
+	onAction: (url: string) => void;	// 需要父页面处理的动作（如 ffbox:/ 协议）
+	onBoundsChange: (rect: { top: number, left: number, width: number, height: number } | null) => void;	// 内容边界变化
 	// onStateChange?: (state: 'closed' | 'opening' | 'opened' | 'closing') => void;	// 开关状态变化
-	onMouseLeaveContent?: () => void;	// 鼠标离开内容区域，父页面据此关闭 iframe 的 pointer-events
-	onRequestMachineIds?: () => Promise<{ frontendMachineId?: string; backendMachineId?: string }>;	// 向父页面请求机器码（前端和本地服务器）
+	onMouseLeaveContent: () => void;	// 鼠标离开内容区域，父页面据此关闭 iframe 的 pointer-events
+	onRequestMachineIds: () => Promise<{ frontendMachineId?: string; backendMachineId?: string }>;	// 向父页面请求机器码（前端和本地服务器）
+	onHttpRequest: (payload: { serverId?: string; method: string; path: string; query?: Record<string, any>; body?: any }) => Promise<any>;	// 向父页面发起 HTTP 代调用（iframe 指定服务器/方法/路径/参数，宿主代为调用后端 API）
 }
 
 const props = defineProps<Props>();
@@ -87,7 +88,7 @@ const initWindow = async (modelKey?: string) => {
 
 	if (fetchedConfig.value.initMsgbox) {
 		// iframe 中无法显示 Msgbox，转发给父页面
-		props.onInitMsgbox?.(fetchedConfig.value.initMsgbox);
+		props.onInitMsgbox(fetchedConfig.value.initMsgbox);
 	}
 
 	// 生成新的 conversationId（不再向后端发 [init] 请求）
@@ -130,6 +131,7 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 		conversationId,
 		provider: selected.provider,
 		modelId: selected.modelId,
+		platform: props.platform,
 	};
 	if (message !== undefined) {
 		requestBody.message = message;
@@ -138,8 +140,8 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 		requestBody.toolResult = toolResult ?? '';
 	}
 
-	let expense = 0;
-	let clientToolCall: ChatAPIResult['clientToolCall'];
+	let inputUsage = 0; let outputUsage = 0;
+	let clientToolCalls: ChatAPIResult['clientToolCalls'] = [];
 
 	try {
 		const response = await fetch(fetchedConfig.value.chatUrl, {
@@ -152,7 +154,6 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 			const errText = await response.text();
 			return Promise.reject(`请求失败 (${response.status}): ${errText}`);
 		}
-		onEvent({ type: 'connected' });
 
 		const reader = response.body?.getReader();
 		if (!reader) return Promise.reject('无法获取响应流');
@@ -177,13 +178,10 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 				try {
 					const event = JSON.parse(data) as StreamEvent;
 					onEvent(event);
-					if (event.type === 'usage') expense = event.expense;
+					if (event.type === 'usage') { inputUsage = event.inputUsage; outputUsage = event.outputUsage; }
 					if (event.type === 'client_tool_call') {
-						clientToolCall = { id: event.id, name: event.name, args: event.args, needResponse: event.needResponse };
+						clientToolCalls.push({ id: event.id, name: event.name, args: event.args, needResponse: event.needResponse });
 					}
-					// if (event.type === 'error') {
-					// 	return Promise.reject(event.message);
-					// }
 				} catch (e) {
 					// JSON 解析失败，跳过
 				}
@@ -197,9 +195,9 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 				try {
 					const event = JSON.parse(data) as StreamEvent;
 					onEvent(event);
-					if (event.type === 'usage') expense = event.expense;
+					if (event.type === 'usage') { inputUsage = event.inputUsage; outputUsage = event.outputUsage; }
 					if (event.type === 'client_tool_call') {
-						clientToolCall = { id: event.id, name: event.name, args: event.args, needResponse: event.needResponse };
+						clientToolCalls.push({ id: event.id, name: event.name, args: event.args, needResponse: event.needResponse });
 					}
 				} catch (e) {
 					// ignore
@@ -207,8 +205,13 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 			}
 		}
 
+		// 根据所选模型的输入/输出乘数计算算力开销
+		const priceItem = fetchedConfig.value?.modelPrice?.find((p) => p.modelKey === selected.key);
+		const inputMul = priceItem?.inputMultiplyer ?? 1;
+		const outputMul = priceItem?.outputMultiplyer ?? 1;
+		const expense = Math.round(inputUsage * inputMul + outputUsage * outputMul);
 		if (expense > 0) await useQuota(expense);
-		return { expense, clientToolCall };
+		return { inputUsage, outputUsage, clientToolCalls };
 	} catch (err: any) {
 		return Promise.reject(`请求失败：${err?.message || '未知原因'}`);
 	}
@@ -252,6 +255,7 @@ onMounted(() => {
 		:chatAPI="chatAPI" :init="initWindow" :resetChat="resetChat"
 		:titleName="fetchedConfig?.titleName"
 		:modelOptions="modelOptions"
+		:modelPrice="fetchedConfig?.modelPrice"
 		:initialPlaceholders="fetchedConfig?.initialPlaceholders" :initialPlaceholderInterval="fetchedConfig?.initialPlaceholderInterval"
 		:initSystemMessage="fetchedConfig?.initSystemMessage"
 		:requestKeywordSystemMessage="fetchedConfig?.requestKeywordSystemMessage" :responseKeywordSystemMessage="fetchedConfig?.responseKeywordSystemMessage"
@@ -263,5 +267,6 @@ onMounted(() => {
 		:onBoundsChange="props.onBoundsChange"
 		:onMouseLeaveContent="props.onMouseLeaveContent"
 		:onRequestMachineIds="props.onRequestMachineIds"
+		:onHttpRequest="props.onHttpRequest"
 	/>
 </template>
