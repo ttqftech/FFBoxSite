@@ -131,6 +131,7 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 		conversationId,
 		provider: selected.provider,
 		modelId: selected.modelId,
+		platform: props.platform,
 	};
 	if (message !== undefined) {
 		requestBody.message = message;
