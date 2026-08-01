@@ -16,8 +16,8 @@ import { generateConfig } from './configGenerator';
  */
 
 interface Props {
-	// 平台标识，决定 generateConfig 拉取哪套配置（如 'FFBoxSite' / 'FFBox 5.3'），由父页面下发
-	platform: string;
+	platform: string;	// 平台标识，决定 generateConfig 拉取哪套配置（如 'FFBoxSite' / 'FFBox 5.3'），由父页面下发
+	extraInfo?: Record<string, any>;	// 由父页面下发的额外信息（如当前楼层），随每次 chatAPI 请求带往后端
 	// iframe 通讯回调
 	onInitMsgbox: (content: string) => void;	// 配置要求显示初始化弹窗（iframe 无法显示 Msgbox，转发父页面）
 	onAction: (url: string) => void;	// 需要父页面处理的动作（如 ffbox:/ 协议）
@@ -133,6 +133,10 @@ const chatAPI = async (params: ChatAPIParams): Promise<ChatAPIResult> => {
 		modelId: selected.modelId,
 		platform: props.platform,
 	};
+	// 带上父页面下发的 extraInfo（当前楼层等），后端据此替换 Context 中的相应数据
+	if (props.extraInfo && Object.keys(props.extraInfo).length) {
+		requestBody.extraInfo = props.extraInfo;
+	}
 	if (message !== undefined) {
 		requestBody.message = message;
 	} else if (toolCallId !== undefined) {
