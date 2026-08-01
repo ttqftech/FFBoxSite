@@ -284,7 +284,7 @@
         "state": "uploaded",
         "size": 92677668,
         "digest": "sha256:96e42a8ef8f23748ef182266bc10c9b911999aad7b4a050915ab8497731e5b85",
-        "download_count": 954,
+        "download_count": 957,
         "created_at": "2026-06-07T15:31:25Z",
         "updated_at": "2026-06-07T15:31:42Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.4/Windows_x86-64_FFBox_5.4.exe"
@@ -295,11 +295,11 @@
     "body": "FFBox v5.4 新功能\r\n\r\n- 切割操作器新增进度条鼠标悬浮缩略图（带后端缓存）；改用 ffprobe 扫描关键帧信息，大幅提高速度\r\n- 切割时间输入框组件新增清空按钮\r\n- hwaccel 支持自定义字符串；支持 skip_frame 参数；支持 readrate 参数\r\n- 新增预设导入导出功能，并支持跨版本预设转换插件\r\n- 码率控制选项重构，ratevalue→详细参数；码率控制支持不选择（自动）模式\r\n- 音频采样频率和声道布局在无定义情况下支持手动输入；去除 -vol 选项\r\n- 修复一大批音频编码的采样频率、码率控制等的不正确定义",
     "reactions": {
       "url": "https://api.github.com/repos/ttqftech/FFBox/releases/335623729/reactions",
-      "total_count": 6,
+      "total_count": 7,
       "+1": 1,
       "-1": 0,
       "laugh": 1,
-      "hooray": 1,
+      "hooray": 2,
       "confused": 0,
       "heart": 1,
       "rocket": 1,
