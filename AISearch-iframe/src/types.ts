@@ -76,7 +76,7 @@ export interface AIChatMessage {
 // chatAPI 参数（大体上与后端同步）
 export interface ChatAPIParams {
 	message?: string;	// 新的一轮用户消息
-	extraMessage?: string;	// 额外的非用户输入的消息（待实现）
+	extraInfo?: Record<string, any>;	// 额外的非用户输入的消息（待实现）
 	toolCallId?: string;	// 客户端工具调用结果：工具 id
 	toolResult?: string;	// 客户端工具调用结果：结果文本
 	modelKey?: string;

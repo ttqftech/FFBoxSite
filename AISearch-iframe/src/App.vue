@@ -48,8 +48,8 @@ const handleHttpRequest = (payload: { serverId?: string; method: string; path: s
 // 由父页面下发的 bounds（宿主容器在父页面 viewport 下的 rect）
 const hostBounds = reactive({ top: 0, left: 0, width: 400, height: 100 });
 
-// 由父页面下发的 platform，决定 generateConfig 使用哪套配置
-const platform = ref<string>('');
+const platform = ref<string>('');	// 由父页面下发的 platform，决定 generateConfig 使用哪套配置
+const extraInfo = ref<Record<string, any>>({});	// 由父页面下发的 extraInfo（如当前楼层），随 chatAPI 传给后端
 
 // 接收父页面消息
 const handleMessage = (event: MessageEvent) => {
@@ -84,6 +84,11 @@ const handleMessage = (event: MessageEvent) => {
 				platform.value = data.platform;
 			}
 			break;
+		case 'extraInfo':
+			if (data.extraInfo && typeof data.extraInfo === 'object') {
+				extraInfo.value = data.extraInfo;
+			}
+			break;
 	}
 };
 
@@ -112,6 +117,7 @@ onBeforeUnmount(() => {
 		<div class="aiSearchInner">
 			<AISearchWithConfig
 				:platform="platform"
+				:extraInfo="extraInfo"
 				:onInitMsgbox="handleInitMsgbox"
 				:onAction="handleAction"
 				:onBoundsChange="handleBoundsChange"

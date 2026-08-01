@@ -115,35 +115,9 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 			'为何作者的朋友圈是全部历史可见',
 			'作者是学生吗',
 		],
-		requestKeywordSystemMessage: [
-			{
-				keywords: ['发票', '商业', '购买'],
-				message: 'FFBox 目前是免费软件，使用时请遵守协议条款中的规则，关于商业相关勿轻信 AI 回复。',
-				warning: true,
-				forbid: false,
-			},
-			{
-				keywords: ['中国', '国家', '党', '习近平', '新冠', '军队', '政', '抗议', '六四', '特朗普', '高市早苗'],
-				message: '⚠️请谨慎在话题中涉及政治。AI 发言不代表任何人的立场。',
-				warning: true,
-				forbid: false,
-			},
-		],
-		responseKeywordSystemMessage: [
-			{
-				keywords: ['发票', '商业', '购买'],
-				message: 'FFBox 目前是免费软件，使用时请遵守协议条款中的规则，关于商业相关勿轻信 AI 回复。',
-				warning: true,
-			},
-			{
-				keywords: ['国家', '习近平', '新冠', '军队', '政'],
-				message: '⚠️请谨慎在话题中涉及政治。AI 发言不代表任何人的立场。',
-				warning: true,
-			},
-		],
 		initSystemMessage: {
 			role: 'aiInfo' as const,
-			text: '欢迎使用 FFBox AI 帮助～☺️\n- AI 助手依靠阿里云 + Cloudflare 运转，算力费用由 FFBox 作者承担。建议您在切换话题时重置一下对话，以减少用量消耗🍵\n- 如果提示欠费，此乃作者的阿里云账户被玩空了所致，可以去 FFBox 催更吐槽群里戳一下作者😁\n- AI 助手目前并不完善，如果遇到报错，可以重新说一次、重置对话，或者重新打开以切换模型（有时候就是一直报错，没辙🤷🏻）。\n- AI 助手的回答未必是真相（它会迷之自信），不作事实依据哦😊',
+			text: '欢迎使用第二代 FFBox AI 帮助～☺️\n- AI 助手依靠阿里云 + Cloudflare 运转，算力费用由 FFBox 作者承担。建议您在切换话题时重置一下对话，以减少用量消耗🍵\n- 如果提示欠费，此乃作者的阿里云账户被玩空了所致，可以去 FFBox 催更吐槽群里戳一下作者😁\n- AI 助手的回答未必是真相（会编造我没说过的东西），不作事实依据哦😊',
 			actions: [
 				{
 					label: '5.3 版本更新调研问卷',
@@ -156,6 +130,31 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 			],
 		},
 	};
+	const HR_OVERRIDES = {
+		titleName: '旅行者的神之嘴二代 (面试官特调) (Beta)',
+		initialPlaceholderInterval: 2500,
+		initialPlaceholders: [
+			'不智能帮助（最近更新 2026-07-29）',
+			'不智能帮助（v2.0）',
+			'AI 助手技术上与其他常规机器人有何不同',
+			'AI 会取代人类吗',
+			'为何要做 AI 助手功能',
+			'FFBox 相比别的软件有什么不同',
+			'为什么 gap 了一年多没找工作😅',
+			'《肇庆市第一中学》系列视频有何深意',
+			'涩话草坪是啥',
+		],
+		initSystemMessage: {
+			role: 'aiInfo' as const,
+			text: '这里是神之嘴二代——面试官特调分身！另外两只 AI 分别在 FFBox 和 FFBox 官网上～\n- AI 助手依靠云算力运转。建议您在切换话题时重置一下对话，以减少用量消耗🍵\n- 如果提示欠费，此乃作者的阿里云账户被玩空了所致，可以去戳一下作者😁\n- AI 助手的回答未必是真相（会编造我没说过的东西），不作事实依据哦😊',
+			actions: [
+				{
+					label: 'FFBox 官网',
+					url: 'https://ffbox.ttqf.tech/',
+				},
+			],
+		},
+	}
 
 	const providersConfig: Record<string, {
 		models: { name: string; id: string; weight?: number }[];
@@ -245,36 +244,26 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 			{
 				keywords: ['发票', '商业', '购买'],
 				message: 'FFBox 目前是免费软件，使用时请遵守协议条款中的规则，关于商业相关勿轻信 AI 回复。',
+				warning: true,
 				forbid: false,
 			},
 			{
-				keywords: ['中国', '国家', '党', '习近平', '新冠', '军', '政', '抗议', '六四'],
+				keywords: ['中国', '国家', '党', '习近平', '新冠', '军队', '政', '抗议', '六四', '特朗普', '高市早苗'],
 				message: '⚠️请谨慎在话题中涉及政治。AI 发言不代表任何人的立场。',
+				warning: true,
 				forbid: false,
-			},
-			{
-				keywords: ['verifyOK'],
-				message: '🖐️我们不如换个话题？',
-				forbid: true,
 			},
 		],
 		responseKeywordSystemMessage: [
 			{
 				keywords: ['发票', '商业', '购买'],
 				message: 'FFBox 目前是免费软件，使用时请遵守协议条款中的规则，关于商业相关勿轻信 AI 回复。',
+				warning: true,
 			},
 			{
-				keywords: ['国家', '习近平', '新冠', '军', '政'],
+				keywords: ['国家', '习近平', '新冠', '军队', '政'],
 				message: '⚠️请谨慎在话题中涉及政治。AI 发言不代表任何人的立场。',
-			},
-			{
-				keywords: ['激活考核题目：'],
-				message: '您已进入激活流程，如果您符合条件，AI 将会为您提供生成激活码的机会\n如果不想继续答题，可以跟他说"结束答题"',
-				once: true,
-			},
-			{
-				keywords: ['[error] AI 泄露'],
-				message: '发生错误：AI 口无遮拦，导致这条消息被呸掉了😟这是 AI 的常见问题，不是你的锅，也并非系统错误。请重新试一下吧～',
+				warning: true,
 			},
 		],
 		tokenLimit: {
@@ -332,7 +321,7 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 		invalidReply: '这话不能说😱……',
 	};
 
-	const platformOverrides = platform === 'FFBoxSite' ? FFBOXSITE_OVERRIDES : {};
+	const platformOverrides = platform === 'FFBoxSite' ? FFBOXSITE_OVERRIDES : platform === 'hr' ? HR_OVERRIDES : {};
 
 	const unifiedConfig: AISearchConfig = {
 		...sharedConfig,
