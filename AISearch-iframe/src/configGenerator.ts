@@ -162,27 +162,32 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 	}> = {
 		'阿里-O': {
 			models: [
-				{ name: 'qwen3.7-plus', id: 'qwen3.7-plus', weight: 1 },
-				// { name: 'deepseek-v4-flash', id: 'deepseek-v4-flash', weight: 1 },
 				// { name: 'qwen3.5-plus-2026-04-20', id: 'qwen3.5-plus-2026-04-20', weight: 1 },
-				{ name: 'glm-5.2', id: 'glm-5.2', weight: 0.1 },
-				{ name: 'qwen3.7-plus-2026-05-26', id: 'qwen3.7-plus-2026-05-26', weight: 1 },
-				{ name: 'qwen3.7-flash', id: 'qwen3.7-flash', weight: 0.5 },
-				{ name: 'qwen3.7-flash-2026-07-15', id: 'qwen3.7-flash-2026-07-15', weight: 0.5 },
+				// { name: 'deepseek-v4-flash', id: 'deepseek-v4-flash', weight: 1 },
 				// { name: 'deepseek-v4-pro', id: 'deepseek-v4-pro', weight: 1 },
 				// { name: 'qwen3.6-27b', id: 'qwen3.6-27b', weight: 1 },
-
+				{ name: 'qwen3.7-plus', id: 'qwen3.7-plus', weight: 1 },
+				{ name: 'qwen3.7-plus-2026-05-26', id: 'qwen3.7-plus-2026-05-26', weight: 1 },
+				{ name: 'glm-5.2（贵！）', id: 'glm-5.2', weight: 0.1 },
+				{ name: 'qwen3.7-flash', id: 'qwen3.7-flash', weight: 0.5 },
+				{ name: 'qwen3.7-flash-2026-07-15', id: 'qwen3.7-flash-2026-07-15', weight: 0.5 },
+				{ name: 'deepseek-v4-flash-0731', id: 'deepseek-v4-flash-0731', weight: 0.8 },
+				{ name: 'kimi-k2.7-code（贵！）', id: 'kimi-k2.7-code', weight: 0.1 },
+				{ name: 'qwen3.8-max（贵！）', id: 'qwen3.8-max', weight: 0 },
 			],
 			modelPrice: [
-				{ modelIdOrIndex: 'qwen3.7-plus', inputMultiplyer: 2, outputMultiplyer: 8 },	// 2026-09-01 过期
-				{ modelIdOrIndex: 'qwen3.7-plus-2026-05-26', inputMultiplyer: 2, outputMultiplyer: 8 },		// 2026-09-01 过期
 				// { modelIdOrIndex: 'qwen3.5-plus-2026-04-20', inputMultiplyer: 0.8, outputMultiplyer: 4.8 },	// 2026-07-23 过期
 				// { modelIdOrIndex: 'deepseek-v4-flash', inputMultiplyer: 1, outputMultiplyer: 2 },	// 2026-07-24 过期
 				// { modelIdOrIndex: 'deepseek-v4-pro', inputMultiplyer: 12, outputMultiplyer: 24 },	// 2026-07-24 过期
-				{ modelIdOrIndex: 'glm-5.2', inputMultiplyer: 8, outputMultiplyer: 28 },	// 2026-09-15 过期
 				// { modelIdOrIndex: 'qwen3.6-27b', inputMultiplyer: 3, outputMultiplyer: 18 },	// 2026-07-23 过期
+				{ modelIdOrIndex: 'qwen3.7-plus', inputMultiplyer: 2, outputMultiplyer: 8 },	// 2026-09-01 过期
+				{ modelIdOrIndex: 'qwen3.7-plus-2026-05-26', inputMultiplyer: 2, outputMultiplyer: 8 },		// 2026-09-01 过期
+				{ modelIdOrIndex: 'glm-5.2', inputMultiplyer: 8, outputMultiplyer: 28 },	// 2026-09-15 过期
 				{ modelIdOrIndex: 'qwen3.7-flash', inputMultiplyer: 0.2, outputMultiplyer: 0.8 },	// 2026-10-23 过期
 				{ modelIdOrIndex: 'qwen3.7-flash-2026-07-15', inputMultiplyer: 0.2, outputMultiplyer: 0.8 },	// 2026-10-23 过期
+				{ modelIdOrIndex: 'deepseek-v4-flash-0731', inputMultiplyer: 1, outputMultiplyer: 2 },	// 2026-10-31 过期
+				{ modelIdOrIndex: 'kimi-k2.7-code', inputMultiplyer: 6.5, outputMultiplyer: 27 },	// 2026-09-14 过期
+				{ modelIdOrIndex: 'qwen3.8-max', inputMultiplyer: 12, outputMultiplyer: 36 },	// 2026-11-01 过期
 			],
 		},
         ollama: {
@@ -267,9 +272,9 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 			},
 		],
 		tokenLimit: {
-			day: 80000,	// 0.08 元
-			week: 200000,
-			total: 800000,	// 0.8 元
+			day: 70000,	// 0.07 元
+			week: 180000,
+			total: 700000,	// 0.7 元
 		},
 		tokenLimitMessage: {
 			day: '今日 AI 用量已达到上限啦～明天可以再来哦！\n（ℹ️您还可在 FFBox 官网使用 AI 助手）',
