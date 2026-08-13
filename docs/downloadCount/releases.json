@@ -212,7 +212,7 @@
         "state": "uploaded",
         "size": 113996104,
         "digest": "sha256:3a55b679aabf599bd483b30c9ec411f328b69ed8af1b06c8b3c643892aeb73fc",
-        "download_count": 32,
+        "download_count": 33,
         "created_at": "2026-06-07T15:29:49Z",
         "updated_at": "2026-06-07T15:30:29Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.4/macOS_ARM64_FFBox_5.4.dmg"
