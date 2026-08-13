@@ -207,6 +207,14 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 				{ modelIdOrIndex: 'mimo-v2.5', inputMultiplyer: 1, outputMultiplyer: 2 },
 			],
 		},
+		'DeepSeek-O': {
+			models: [
+				{ name: 'deepseek-v4-flash', id: 'deepseek-v4-flash', weight: 1 },
+			],
+			modelPrice: [
+				{ modelIdOrIndex: 'deepseek-v4-flash', inputMultiplyer: 1, outputMultiplyer: 2 },
+			],
+		},
 		// 'しろそら-Oif': {
 		// 	models: [
 		// 		{ name: 'DeepSeek-V3.2', id: 'deepseek-ai/DeepSeek-V3.2', weight: 1 },
