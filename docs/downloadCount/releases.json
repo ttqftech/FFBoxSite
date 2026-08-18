@@ -248,7 +248,7 @@
         "state": "uploaded",
         "size": 17691413,
         "digest": "sha256:baab31d691d11afd3884a5bd3e56ebe8935f1cd16319b48f5e2c0d8b008f126f",
-        "download_count": 183,
+        "download_count": 184,
         "created_at": "2026-06-07T15:30:54Z",
         "updated_at": "2026-06-07T15:30:58Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.4/Windows_x86-64_FFBoxService%2BwebUI_5.4.zip"
@@ -284,7 +284,7 @@
         "state": "uploaded",
         "size": 92677668,
         "digest": "sha256:96e42a8ef8f23748ef182266bc10c9b911999aad7b4a050915ab8497731e5b85",
-        "download_count": 1201,
+        "download_count": 1202,
         "created_at": "2026-06-07T15:31:25Z",
         "updated_at": "2026-06-07T15:31:42Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.4/Windows_x86-64_FFBox_5.4.exe"
