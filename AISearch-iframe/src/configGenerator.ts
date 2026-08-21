@@ -185,7 +185,7 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 				{ modelIdOrIndex: 'glm-5.2', inputMultiplyer: 8, outputMultiplyer: 28 },	// 2026-09-15 过期
 				{ modelIdOrIndex: 'qwen3.7-flash', inputMultiplyer: 0.2, outputMultiplyer: 0.8 },	// 2026-10-23 过期
 				{ modelIdOrIndex: 'qwen3.7-flash-2026-07-15', inputMultiplyer: 0.2, outputMultiplyer: 0.8 },	// 2026-10-23 过期
-				{ modelIdOrIndex: 'deepseek-v4-flash-0731', inputMultiplyer: 1, outputMultiplyer: 2 },	// 2026-10-31 过期
+				{ modelIdOrIndex: 'deepseek-v4-flash-0731', inputMultiplyer: 1.5, outputMultiplyer: 4.5 },	// 2026-10-31 过期
 				{ modelIdOrIndex: 'kimi-k2.7-code', inputMultiplyer: 6.5, outputMultiplyer: 27 },	// 2026-09-14 过期
 				{ modelIdOrIndex: 'qwen3.8-max', inputMultiplyer: 12, outputMultiplyer: 36 },	// 2026-11-01 过期
 			],
@@ -212,7 +212,15 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 				{ name: 'deepseek-v4-flash', id: 'deepseek-v4-flash', weight: 1 },
 			],
 			modelPrice: [
-				{ modelIdOrIndex: 'deepseek-v4-flash', inputMultiplyer: 1, outputMultiplyer: 2 },
+				{ modelIdOrIndex: 'deepseek-v4-flash', inputMultiplyer: 1.5, outputMultiplyer: 4.5 },
+			],
+		},
+		'小红书-O': {
+			models: [
+				{ name: 'dots3-note-prev', id: 'dots3-note-prev', weight: 1 },
+			],
+			modelPrice: [
+				{ modelIdOrIndex: 'dots3-note-prev', inputMultiplyer: 1, outputMultiplyer: 1 },
 			],
 		},
 		// 'しろそら-Oif': {
@@ -229,19 +237,27 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 		// 		// { modelIdOrIndex: 'deepseek-ai/DeepSeek-R1', inputMultiplyer: 0.3, outputMultiplyer: 0.7 },
 		// 	],
 		// },
-		'しろそら-Oic': {
-			models: [
-				{ name: 'GPT-5.6-luna', id: 'gpt-5.6-luna', weight: 0.1 },
-				// { name: 'grok-4.5', id: 'grok-4.5', weight: 1 },
-				{ name: 'GPT-5.4', id: 'gpt-5.4', weight: 0.1 },
-			],
-			modelPrice: [
-				// 使用的是 ioclub 0.05 倍率，但按 0.5 倍率计算
-				{ modelIdOrIndex: 'gpt-5.6-luna', inputMultiplyer: 0.5, outputMultiplyer: 3 },
-				// { modelIdOrIndex: 'grok-4.5', inputMultiplyer: 1, outputMultiplyer: 3 },
-				{ modelIdOrIndex: 'gpt-5.4', inputMultiplyer: 1.25, outputMultiplyer: 7.5 },
-			],
-		}
+		// 'しろそら-Oic': {
+		// 	models: [
+		// 		{ name: 'GPT-5.6-luna', id: 'gpt-5.6-luna', weight: 0.1 },
+		// 		// { name: 'grok-4.5', id: 'grok-4.5', weight: 1 },
+		// 		{ name: 'GPT-5.4', id: 'gpt-5.4', weight: 0.1 },
+		// 	],
+		// 	modelPrice: [
+		// 		// 使用的是 ioclub 0.05 倍率，但按 0.5 倍率计算
+		// 		{ modelIdOrIndex: 'gpt-5.6-luna', inputMultiplyer: 0.5, outputMultiplyer: 3 },
+		// 		// { modelIdOrIndex: 'grok-4.5', inputMultiplyer: 1, outputMultiplyer: 3 },
+		// 		{ modelIdOrIndex: 'gpt-5.4', inputMultiplyer: 1.25, outputMultiplyer: 7.5 },
+		// 	],
+		// }
+		// 'しろそら-Oic': {
+		// 	models: [
+		// 		{ name: 'deepseek-v4-flash', id: 'deepseek-v4-flash', weight: 0.1 },
+		// 	],
+		// 	modelPrice: [
+		// 		{ modelIdOrIndex: 'deepseek-v4-flash', inputMultiplyer: 1, outputMultiplyer: 1 },
+		// 	],
+		// }
 	};
 
 	const sharedConfig = {
@@ -289,9 +305,9 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 			week: '本周 AI 用量已达到上限啦～下周一可以再来哦！\n（ℹ️您还可在 FFBox 官网使用 AI 助手）',
 			total: 'AI 用量已达到上限啦🥹我能理解您好问的习惯，但有限的 AI 资源还是要分配给更多的用户。如果您还想使用的话，需要清除数据哦～\n（ℹ️您还可在 FFBox 官网使用 AI 助手）',
 		},
-		maxInputLength: 512,
+		maxInputLength: 640,
 		initialPlaceholders: [
-			'智能帮助（最近更新 2026-07-29）',
+			'智能帮助（最近更新 2026-08-21）',
 			'智能帮助（v2.0）',
 			'5.3 版本更新调研问卷',
 			'编码器和格式分别是什么概念',
@@ -313,7 +329,7 @@ export const generateConfig = (platform?: string): AISearchConfig => {
 			'安卓手机可以使用转码服务吗',
 		],
 		initialPlaceholderInterval: 4000,
-		maxRounds: 10,
+		maxRounds: 12,
 		maxRoundsMessage: '本轮对话发言次数已达到上限啦，请点击重置按钮开始新对话吧～',
 		titleName: `FFBox AI 帮助 (${platform})`,
 		initMsgbox: '',
