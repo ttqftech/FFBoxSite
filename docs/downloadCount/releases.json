@@ -284,7 +284,7 @@
         "state": "uploaded",
         "size": 92677668,
         "digest": "sha256:96e42a8ef8f23748ef182266bc10c9b911999aad7b4a050915ab8497731e5b85",
-        "download_count": 1373,
+        "download_count": 1376,
         "created_at": "2026-06-07T15:31:25Z",
         "updated_at": "2026-06-07T15:31:42Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.4/Windows_x86-64_FFBox_5.4.exe"
@@ -1476,7 +1476,7 @@
         "state": "uploaded",
         "size": 88230868,
         "digest": "sha256:9cf08c3fd0a8c9d1c91c5b16f2c7f84cd146de99ffc1ed8f9af55836d7145b3b",
-        "download_count": 2042,
+        "download_count": 2045,
         "created_at": "2025-09-01T12:11:41Z",
         "updated_at": "2025-09-01T12:11:55Z",
         "browser_download_url": "https://github.com/ttqftech/FFBox/releases/download/v5.0/Windows_x86-64_FFBox_5.0.exe"
