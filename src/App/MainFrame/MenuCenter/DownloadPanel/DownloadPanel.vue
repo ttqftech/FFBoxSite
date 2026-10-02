@@ -82,12 +82,16 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 			url = [
 				'./online-v5.4',
 				'./FFBox_v5.4_web.zip',
+				'./online-v6.0',
 			][selection];
-			if (selection === 0) {
+			if (selection === 0 || selection === 2) {
 				Msgbox({
 					image: h(IconPointOut),
-					title: '您将要使用一个尚未完善的网页版～',
-					content: h('div', { style: `text-align: center` }, ['FFBox 是优先为客户端环境进行开发的，网页运行功能相对受限且可能存在更多 bug，建议您有条件时优先使用客户端', h('br'), '同时，建议自行部署以获得更佳体验～']),
+					title: selection === 2 ? '您将要使用一个尚未完善的 6.0 测试版网页版～' : '您将要使用一个尚未完善的网页版～',
+					content: h('div', { style: `text-align: center` }, [
+						selection === 2 ? '这是 6.0 测试版网页版，稳定性与功能都可能发生较大变化，请谨慎使用并注意备份数据' : 'FFBox 是优先为客户端环境进行开发的，网页运行功能相对受限且可能存在更多 bug，建议您有条件时优先使用客户端',
+						h('br'), '同时，建议自行部署以获得更佳体验～'
+					]),
 					buttons: [
 						{ text: `我已知悉，继续`, type: ButtonType.Primary, callback: () => window.open(url, '__blank') && true },
 					]
@@ -141,6 +145,7 @@ const handleDownloadClick = (os: 'Windows' | 'MacOS' | 'Linux' | 'web', selectio
 			<div class="os">
 				<span>在线试用</span>
 				<Button size="large" @click="handleDownloadClick('web', 0)"><IconWeb />v5.1 版本</Button>
+				<Button size="large" @click="handleDownloadClick('web', 2)"><IconWeb />v6.0 测试版</Button>
 			</div>
 			<div class="os">
 				<span>压缩包</span>
