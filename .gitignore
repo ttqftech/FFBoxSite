@@ -9,6 +9,9 @@ lerna-debug.log*
 
 node_modules
 
+# Vite 构建临时产物（如 docs/.vite/ssr-manifest.json）
+.vite
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
