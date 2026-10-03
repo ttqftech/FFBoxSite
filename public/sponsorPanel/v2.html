@@ -145,6 +145,16 @@
 		.ffbox-input .inputbox-selector > input:hover::placeholder {
 			font-size: 13px; opacity: 0.25;
 		}
+		.ffbox-input .inputbox-selector > select {
+			position: absolute; left: 6px;
+			width: calc(100% - 12px); height: 24px; line-height: 24px;
+			background: none; border: none; margin: 0; padding: 0; outline: none;
+			font-family: inherit; font-size: 13px; color: inherit;
+			cursor: pointer;
+		}
+		.ffbox-input .inputbox-selector > select > option {
+			color: #333; background: #FFF;
+		}
 
 		/* ==================== Tooltip ==================== */
 		.tooltip {
@@ -467,6 +477,17 @@
 
 	<h2>功能解限</h2>
 
+	<div class="ffbox-input" x-show="serverList.length" x-cloak>
+		<div class="input-title">服务器</div>
+		<div class="inputbox-selector">
+			<select x-model="selectedServerId">
+				<template x-for="s in serverList" :key="s.id">
+					<option :value="s.id" x-text="serverLabel(s)"></option>
+				</template>
+			</select>
+		</div>
+	</div>
+
 	<p>您的人品值</p>
 	<div class="yourLevel-item">
 		<div class="yourLevel-middleNoOverflow">
@@ -482,15 +503,15 @@
 	</div>
 	<div class="yourLevel-item" x-show="backendVisible" x-cloak style="display: none;">
 		<div class="yourLevel-middleNoOverflow">
-			<div class="yourLevel-bar" :style="`width: ${state.localServerFunctionLevel}%`"></div>
+			<div class="yourLevel-bar" :style="`width: ${serverLevel}%`"></div>
 		</div>
 		<div class="yourLevel-middle">
-			<div class="yourLevel-bar" :style="`width: ${state.localServerFunctionLevel}%`">
+			<div class="yourLevel-bar" :style="`width: ${serverLevel}%`">
 				<div class="yourLevel-bar-highlight"></div>
 			</div>
-			<span x-text="`本地服务器：${state.localServerFunctionLevel}`">本地服务器：--</span>
+			<span x-text="`${selectedServerName}：${serverLevel}`">服务器：--</span>
 		</div>
-		<div class="yourLevel-middle-highlight" :style="`width: ${state.localServerFunctionLevel}%`"></div>
+		<div class="yourLevel-middle-highlight" :style="`width: ${serverLevel}%`"></div>
 	</div>
 	<p><i style="font-size: 0.7em;">该功能为公测阶段，会随时间每 30 天流失【<span x-text="velocityStr">?</span>】点，请定期维护人品值</i></p>
 
@@ -564,7 +585,7 @@
 
 	<div class="paragram" style="margin-top: 8px;">
 		<button class="ffbox-button" :disabled="state.env === 'browser'" @click="handleActivate('frontend')">解锢【前端】人品值</button>
-		<button class="ffbox-button" :disabled="!state.localServerConnected" @click="handleActivate('backend')">解锢【本地服务器】人品值</button>
+		<button class="ffbox-button" :disabled="!selectedServer || !selectedServer.connected" @click="handleActivate('backend')">解锢【<span x-text="selectedServerName"></span>】人品值</button>
 	</div>
 
 	<h2>旧码升级</h2>
@@ -590,9 +611,9 @@
 	<p>机器码（前端）：<span x-text="frontendMachineIdDisplay"
 			style="user-select:all;cursor:pointer;"
 			@click="copyFrontendMachineId()">--</span></p>
-	<p>机器码（本地服务器）：<span x-text="backendMachineIdDisplay"
+	<p>机器码（<span x-text="selectedServerName"></span>）：<span x-text="serverMachineIdDisplay"
 			style="user-select:all;cursor:pointer;"
-			@click="copyBackendMachineId()">--</span></p>
+			@click="copyServerMachineId()">--</span></p>
 
 	<div class="tooltip"
 		:class="{ visible: tooltipVisible }"
@@ -823,9 +844,11 @@
 			Alpine.data('sponsorPanel', () => ({
 				state: {
 					functionLevel: NaN,
-					localServerConnected: false,
-					localServerFunctionLevel: NaN,
-					localServerMachineId: '',
+					localServerConnected: false,	// 旧版宿主兼容字段
+					localServerFunctionLevel: NaN,	// 旧版宿主兼容字段
+					localServerMachineId: '',		// 旧版宿主兼容字段
+					servers: [],
+					currentServerId: '',
 					frontendMachineId: '',
 					env: 'browser',
 					colorTheme: 'themeLight',
@@ -834,6 +857,7 @@
 				},
 				previewLevel: 20,
 				activeVersion: '6.0', // FFBoxSite 模式下当前预览的版本
+				selectedServerId: '', // 下拉框选中的服务器，空表示尚未选择（首次收到 state 时自动填充）
 				activateCode: '',
 				envelopPressed: false,
 				envelopNum: -2,
@@ -889,18 +913,63 @@
 
 				applyState(s) {
 					Object.assign(this.state, s);
+					// 保持用户已选的服务器；若它已消失（或尚未选过）则跟随宿主当前服务器，再退化为第一台
+					const list = this.serverList;
+					if (!list.some((item) => item.id === this.selectedServerId)) {
+						this.selectedServerId = (list.find((item) => item.id === s.currentServerId) || list[0])?.id || '';
+					}
 					// 前端 functionLevel 变化时，滑块回弹到前端人品值
 					if (s.functionLevel !== undefined && s.functionLevel !== null && !isNaN(s.functionLevel)) {
 						this.previewLevel = s.functionLevel;
 					}
 				},
 
+				// ==================== 服务器选择 ====================
+				/** 宿主下发的服务器列表；旧版宿主没有该字段时，降级为“本地服务器”单条目 */
+				get serverList() {
+					if (Array.isArray(this.state.servers) && this.state.servers.length) {
+						return this.state.servers;
+					}
+					if (!this.state.localServerConnected && !this.state.localServerMachineId) {
+						return [];
+					}
+					return [{
+						id: '__localServer__',
+						name: '本地服务器',
+						ip: 'localhost',
+						connected: !!this.state.localServerConnected,
+						machineId: this.state.localServerMachineId || '',
+						functionLevel: this.state.localServerFunctionLevel,
+					}];
+				},
+
+				get selectedServer() {
+					const list = this.serverList;
+					return list.find((item) => item.id === this.selectedServerId) || list[0];
+				},
+
+				get selectedServerName() {
+					const server = this.selectedServer;
+					return (server && (server.name || server.ip)) || '服务器';
+				},
+
+				get serverLevel() {
+					const level = this.selectedServer && this.selectedServer.functionLevel;
+					return (typeof level === 'number' && !isNaN(level)) ? level : NaN;
+				},
+
+				serverLabel(server) {
+					const name = server.name || server.ip || '服务器';
+					return server.connected ? name : `${name}（未连接）`;
+				},
+
 				// ==================== Computed Getters ====================
 				get legacyUpgradeHintVisible() {
+					const serverMachineId = this.selectedServer && this.selectedServer.machineId;
 					return !!(
 						this.state.frontendMachineId &&
-						this.state.localServerMachineId &&
-						this.state.frontendMachineId === this.state.localServerMachineId &&
+						serverMachineId &&
+						this.state.frontendMachineId === serverMachineId &&
 						typeof this.activateCode === 'string' &&
 						this.activateCode.startsWith('U2FsdGVkX1')
 					);
@@ -918,16 +987,17 @@
 				},
 
 				get backendVisible() {
-					return !!(this.state.localServerConnected && this.state.localServerFunctionLevel);
+					return !!(this.selectedServer && this.selectedServer.connected && this.serverLevel);
 				},
 
 				get frontendMachineIdDisplay() {
 					return this.state.frontendMachineId || '（网页版暂不支持）';
 				},
 
-				get backendMachineIdDisplay() {
-					if (!this.state.localServerConnected) return '（未连接，请连接本地服务器后获取）';
-					return this.state.localServerMachineId || '（服务器版本不匹配，无法读取）';
+				get serverMachineIdDisplay() {
+					if (!this.selectedServer) return '（暂无服务器）';
+					if (!this.selectedServer.connected) return '（未连接，请连接该服务器后获取）';
+					return this.selectedServer.machineId || '（服务器版本不匹配，无法读取）';
 				},
 
 				// ==================== Limitations Table (computed in-iframe) ====================
@@ -1045,8 +1115,8 @@
 					}
 				},
 
-				copyBackendMachineId() {
-					const text = this.backendMachineIdDisplay;
+				copyServerMachineId() {
+					const text = this.serverMachineIdDisplay;
 					if (text && !text.startsWith('（')) {
 						navigator.clipboard.writeText(text);
 						this.request('popup', { message: '已复制机器码到剪贴板🫡', level: 0 });
@@ -1111,7 +1181,7 @@
 						backendResult = '-';
 					} else if (end === 'backend') {
 						frontendResult = '-';
-						backendResult = await this.request('activateBackend', { code: this.activateCode });
+						backendResult = await this.request('activateBackend', { code: this.activateCode, serverId: this.selectedServerId });
 					}
 					console.log('激活结果', frontendResult, backendResult);
 					if (frontendResult && backendResult) {
@@ -1143,8 +1213,8 @@
 							const respData = await resp.json();
 							if (!respData.code || !respData.code.startsWith('facv2.')) throw new Error('Invalid response');
 							const userInput = respData.code;
-							const frontendResult = await this.request('activateFrontend', { code: userInput });
-							const backendResult = await this.request('activateBackend', { code: userInput });
+						const frontendResult = await this.request('activateFrontend', { code: userInput });
+						const backendResult = await this.request('activateBackend', { code: userInput, serverId: this.selectedServerId });
 							console.log('激活结果', frontendResult, backendResult, this.envelopNum, userInput);
 							this.request('popup', { message: '激活结果请到开发人员控制台查看', level: 1 });
 						} catch (e) {
